@@ -10,6 +10,6 @@ import brooklyn.entity.webapp.JavaWebAppSoftwareProcess;
 
 @Catalog(name="Ambari Server", description="Ambari Server: part of an ambari cluster used to install and monitor a hadoop cluster.")
 @ImplementedBy(AmbariServerImpl.class)
-public interface AmbariServer extends SoftwareProcess, UsesJava, UsesJmx, UsesJavaMXBeans {
+public interface AmbariServer extends SoftwareProcess, UsesJava {
 
 }

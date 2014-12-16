@@ -5,6 +5,7 @@ import java.util.Arrays;
 import io.airlift.command.Command;
 import io.airlift.command.Option;
 
+import org.apache.brooklyn.ambari.AmbariServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +75,7 @@ public class SampleMain extends Main {
             super.populateCatalog(catalog);
             catalog.addItem(SingleWebServerSample.class);
             catalog.addItem(ClusterWebServerDatabaseSample.class);
-            catalog.addItem(AmbariApp.class);
+            catalog.addItem(AmbariServer.class);
         }
 
         @Override

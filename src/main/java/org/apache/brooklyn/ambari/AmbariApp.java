@@ -12,7 +12,8 @@ public class AmbariApp extends AbstractApplication {
     
     @Override
     public void init() {
-    	addChild(EntitySpec.create(AmbariServer.class));
+    	AmbariServer server = addChild(EntitySpec.create(AmbariServer.class));
+
     }
     
 }
