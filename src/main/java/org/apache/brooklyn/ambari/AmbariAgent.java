@@ -6,7 +6,6 @@ import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.ImplementedBy;
-import brooklyn.entity.webapp.jboss.JBoss7Server;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.javalang.JavaClassNames;
 

@@ -1,6 +1,5 @@
 package org.apache.brooklyn.ambari;
 
-import brooklyn.entity.Entity;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 
 /**

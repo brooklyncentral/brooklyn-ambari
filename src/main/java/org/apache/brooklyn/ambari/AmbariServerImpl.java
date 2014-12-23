@@ -2,7 +2,6 @@ package org.apache.brooklyn.ambari;
 
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.SoftwareProcessImpl;
-import brooklyn.entity.webapp.JavaWebAppSoftwareProcessImpl;
 import brooklyn.event.feed.http.HttpFeed;
 import brooklyn.event.feed.http.HttpPollConfig;
 import brooklyn.event.feed.http.HttpValueFunctions;
@@ -40,6 +39,11 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                         .onSuccess(HttpValueFunctions.responseCodeEquals(200))
                         .onFailureOrException(Functions.constant(false)))
                 .build();
+        /**
+         * see {@link brooklyn.entity.nosql.riak.RiakNodeImpl}
+         * https://github.com/cloudsoft/bt-hpc/blob/master/brooklyn-vello/src/main/java/io/cloudsoft/vello/impl/VelloFlowClientImpl.java
+         */
+//        httpFeed = HttpFeed.builder().credentials()
     }
 
     @Override

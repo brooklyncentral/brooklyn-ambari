@@ -2,7 +2,6 @@ package org.apache.brooklyn.ambari;
 
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
-import brooklyn.entity.webapp.JavaWebAppSoftwareProcessImpl;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.ssh.BashCommands;
@@ -11,6 +10,7 @@ import static brooklyn.util.ssh.BashCommands.installPackage;
 
 public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implements AmbariServerDriver {
 
+    private final DefaultAmbariInstallHelper defaultAmbariInstallHelper = new DefaultAmbariInstallHelper();
 
     public AmbariServerSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
@@ -25,8 +25,7 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     protected String getLogFileLocation() {
-        // TODO Auto-generated method stub
-        return null;
+        return "/var/log/ambari-server/ambari-server.log";
     }
 
     @Override
@@ -37,10 +36,7 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
     @Override
     public void install() {
         newScript(INSTALLING).body.append(
-                BashCommands.INSTALL_WGET,
-                BashCommands.sudo("wget http://public-repo-1.hortonworks.com/ambari/ubuntu12/1.x/updates/1.7.0/ambari.list -O /etc/apt/sources.list.d/ambari.list"),
-                BashCommands.sudo("apt-key adv --recv-keys --keyserver keyserver.ubuntu.com B9733A7A07513CAD"),
-                BashCommands.sudo("apt-get update"),
+                defaultAmbariInstallHelper.installAmbariRequirements(getMachine()),
                 installPackage("ambari-server"),
                 BashCommands.sudo("ambari-server setup -s"))
                 .execute();
@@ -48,7 +44,6 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     public void customize() {
-        // TODO Auto-generated method stub
     }
 
     @Override
@@ -56,4 +51,8 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
         newScript(LAUNCHING).body.append(BashCommands.sudo("ambari-server start")).execute();
     }
 
+    @Override
+    public void postLaunch() {
+        super.postLaunch();
+    }
 }

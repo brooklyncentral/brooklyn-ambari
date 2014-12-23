@@ -1,10 +1,9 @@
 package org.apache.brooklyn.ambari;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.proxying.EntitySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AmbariApp extends AbstractApplication {
 	
