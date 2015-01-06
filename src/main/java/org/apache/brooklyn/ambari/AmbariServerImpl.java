@@ -6,9 +6,17 @@ import brooklyn.event.feed.http.HttpFeed;
 import brooklyn.event.feed.http.HttpPollConfig;
 import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
+import brooklyn.util.collections.Jsonya;
+import brooklyn.util.http.HttpTool;
+import brooklyn.util.http.HttpToolResponse;
 import com.google.common.base.Functions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.common.net.HttpHeaders;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
 
+import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -52,4 +60,21 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         if (httpFeed != null) httpFeed.stop();
     }
+
+    @Override
+    public void createCluster(String cluster) {
+        waitForServiceUp();
+        //TODO clearly needs changed
+        UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin","admin");
+        //TODO trustAll should probably be fixed
+        URI attribute = getAttribute(Attributes.MAIN_URI);
+        URI uri = UriBuilder.fromUri(attribute).path("/api/v1/clusters/{cluster}").build(cluster);
+        HttpClient httpClient = HttpTool.httpClientBuilder().credentials(usernamePasswordCredentials).trustAll().uri(uri).build();
+        ImmutableMap<String, String> headers = ImmutableMap.of("x-requested-by", "bob", HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials));
+        String json = Jsonya.newInstance().at("Clusters").put("version","HDP-2.2").root().toString();
+        //TODO should handle failure
+        HttpToolResponse httpToolResponse = HttpTool.httpPost(httpClient, uri, headers, json.getBytes());
+    }
+
+    //TODO register agent
 }

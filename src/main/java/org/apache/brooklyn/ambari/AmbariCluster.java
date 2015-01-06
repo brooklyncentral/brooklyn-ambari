@@ -23,8 +23,11 @@ import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.group.Cluster;
+import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.Startable;
+import brooklyn.event.AttributeSensor;
+import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
@@ -36,5 +39,11 @@ public interface AmbariCluster extends Entity, Startable {
 
     @SetFromFlag("securityGroup")
     public static ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server", "");
+
+    AttributeSensor<AmbariServer> AMBARI_SERVER = Sensors.newSensor(
+            AmbariServer.class, "ambaricluster.configservers", "Config servers");
+
+    AttributeSensor<DynamicCluster> AMBARI_AGENT = Sensors.newSensor(
+            DynamicCluster.class, "ambaricluster.configagents", "Config agents");
 
 }

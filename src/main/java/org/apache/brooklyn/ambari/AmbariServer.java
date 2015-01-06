@@ -1,6 +1,8 @@
 package org.apache.brooklyn.ambari;
 
 import brooklyn.catalog.Catalog;
+import brooklyn.entity.annotation.Effector;
+import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.ImplementedBy;
@@ -14,4 +16,7 @@ public interface AmbariServer extends SoftwareProcess, UsesJava {
      * @throws IllegalStateException if times out.
      */
     public void waitForServiceUp();
+
+    @Effector(description = "Creates a cluster")
+    public void createCluster(@EffectorParam(name = "Cluster name")String cluster);
 }

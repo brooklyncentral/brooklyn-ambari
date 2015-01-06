@@ -22,14 +22,9 @@ import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.event.basic.MapConfigKey;
 import brooklyn.location.Location;
-import brooklyn.location.cloud.CloudLocationConfig;
-import brooklyn.location.jclouds.JcloudsLocationConfig;
-import brooklyn.util.time.Duration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.jclouds.compute.domain.OsFamily;
 
 import java.util.Collection;
 
@@ -50,10 +45,10 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 "inboundPorts", ImmutableList.of(8080, 22),
                 "securityGroups", securityGroup);
 
-        AmbariServer ambariServer = addChild(EntitySpec.create(AmbariServer.class)
+        setAttribute(AMBARI_SERVER, addChild(EntitySpec.create(AmbariServer.class)
                         .configure(SoftwareProcess.PROVISIONING_PROPERTIES, serverProvisioningProperties)
                         .displayName("Ambari Server")
-        );
+        ));
 
 
         ImmutableMap<String, Object> agentProvisioningProperties = ImmutableMap.<String, Object>of(
@@ -63,22 +58,22 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 "securityGroups", securityGroup);
 
         EntitySpec<AmbariAgent> agentEntitySpec = EntitySpec.create(AmbariAgent.class)
-                .configure(AmbariAgent.AMBARI_SERVER_FQDN, attributeWhenReady(ambariServer, AmbariServer.HOSTNAME))
+                .configure(AmbariAgent.AMBARI_SERVER_FQDN, attributeWhenReady(getAttribute(AMBARI_SERVER), AmbariServer.HOSTNAME))
                         //TODO shouldn't use default os
                 .configure(SoftwareProcess.PROVISIONING_PROPERTIES, agentProvisioningProperties);
 
-        DynamicCluster ambariAgentCluster = addChild(EntitySpec.create(DynamicCluster.class)
+        setAttribute(AMBARI_AGENT, addChild(EntitySpec.create(DynamicCluster.class)
                         //TODO should probably change option to hadoop cluster size
                         .configure(DynamicCluster.INITIAL_SIZE, initialSize - 1)
                         .configure(DynamicCluster.MEMBER_SPEC, agentEntitySpec)
                         .displayName("All Nodes")
-        );
+        ));
     }
 
     @Override
     public void start(Collection<? extends Location> locations) {
         super.start(locations);
-
-
+        AmbariServer ambariServer = getAttribute(AMBARI_SERVER);
+        ambariServer.createCluster("Cluster1");
     }
 }
