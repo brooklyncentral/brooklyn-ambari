@@ -10,7 +10,7 @@ import static brooklyn.util.ssh.BashCommands.installPackage;
 
 public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implements AmbariServerDriver {
 
-    private final DefaultAmbariInstallHelper defaultAmbariInstallHelper = new DefaultAmbariInstallHelper();
+    private final AmbariInstallHelper ambariInstallHelper = new DefaultAmbariInstallHelper();
 
     public AmbariServerSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
@@ -36,7 +36,7 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
     @Override
     public void install() {
         newScript(INSTALLING).body.append(
-                defaultAmbariInstallHelper.installAmbariRequirements(getMachine()),
+                ambariInstallHelper.installAmbariRequirements(getMachine()),
                 installPackage("ambari-server"),
                 BashCommands.sudo("ambari-server setup -s"))
                 .execute();

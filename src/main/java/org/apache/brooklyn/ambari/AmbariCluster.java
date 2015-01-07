@@ -24,11 +24,14 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.Startable;
 import brooklyn.event.AttributeSensor;
+import brooklyn.event.basic.BasicConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
+import com.google.common.reflect.TypeToken;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
@@ -39,6 +42,11 @@ public interface AmbariCluster extends Entity, Startable {
 
     @SetFromFlag("securityGroup")
     public static ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server", "");
+
+    public static ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {})
+            .name("foo.bar.baz")
+            .defaultValue(EntitySpec.create(AmbariServer.class))
+            .build();
 
     AttributeSensor<AmbariServer> AMBARI_SERVER = Sensors.newSensor(
             AmbariServer.class, "ambaricluster.configservers", "Config servers");

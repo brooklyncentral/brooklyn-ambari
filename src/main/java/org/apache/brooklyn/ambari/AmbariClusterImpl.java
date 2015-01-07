@@ -22,16 +22,25 @@ import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.event.SensorEvent;
+import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
 
 public class AmbariClusterImpl extends BasicStartableImpl implements AmbariCluster {
 
+    //TODO is there an issue with rebind here?  On rebind should be populated from somewhere else?
+    private final ConcurrentHashMap<String, Boolean> registeredHosts = new ConcurrentHashMap<String, Boolean>();
 
     @Override
     public void init() {
@@ -43,9 +52,10 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         Object securityGroup = getConfig(SECURITY_GROUP);
         ImmutableMap<String, Object> serverProvisioningProperties = ImmutableMap.<String, Object>of(
                 "inboundPorts", ImmutableList.of(8080, 22),
-                "securityGroups", securityGroup);
+                "securityGroups", securityGroup,
+                "minRam", 4096);
 
-        setAttribute(AMBARI_SERVER, addChild(EntitySpec.create(AmbariServer.class)
+        setAttribute(AMBARI_SERVER, addChild(getConfig(SERVER_SPEC)
                         .configure(SoftwareProcess.PROVISIONING_PROPERTIES, serverProvisioningProperties)
                         .displayName("Ambari Server")
         ));
@@ -73,7 +83,22 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     @Override
     public void start(Collection<? extends Location> locations) {
         super.start(locations);
-        AmbariServer ambariServer = getAttribute(AMBARI_SERVER);
-        ambariServer.createCluster("Cluster1");
+
+        subscribe(getAttribute(AMBARI_SERVER), AmbariServer.REGISTERED_HOSTS, registeredHostsEventListener);
+
+        setAttribute(SERVICE_UP, Boolean.TRUE);
+    }
+
+    final SensorEventListener<List<String>> registeredHostsEventListener = new SensorEventListener<List<String>>() {
+        @Override
+        public void onEvent(SensorEvent<List<String>> event) {
+            for (String host : event.getValue()) {
+                registeredHosts.putIfAbsent(host, true);
+            }
+        }
+    };
+
+    private void createCluster() {
+        getAttribute(AMBARI_SERVER).createCluster("Cluster1", registeredHosts.keys(), ImmutableList.<String>of("ZOOKEEPER","HDFS"));
     }
 }
