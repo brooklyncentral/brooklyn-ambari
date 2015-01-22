@@ -1,10 +1,13 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.ssh.BashCommands;
+import org.apache.brooklyn.ambari.AmbariInstallHelper;
+import org.apache.brooklyn.ambari.DefaultAmbariInstallHelper;
+import org.apache.brooklyn.ambari.server.AmbariServerDriver;
 
 import static brooklyn.util.ssh.BashCommands.installPackage;
 

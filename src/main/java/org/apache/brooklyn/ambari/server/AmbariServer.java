@@ -1,4 +1,4 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.entity.annotation.Effector;
@@ -8,11 +8,9 @@ import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensor;
-import brooklyn.util.time.Duration;
-import com.google.common.collect.ImmutableList;
 
-import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 
 @Catalog(name = "Ambari Server", description = "Ambari Server: part of an ambari cluster used to install and monitor a hadoop cluster.")
 @ImplementedBy(AmbariServerImpl.class)
@@ -42,5 +40,5 @@ public interface AmbariServer extends SoftwareProcess, UsesJava {
     public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName, @EffectorParam(name = "Component name") String component);
 
     @Effector(description = "Create and install cluster on hosts with services")
-    public void createCluster(String cluster, Enumeration<String> hosts, Iterable<String> services);
+    public void createCluster(String cluster, Set<String> hosts, Iterable<String> services);
 }

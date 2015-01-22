@@ -27,12 +27,11 @@ import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.eclipse.jetty.util.ConcurrentHashSet;
+import org.apache.brooklyn.ambari.agent.AmbariAgent;
+import org.apache.brooklyn.ambari.server.AmbariServer;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
@@ -99,6 +98,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     };
 
     private void createCluster() {
-        getAttribute(AMBARI_SERVER).createCluster("Cluster1", registeredHosts.keys(), ImmutableList.<String>of("ZOOKEEPER","HDFS"));
+        getAttribute(AMBARI_SERVER).createCluster("Cluster1", registeredHosts.keySet(), ImmutableList.<String>of("ZOOKEEPER","HDFS"));
     }
 }

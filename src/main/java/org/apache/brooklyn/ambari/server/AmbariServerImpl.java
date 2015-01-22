@@ -1,4 +1,4 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
 import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.Attributes;
@@ -16,12 +16,16 @@ import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
 import com.jayway.jsonpath.JsonPath;
+import org.apache.brooklyn.ambari.rest.DefaultAmbariBluePrint;
+import org.apache.brooklyn.ambari.rest.AmbariApiHelper;
+import org.apache.brooklyn.ambari.rest.DefaultAmbariApiHelper;
+import org.apache.brooklyn.ambari.rest.RecommendationResponse;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 import javax.annotation.Nullable;
 import java.net.URI;
-import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
@@ -118,7 +122,9 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
-    public void createCluster(String cluster, Enumeration<String> hosts, Iterable<String> services) {
-
+    public void createCluster(String cluster, Set<String> hosts, Iterable<String> services) {
+        waitForServiceUp();
+        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(hosts, services, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.createBlueprint(DefaultAmbariBluePrint.createBlueprintFromRecommendation(recommendations.getBlueprint()), usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
     }
 }

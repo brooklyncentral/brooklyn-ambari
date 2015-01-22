@@ -24,7 +24,7 @@ import brooklyn.util.ssh.BashCommands;
 
 import static brooklyn.util.ssh.BashCommands.*;
 
-class DefaultAmbariInstallHelper implements AmbariInstallHelper {
+public class DefaultAmbariInstallHelper implements AmbariInstallHelper {
 
     private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/1.x/updates/1.7.0/ambari.repo";
     private static final String CENTOS_REPO_LIST_LOCATION = "/etc/yum.repos.d/ambari.repo";

@@ -1,4 +1,4 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
 import brooklyn.entity.java.JavaSoftwareProcessDriver;
 

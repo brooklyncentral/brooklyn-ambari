@@ -5,7 +5,7 @@ import java.util.Arrays;
 import io.airlift.command.Command;
 import io.airlift.command.Option;
 
-import org.apache.brooklyn.ambari.AmbariServer;
+import org.apache.brooklyn.ambari.server.AmbariServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,8 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.agent;
 
 import brooklyn.entity.basic.SoftwareProcessImpl;
+import org.apache.brooklyn.ambari.agent.AmbariAgent;
+import org.apache.brooklyn.ambari.agent.AmbariAgentDriver;
 
 /**
  * Created by duncangrant on 15/12/14.

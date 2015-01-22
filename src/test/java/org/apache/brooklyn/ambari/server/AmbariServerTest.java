@@ -16,11 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
 import brooklyn.entity.proxying.ImplementedBy;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**

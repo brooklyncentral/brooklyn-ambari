@@ -1,10 +1,9 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
-import brooklyn.util.collections.CollectionFunctionals;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jayway.jsonpath.PathNotFoundException;
-import org.testng.annotations.Parameters;
+import org.apache.brooklyn.ambari.server.AmbariServerImpl;
 import org.testng.annotations.Test;
 
 import java.util.List;

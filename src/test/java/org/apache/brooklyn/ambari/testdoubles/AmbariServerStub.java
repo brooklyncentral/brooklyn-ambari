@@ -18,7 +18,6 @@
  */
 package org.apache.brooklyn.ambari.testdoubles;
 
-import brooklyn.basic.BrooklynObject;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.*;
 import brooklyn.entity.annotation.EffectorParam;
@@ -31,7 +30,7 @@ import brooklyn.policy.EnricherSpec;
 import brooklyn.policy.Policy;
 import brooklyn.policy.PolicySpec;
 import brooklyn.util.guava.Maybe;
-import org.apache.brooklyn.ambari.AmbariServer;
+import org.apache.brooklyn.ambari.server.AmbariServer;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -70,6 +69,11 @@ public class AmbariServerStub implements AmbariServer {
     @Override
     public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName, @EffectorParam(name = "Component name") String component) {
         throw new RuntimeException("Should not have tried to create a host component");
+    }
+
+    @Override
+    public void createCluster(String cluster, Set<String> hosts, Iterable<String> services) {
+        throw new RuntimeException("Should not have tried to create cluster");
     }
 
     @Override

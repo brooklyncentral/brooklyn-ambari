@@ -16,15 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.server;
 
-import java.util.LinkedList;
+import org.apache.brooklyn.ambari.TestDriver;
+import org.apache.brooklyn.ambari.server.AmbariServerImpl;
+import org.apache.brooklyn.ambari.server.AmbariServerTest;
+
 import java.util.List;
 
 /**
  * Created by duncangrant on 07/01/15.
  */
-public class AmbariServerTestImpl extends AmbariServerImpl implements AmbariServerTest{
+public class AmbariServerTestImpl extends AmbariServerImpl implements AmbariServerTest {
 
     @Override
     public Class getDriverInterface() {

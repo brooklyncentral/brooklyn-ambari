@@ -16,20 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.rest;
 
-import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 import java.net.URI;
+import java.util.Set;
 
 /**
  * Created by duncangrant on 07/01/15.
  */
 public interface AmbariApiHelper {
     public void createClusterAPI(String cluster, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+
     public void addHostToCluster(String cluster, String host, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+
     public void addServiceToCluster(String cluster, String service, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+
     public void createComponent(String cluster, String service, String component, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+
     public void createHostComponent(String cluster, String hostName, String component, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+
+    public RecommendationResponse getRecommendations(Set<String> hosts, Iterable<String> services, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+
+    public void createBlueprint(DefaultAmbariBluePrint blueprint, UsernamePasswordCredentials usernamePasswordCredentials, URI attribute);
 }

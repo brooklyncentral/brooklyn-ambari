@@ -1,9 +1,10 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.agent;
 
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
+import org.apache.brooklyn.ambari.DefaultAmbariInstallHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

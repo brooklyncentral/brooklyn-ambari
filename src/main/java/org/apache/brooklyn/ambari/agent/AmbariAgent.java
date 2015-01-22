@@ -1,4 +1,4 @@
-package org.apache.brooklyn.ambari;
+package org.apache.brooklyn.ambari.agent;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
