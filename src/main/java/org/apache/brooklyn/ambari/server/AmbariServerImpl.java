@@ -16,10 +16,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
 import com.jayway.jsonpath.JsonPath;
-import org.apache.brooklyn.ambari.rest.DefaultAmbariBluePrint;
-import org.apache.brooklyn.ambari.rest.AmbariApiHelper;
-import org.apache.brooklyn.ambari.rest.DefaultAmbariApiHelper;
-import org.apache.brooklyn.ambari.rest.RecommendationResponse;
+import org.apache.brooklyn.ambari.rest.*;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 import javax.annotation.Nullable;
@@ -122,9 +119,10 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
-    public void createCluster(String cluster, Set<String> hosts, Iterable<String> services) {
+    public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         waitForServiceUp();
         RecommendationResponse recommendations = ambariApiHelper.getRecommendations(hosts, services, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
-        ambariApiHelper.createBlueprint(DefaultAmbariBluePrint.createBlueprintFromRecommendation(recommendations.getBlueprint()), usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.createBlueprint(blueprintName, DefaultAmbariBluePrint.createBlueprintFromRecommendation(recommendations.getBlueprint()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
+        ambariApiHelper.createCluster(clusterName, blueprintName, DefaultBluePrintClusterBinding.createFromRecommendation(recommendations.getBlueprintClusterBinding()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
     }
 }

@@ -3,6 +3,7 @@ package org.apache.brooklyn.ambari.rest;
 import brooklyn.util.collections.Jsonya;
 import brooklyn.util.http.HttpTool;
 import brooklyn.util.http.HttpToolResponse;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 
 public class DefaultAmbariApiHelper implements AmbariApiHelper {
@@ -47,16 +49,16 @@ public class DefaultAmbariApiHelper implements AmbariApiHelper {
     }
 
     @Override
-    public void createBlueprint(DefaultAmbariBluePrint blueprint, UsernamePasswordCredentials usernamePasswordCredentials, URI attribute) {
-
+    public void createBlueprint(String blueprintName, DefaultAmbariBluePrint blueprint, URI baseUri, UsernamePasswordCredentials usernamePasswordCredentials) {
+        post(usernamePasswordCredentials, baseUri, blueprint.toJson().getBytes(), "/api/v1/blueprints/{blueprintname}", blueprintName);
     }
 
     @Override
-    public RecommendationResponse getRecommendations(Set<String> hosts, Iterable<String> services, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri) {
+    public RecommendationResponse getRecommendations(List<String> hosts, Iterable<String> services, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri) {
         String json = Jsonya.newInstance()
                 .root().put("hosts", hosts)
-                .root().put("services",services)
-                .root().put("recommend","host_groups")
+                .root().put("services", services)
+                .root().put("recommend", "host_groups")
                 .root().toString();
         HttpToolResponse httpToolResponse = post(usernamePasswordCredentials, baseUri, json.getBytes(), "/api/v1/stacks/HDP/versions/2.2/recommendations");
 
@@ -72,6 +74,12 @@ public class DefaultAmbariApiHelper implements AmbariApiHelper {
         return null;
     }
 
+    @Override
+    public void createCluster(String clusterName, String blueprintName, DefaultBluePrintClusterBinding bluePrintClusterBinding, URI baseUri, UsernamePasswordCredentials usernamePasswordCredentials) {
+        bluePrintClusterBinding.setBluePrintName(blueprintName);
+        post(usernamePasswordCredentials, baseUri, bluePrintClusterBinding.toJson().getBytes(), "/api/v1/clusters/{clustername}", clusterName);
+    }
+
     private HttpToolResponse post(UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri, byte[] body, String path, String... templateParams) {
         URI uri = UriBuilder.fromUri(baseUri).path(path).build(templateParams);
         //TODO trustAll should probably be fixed
@@ -79,7 +87,15 @@ public class DefaultAmbariApiHelper implements AmbariApiHelper {
         ImmutableMap<String, String> headers = ImmutableMap.of("x-requested-by", "bob", HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials));
         //TODO should handle failure
         HttpToolResponse httpToolResponse = HttpTool.httpPost(httpClient, uri, headers, body);
+        assertAcceptableReturnCode(httpToolResponse);
         return httpToolResponse;
+    }
+
+    private void assertAcceptableReturnCode(HttpToolResponse httpToolResponse) {
+        ImmutableList<Integer> list = ImmutableList.<Integer>of(200, 201, 202);
+        if (!list.contains(httpToolResponse.getResponseCode())) {
+            throw new AmbariApiError(httpToolResponse);
+        }
     }
 
 }

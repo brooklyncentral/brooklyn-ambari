@@ -19,34 +19,28 @@
 package org.apache.brooklyn.ambari.rest;
 
 import brooklyn.util.collections.Jsonya;
-import brooklyn.util.collections.MutableMap;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.brooklyn.ambari.rest.RecommendationResponse.Resource.Recommendations.Blueprint;
 
-import javax.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by duncangrant on 21/01/15.
- */
 public class DefaultAmbariBluePrint implements AsMap {
 
-    private final List<HostGroup> host_groups = new LinkedList<HostGroup>();
+    private final List<HostGroup> hostGroups = new LinkedList<HostGroup>();
     private ImmutableMap<String, String> baseBlueprints = ImmutableMap.of("stack_name", "HDP", "stack_version", "2.2");
-    private ImmutableMap<Object, Object> configurations = ImmutableMap.of();
-
-    private DefaultAmbariBluePrint(Blueprint blueprint) {
-        for (Blueprint.HostGroup hostGroup : blueprint.host_groups) {
-            host_groups.add(new HostGroup(hostGroup));
-        }
-    }
+    private ImmutableList configurations = ImmutableList.of(ImmutableMap.of("nagios-env", ImmutableMap.of("nagios_contact", "admin@localhost")));
 
     public static DefaultAmbariBluePrint createBlueprintFromRecommendation(Blueprint blueprint) {
         return new DefaultAmbariBluePrint(blueprint);
+    }
+
+    private DefaultAmbariBluePrint(Blueprint blueprint) {
+        for (Blueprint.HostGroup hostGroup : blueprint.host_groups) {
+            hostGroups.add(new HostGroup(hostGroup));
+        }
     }
 
     public String toJson() {
@@ -54,10 +48,10 @@ public class DefaultAmbariBluePrint implements AsMap {
     }
 
     public Map asMap() {
-        return ImmutableMap.of("host_groups", toMaps(host_groups), "configurations", configurations, "Blueprints", baseBlueprints);
+        return ImmutableMap.of("host_groups", toMaps(hostGroups), "configurations", configurations, "Blueprints", baseBlueprints);
     }
 
-    private static List<Map> toMaps(List<? extends AsMap> host_groups) {
+    public static List<Map> toMaps(List<? extends AsMap> host_groups) {
         LinkedList<Map> maps = new LinkedList<Map>();
         for (AsMap host_group : host_groups) {
             maps.add(host_group.asMap());
@@ -94,16 +88,7 @@ public class DefaultAmbariBluePrint implements AsMap {
 
         @Override
         public Map asMap() {
-            return ImmutableMap.copyOf(componentParams);
+            return componentParams;
         }
     }
-
-    public static final Function<Object, Object> TRANSLATOR = new Function<Object, Object>() {
-        @Nullable
-        @Override
-        public Object apply(Object object) {
-            DefaultAmbariBluePrint defaultAmbariBluePrint = (DefaultAmbariBluePrint) object;
-            return defaultAmbariBluePrint.asMap();
-        }
-    };
 }

@@ -21,6 +21,7 @@ package org.apache.brooklyn.ambari.rest;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,7 +38,9 @@ public interface AmbariApiHelper {
 
     public void createHostComponent(String cluster, String hostName, String component, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
 
-    public RecommendationResponse getRecommendations(Set<String> hosts, Iterable<String> services, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
+    public RecommendationResponse getRecommendations(List<String> hosts, Iterable<String> services, UsernamePasswordCredentials usernamePasswordCredentials, URI baseUri);
 
-    public void createBlueprint(DefaultAmbariBluePrint blueprint, UsernamePasswordCredentials usernamePasswordCredentials, URI attribute);
+    public void createBlueprint(String blueprintName, DefaultAmbariBluePrint blueprint, URI attribute, UsernamePasswordCredentials usernamePasswordCredentials);
+
+    public void createCluster(String clusterName, String blueprintName, DefaultBluePrintClusterBinding bluePrintClusterBinding, URI baseUri, UsernamePasswordCredentials usernamePasswordCredentials);
 }

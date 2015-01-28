@@ -13,11 +13,9 @@ public class DefaultAmbariBluePrintTest {
 
     private Map mapOfJsonFromDefaultAmbariBlueprint;
     private ObjectMapper objectMapper = new ObjectMapper();
-
     @BeforeMethod
     public void setUp() throws Exception {
-        RecommendationResponse.Resource.Recommendations.Blueprint blueprintRecommendation = createBlueprintFromExampleJson();
-        DefaultAmbariBluePrint defaultAmbariBluePrint = DefaultAmbariBluePrint.createBlueprintFromRecommendation(blueprintRecommendation);
+        DefaultAmbariBluePrint defaultAmbariBluePrint = DefaultAmbariBluePrint.createBlueprintFromRecommendation(createBlueprintFromExampleJson());
         mapOfJsonFromDefaultAmbariBlueprint = objectMapper.readValue(defaultAmbariBluePrint.toJson(), Map.class);
 
     }
@@ -39,12 +37,12 @@ public class DefaultAmbariBluePrintTest {
 
     @Test
     public void testHostGroup4DoesNotContainHDFSClient() throws Exception {
-        assertNotNull(getComponent(getHostGroup("host-group-4"), "HDFS_CLIENT"));
+        assertNull(getComponent(getHostGroup("host-group-4"), "HDFS_CLIENT"));
     }
 
     @Test
-    public void testDefaultAmbariBluePrintFromRecommendationHasNoConfig(){
-        assertTrue(getConfiguration().size() == 0);
+    public void testDefaultAmbariBluePrintFromRecommendationHasDefaultConfid(){
+        assertEquals(getConfiguration().size(), 1);
     }
 
     @Test
@@ -58,17 +56,17 @@ public class DefaultAmbariBluePrintTest {
         return (Map) mapOfJsonFromDefaultAmbariBlueprint.get("Blueprints");
     }
 
-    private Map getConfiguration() {
-        return (Map) mapOfJsonFromDefaultAmbariBlueprint.get("configurations");
+    private List getConfiguration() {
+        return (List) mapOfJsonFromDefaultAmbariBlueprint.get("configurations");
     }
 
     private List<Map> getComponents(Map hostGroup) {
         return (List<Map>) hostGroup.get("components");
     }
 
-    private Map getComponent(Map hostGroup, String datanode) {
+    private Map getComponent(Map hostGroup, String componentName) {
         for (Map map : getComponents(hostGroup)) {
-            if(map.get("name").equals(datanode)){
+            if(map.get("name").equals(componentName)){
                 return map;
             }
         }
@@ -97,11 +95,11 @@ public class DefaultAmbariBluePrintTest {
     }
 
     private RecommendationResponse.Resource.Recommendations.Blueprint createBlueprintFromExampleJson() throws java.io.IOException {
-        RecommendationResponse recommendationResponse = objectMapper.readValue(exampleAmbariJsonResponse, RecommendationResponse.class);
+        RecommendationResponse recommendationResponse = objectMapper.readValue(EXAMPLE_AMBARI_RECOMMENDATION_RESPONSE_JSON, RecommendationResponse.class);
         return recommendationResponse.getBlueprint();
     }
 
-    String exampleAmbariJsonResponse = "{\n" +
+    public static final String EXAMPLE_AMBARI_RECOMMENDATION_RESPONSE_JSON = "{\n" +
             "  \"resources\" : [\n" +
             "    {\n" +
             "      \"href\" : \"http://u1201.ambari.apache.org:8080/api/v1/stacks/HDP/versions/2.2/recommendations/2\",\n" +
@@ -245,4 +243,5 @@ public class DefaultAmbariBluePrintTest {
             "    }\n" +
             "  ]\n" +
             "}\n";
+
 }

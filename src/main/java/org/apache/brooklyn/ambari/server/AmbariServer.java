@@ -28,17 +28,26 @@ public interface AmbariServer extends SoftwareProcess, UsesJava {
     public void createCluster(@EffectorParam(name = "Cluster name") String cluster);
 
     @Effector(description = "Adds a host to a cluster")
-    public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName);
+    public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster,
+                                 @EffectorParam(name = "Host FQDN") String hostName);
 
     @Effector(description = "Add a service to a cluster")
-    public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service name") String service);
+    public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster,
+                                    @EffectorParam(name = "Service name") String service);
 
     @Effector(description = "Create component")
-    public void addComponentToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service name") String service, @EffectorParam(name = "Component name") String component);
+    public void addComponentToCluster(@EffectorParam(name = "Cluster name") String cluster,
+                                      @EffectorParam(name = "Service name") String service,
+                                      @EffectorParam(name = "Component name") String component);
 
     @Effector(description = "Create host component")
-    public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName, @EffectorParam(name = "Component name") String component);
+    public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster,
+                                    @EffectorParam(name = "Host FQDN") String hostName,
+                                    @EffectorParam(name = "Component name") String component);
 
     @Effector(description = "Create and install cluster on hosts with services")
-    public void createCluster(String cluster, Set<String> hosts, Iterable<String> services);
+    public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
+                           @EffectorParam(name = "Blueprint Name") String blueprintName,
+                           @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
+                           @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services);
 }

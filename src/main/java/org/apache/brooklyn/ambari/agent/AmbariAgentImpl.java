@@ -19,6 +19,8 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
 
         //TODO - Need to wire isrunning to service up (I think)
         setAttribute(SERVICE_UP, true);
+
+
     }
 
     @Override

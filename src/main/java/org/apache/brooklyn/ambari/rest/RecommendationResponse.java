@@ -30,6 +30,10 @@ public class RecommendationResponse {
         return resources != null && resources.length > 0 ?resources[0].recommendations.blueprint : null;
     }
 
+    public Resource.Recommendations.BlueprintClusterBinding getBlueprintClusterBinding() {
+        return resources != null && resources.length > 0 ? resources[0].recommendations.blueprint_cluster_binding: null;
+    }
+
     public static class Resource {
         public String href;
         public String[] hosts;
@@ -52,7 +56,7 @@ public class RecommendationResponse {
                 }
             }
 
-            static class BlueprintClusterBinding {
+            public static class BlueprintClusterBinding {
                 public Resource.Recommendations.BlueprintClusterBinding.HostGroup[] host_groups;
 
                 static class HostGroup {

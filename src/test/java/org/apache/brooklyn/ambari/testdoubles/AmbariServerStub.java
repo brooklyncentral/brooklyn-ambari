@@ -34,6 +34,7 @@ import org.apache.brooklyn.ambari.server.AmbariServer;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -72,7 +73,7 @@ public class AmbariServerStub implements AmbariServer {
     }
 
     @Override
-    public void createCluster(String cluster, Set<String> hosts, Iterable<String> services) {
+    public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         throw new RuntimeException("Should not have tried to create cluster");
     }
 

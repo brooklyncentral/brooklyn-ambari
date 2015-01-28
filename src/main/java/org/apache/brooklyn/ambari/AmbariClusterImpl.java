@@ -22,9 +22,12 @@ import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.entity.software.ssh.SshCommandSensor;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
+import brooklyn.util.config.ConfigBag;
+import brooklyn.util.time.Duration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.brooklyn.ambari.agent.AmbariAgent;
@@ -54,10 +57,17 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 "securityGroups", securityGroup,
                 "minRam", 4096);
 
-        setAttribute(AMBARI_SERVER, addChild(getConfig(SERVER_SPEC)
+        SshCommandSensor<String> hostnameSensor = new SshCommandSensor<String>(ConfigBag.newInstance()
+                .configure(SshCommandSensor.SENSOR_PERIOD, Duration.seconds(1))
+                .configure(SshCommandSensor.SENSOR_NAME, "fqdn")
+                .configure(SshCommandSensor.SENSOR_COMMAND, "hostname -s"
+                ));
+        AmbariServer val = addChild(getConfig(SERVER_SPEC)
                         .configure(SoftwareProcess.PROVISIONING_PROPERTIES, serverProvisioningProperties)
                         .displayName("Ambari Server")
-        ));
+                        .addInitializer(hostnameSensor)
+        );
+        setAttribute(AMBARI_SERVER, val);
 
 
         ImmutableMap<String, Object> agentProvisioningProperties = ImmutableMap.<String, Object>of(
@@ -69,6 +79,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         EntitySpec<AmbariAgent> agentEntitySpec = EntitySpec.create(AmbariAgent.class)
                 .configure(AmbariAgent.AMBARI_SERVER_FQDN, attributeWhenReady(getAttribute(AMBARI_SERVER), AmbariServer.HOSTNAME))
                         //TODO shouldn't use default os
+                .addInitializer(hostnameSensor)
                 .configure(SoftwareProcess.PROVISIONING_PROPERTIES, agentProvisioningProperties);
 
         setAttribute(AMBARI_AGENT, addChild(EntitySpec.create(DynamicCluster.class)
@@ -98,6 +109,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     };
 
     private void createCluster() {
-        getAttribute(AMBARI_SERVER).createCluster("Cluster1", registeredHosts.keySet(), ImmutableList.<String>of("ZOOKEEPER","HDFS"));
+        getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", ImmutableList.<String>copyOf(registeredHosts.keySet()), ImmutableList.<String>of("ZOOKEEPER", "HDFS"));
     }
 }
