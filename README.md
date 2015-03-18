@@ -55,15 +55,15 @@ There are several options available for building and running.
 
 To build an assembly, simply run:
 
-    mvn clean assembly:assembly
+    mvn clean install
 
 This creates a tarball with a full standalone application which can be installed in any *nix machine at:
-    target/org.apache.brooklyn.brooklyn-ambari-1.0-SNAPSHOT-dist.tar.gz
+    target/brooklyn-ambari-dist.tar.gz
 
 It also installs an unpacked version which you can run locally:
  
-     cd target/org.apache.brooklyn.brooklyn-ambari-0.1-SNAPSHOT-dist/org.apache.brooklyn.brooklyn-ambari-1.0-SNAPSHOT
-     ./start.sh launch
+     cd target/brooklyn-ambari-dist/brooklyn-ambari/
+     ./start.sh launch -l <location> --ambari
 
 For more information see the README (or `./start.sh help`) in that directory.
 
