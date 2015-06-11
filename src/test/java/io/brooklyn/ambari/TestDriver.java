@@ -18,7 +18,6 @@
  */
 package io.brooklyn.ambari;
 
-import brooklyn.entity.basic.AbstractSoftwareProcessDriver;
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.drivers.EntityDriver;
 import brooklyn.location.Location;
@@ -26,68 +25,17 @@ import brooklyn.location.Location;
 /**
  * Created by duncangrant on 07/01/15.
  */
-public class TestDriver extends AbstractSoftwareProcessDriver implements EntityDriver {
+public class TestDriver implements EntityDriver {
     public TestDriver(EntityLocal entity, Location location) {
-        super(entity, location);
     }
 
     @Override
-    public boolean isRunning() {
-        return true;
+    public EntityLocal getEntity() {
+        return null;
     }
 
     @Override
-    public void stop() {
-
-    }
-
-    @Override
-    public void runPreInstallCommand(String command) {
-
-    }
-
-    @Override
-    public void setup() {
-
-    }
-
-    @Override
-    public void copyInstallResources() {
-
-    }
-
-    @Override
-    public void install() {
-
-    }
-
-    @Override
-    public void runPostInstallCommand(String command) {
-
-    }
-
-    @Override
-    public void copyRuntimeResources() {
-
-    }
-
-    @Override
-    public void customize() {
-
-    }
-
-    @Override
-    public void runPreLaunchCommand(String command) {
-
-    }
-
-    @Override
-    public void launch() {
-
-    }
-
-    @Override
-    public void runPostLaunchCommand(String command) {
-
+    public Location getLocation() {
+        return null;
     }
 }
