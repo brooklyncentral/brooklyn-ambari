@@ -1,4 +1,4 @@
-org.apache.brooklyn.brooklyn-ambari
+Brooklyn Ambari
 ===
 
 ## Opening in an IDE
