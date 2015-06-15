@@ -1,13 +1,12 @@
 Brooklyn Ambari
 ===
 
-## Opening in an IDE
+This project contains [Apache Brooklyn](https://brooklyn.incubator.apache.org/)
+blueprints for [Apache Ambari](https://ambari.apache.org) servers and for deploying
+Ambari stacks to those servers.
 
-To open this project in an IDE, you will need maven support enabled
-(e.g. with the relevant plugin).  You should then be able to develop
-it and run it as usual.  For more information on IDE support, visit:
 
-    http://brooklyncentral.github.io/dev/build/ide.html
+[![Build Status](https://api.travis-ci.org/brooklyncentral/clocker.svg?branch=master)](https://travis-ci.org/brooklyncentral/clocker)
 
 
 ## Sample Blueprint
@@ -46,10 +45,14 @@ to AWS, adding the list of services shown:
         - YARN
         - ZOOKEEPER
 
+To use the blueprint unchanged first create an AWS security group called "test-ambari" with
+an inbound TCP rule for port 8080.
+
 
 ## Building and Running
 
 There are several options available for building and running.
+
 
 ### Building a standlone distro
 
@@ -58,11 +61,11 @@ To build an assembly, simply run:
     mvn clean install
 
 This creates a tarball with a full standalone application which can be installed in any *nix machine at:
-    target/brooklyn-ambari-dist.tar.gz
+    dist/target/brooklyn-ambari-dist.tar.gz
 
 It also installs an unpacked version which you can run locally:
  
-     cd target/brooklyn-ambari-dist/brooklyn-ambari/
+     cd dist/target/brooklyn-ambari-dist/brooklyn-ambari/
      ./start.sh launch -l <location> --ambari
 
 For more information see the README (or `./start.sh help`) in that directory.
@@ -83,15 +86,13 @@ Then simply run:
 
 You can copy the jar to your Brooklyn dropins folder, and then launch Brooklyn:
 
-    cp target/brooklyn-ambari-0.1-SNAPSHOT.jar $BROOKLYN_HOME/lib/dropins/
+    cp ambari/target/brooklyn-ambari-0.1-SNAPSHOT.jar $BROOKLYN_HOME/lib/dropins/
     nohup $BROOKLYN_HOME/bin/brooklyn launch &
 
 
 ### Adding to Brooklyn catalog on-the-fly
 
-*TODO: this is work in progress; the project is still to be converted to build an OSGi bundle*
-
-A third alternative is to build an OSGi bundle, which can then be deployed to 
+A third alternative is to build an OSGi bundle, which can then be deployed to
 a running Brooklyn server. The Ambari blueprint can be added to the catalog
 (referencing the required OSGi bundle), which makes the blueprint available
 to Brooklyn users.
@@ -106,7 +107,7 @@ First create the OSGi bundle:
 Copy the OSGi bundle to a stable location. This could be something like Artifactory, or
 for test purposes it could be just on your local file system:
 
-    cp target/brooklyn-ambari-0.1-SNAPSHOT.jar /path/to/artifacts/brooklyn-ambari-0.1-SNAPSHOT.jar
+    cp ambari/target/brooklyn-ambari-0.1-SNAPSHOT.jar /path/to/artifacts/brooklyn-ambari-0.1-SNAPSHOT.jar
 
 Add the AmbariCluster to the catalog. Here we assume Brooklyn is running at https://localhost:8443,
 with credentials admin:password.
