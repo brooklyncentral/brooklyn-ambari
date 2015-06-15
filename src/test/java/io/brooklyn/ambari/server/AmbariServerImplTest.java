@@ -18,13 +18,13 @@ public class AmbariServerImplTest {
 
     private AmbariServerImpl ambariServer = new AmbariServerImpl();
 
-    @Test(expectedExceptions = PathNotFoundException.class)
-    public void testNullJsonThrows() {
+    @Test
+    public void testEmptyJsonThrows() {
         assertThat(getHostsFromJson("{}"), sizeEquals(0));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
-    public void testEmptyJsonThrows() {
+    public void testNullJsonThrows() {
         assertThat(ambariServer.getHosts().apply(null), sizeEquals(0));
     }
 
