@@ -148,8 +148,11 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     @Override
     public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         waitForServiceUp();
-        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(hosts, services, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
-        ambariApiHelper.createBlueprint(blueprintName, DefaultAmbariBluePrint.createBlueprintFromRecommendation(recommendations.getBlueprint()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
-        ambariApiHelper.createCluster(clusterName, blueprintName, DefaultBluePrintClusterBinding.createFromRecommendation(recommendations.getBlueprintClusterBinding()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
+        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(
+                hosts, services, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.createBlueprint(blueprintName, DefaultAmbariBluePrint.createBlueprintFromRecommendation(
+                recommendations.getBlueprint()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
+        ambariApiHelper.createCluster(clusterName, blueprintName, DefaultBluePrintClusterBinding.createFromRecommendation(
+                recommendations.getBlueprintClusterBinding()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
     }
 }
