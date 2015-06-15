@@ -39,6 +39,7 @@
 
     <modules>
         <module>ambari</module>
+        <module>dist</module>
     </modules>
 
     <properties>
