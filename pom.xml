@@ -1,94 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
+	license agreements. See the NOTICE file distributed with this work for additional 
+	information regarding copyright ownership. The ASF licenses this file to 
+	you under the Apache License, Version 2.0 (the "License"); you may not use 
+	this file except in compliance with the License. You may obtain a copy of 
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+	by applicable law or agreed to in writing, software distributed under the 
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. See the License for the specific 
+	language governing permissions and limitations under the License. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.brooklyn.ambari</groupId>
-    <artifactId>brooklyn-ambari-parent</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+	<groupId>io.brooklyn.ambari</groupId>
+	<artifactId>brooklyn-ambari-parent</artifactId>
+	<version>0.2.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
 
-    <name>Brooklyn Ambari parent project</name>
-    <description>
+	<name>Brooklyn Ambari parent project</name>
+	<description>
         Brooklyn entities for deployment the and runtime management of Apache Ambari.
     </description>
-    <url>https://github.com/brooklyncentral/brooklyn-ambari</url>
+	<url>https://github.com/brooklyncentral/brooklyn-ambari</url>
 
-    <parent>
-        <groupId>org.apache.brooklyn</groupId>
-        <artifactId>brooklyn-downstream-parent</artifactId>
-        <version>0.7.0-SNAPSHOT</version> <!-- BROOKLYN_VERSION -->
-    </parent>
+	<parent>
+		<groupId>org.apache.brooklyn</groupId>
+		<artifactId>brooklyn-downstream-parent</artifactId>
+		<version>0.7.0-SNAPSHOT</version> <!-- BROOKLYN_VERSION -->
+	</parent>
 
-    <modules>
-        <module>ambari</module>
-        <module>dist</module>
-    </modules>
+	<modules>
+		<module>ambari</module>
+		<module>dist</module>
+	</modules>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <brooklyn.version>0.7.0-SNAPSHOT</brooklyn.version>
-    </properties>
+		<brooklyn.version>0.7.0-SNAPSHOT</brooklyn.version>
+	</properties>
 
-    <licenses>
-        <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
 
-    <developers>
-        <developer>
-            <organization>Cloudsoft Corporation</organization>
-            <organizationUrl>https://www.cloudsoftcorp.com/</organizationUrl>
-        </developer>
-    </developers>
+	<developers>
+		<developer>
+			<organization>Cloudsoft Corporation</organization>
+			<organizationUrl>https://www.cloudsoftcorp.com/</organizationUrl>
+		</developer>
+	</developers>
 
-    <scm>
-        <url>https://github.com/brooklyncentral/brooklyn-ambari</url>
-        <connection>scm:git:git@github.com:brooklyncentral/brooklyn-ambari.git</connection>
-        <developerConnection>scm:git:git@github.com:brooklyncentral/brooklyn-ambari.git</developerConnection>
-    </scm>
+	<scm>
+		<url>https://github.com/brooklyncentral/brooklyn-ambari</url>
+		<connection>scm:git:git@github.com:brooklyncentral/brooklyn-ambari.git</connection>
+		<developerConnection>scm:git:git@github.com:brooklyncentral/brooklyn-ambari.git</developerConnection>
+	</scm>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.apache.brooklyn</groupId>
+				<artifactId>brooklyn-core</artifactId>
+				<version>${brooklyn.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.brooklyn</groupId>
+				<artifactId>brooklyn-software-base</artifactId>
+				<version>${brooklyn.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.brooklyn</groupId>
+				<artifactId>brooklyn-launcher</artifactId>
+				<version>${brooklyn.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.brooklyn</groupId>
-                <artifactId>brooklyn-core</artifactId>
-                <version>${brooklyn.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.brooklyn</groupId>
-                <artifactId>brooklyn-software-base</artifactId>
-                <version>${brooklyn.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.brooklyn</groupId>
-                <artifactId>brooklyn-launcher</artifactId>
-                <version>${brooklyn.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
+	<dependencies>
+		<dependency>
+			<groupId>com.squareup.retrofit</groupId>
+			<artifactId>retrofit</artifactId>
+			<version>1.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.brooklyn</groupId>
+			<artifactId>brooklyn-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.brooklyn</groupId>
+			<artifactId>brooklyn-software-base</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.brooklyn</groupId>
+			<artifactId>brooklyn-launcher</artifactId>
+		</dependency>
+	</dependencies>
 </project>
 
