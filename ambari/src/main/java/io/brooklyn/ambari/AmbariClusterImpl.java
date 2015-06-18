@@ -20,13 +20,14 @@ package io.brooklyn.ambari;
 
 import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
 import static com.google.common.base.Preconditions.checkNotNull;
-import io.brooklyn.ambari.agent.AmbariAgent;
-import io.brooklyn.ambari.server.AmbariServer;
 
 import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
@@ -40,9 +41,8 @@ import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
 import brooklyn.util.config.ConfigBag;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.server.AmbariServer;
 
 /**
                 "minRam", 8192,
@@ -72,6 +72,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         // Not specifying minRam, osFamily, etc because that can break some locations.
         setAttribute(AMBARI_SERVER, addChild(getConfig(SERVER_SPEC)
                         .configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup)
+                        .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
                         .displayName("Ambari Server")
                         .addInitializer(hostnameSensor)
         ));
@@ -83,6 +84,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         EntitySpec<AmbariAgent> agentEntitySpec = EntitySpec.create(AmbariAgent.class)
                 .configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup)
                 .configure(AmbariAgent.AMBARI_SERVER_FQDN, attributeWhenReady(getAttribute(AMBARI_SERVER), AmbariServer.HOSTNAME))
+                .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
                         //TODO shouldn't use default os
                 .addInitializer(hostnameSensor)
                 .configure(SoftwareProcess.PROVISIONING_PROPERTIES, agentProvisioningProperties);
