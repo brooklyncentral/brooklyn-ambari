@@ -18,11 +18,8 @@
  */
 package io.brooklyn.ambari.server;
 
-import io.brooklyn.ambari.rest.AmbariApiHelper;
-import io.brooklyn.ambari.rest.DefaultAmbariApiHelper;
-import io.brooklyn.ambari.rest.DefaultAmbariBluePrint;
-import io.brooklyn.ambari.rest.DefaultBluePrintClusterBinding;
-import io.brooklyn.ambari.rest.RecommendationResponse;
+import io.brooklyn.ambari.rest.AmbariApi;
+import io.brooklyn.ambari.rest.AmbariApi.RecommendationRequest;
 
 import java.net.URI;
 import java.util.List;
@@ -30,8 +27,14 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import org.apache.ambari.server.api.services.stackadvisor.recommendations.RecommendationResponse;
+import org.apache.ambari.server.api.services.stackadvisor.recommendations.RecommendationResponse.Recommendation;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
+import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
+import retrofit.client.OkClient;
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.Attributes;
@@ -50,6 +53,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
 import com.jayway.jsonpath.JsonPath;
+import com.squareup.okhttp.OkHttpClient;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
@@ -57,10 +61,11 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     private volatile HttpFeed hostsHttpFeed;
     //TODO clearly needs changed
     private UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin", "admin");
-    private AmbariApiHelper ambariApiHelper = new DefaultAmbariApiHelper();
+    
+    private AmbariApi service;
 
     @Override
-    public Class getDriverInterface() {
+    public Class<AmbariServerDriver> getDriverInterface() {
         return AmbariServerDriver.class;
     }
 
@@ -73,7 +78,24 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         String ambariUri = String.format("http://%s:%d/", hp.getHostText(), hp.getPort());
         setAttribute(Attributes.MAIN_URI, URI.create(ambariUri));
+        
+        RestAdapter restAdapter = new RestAdapter.Builder()
+        .setEndpoint(ambariUri)
+        .setClient(new OkClient(new OkHttpClient()))
+        .setRequestInterceptor(new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+                String credentials = usernamePasswordCredentials.getUserName() + 
+                        ":" + usernamePasswordCredentials.getPassword();
+                String string = "Basic " + Base64.encodeBase64String(credentials.getBytes());
+                request.addHeader("Authorization", string);
+                request.addHeader("Accept", "application/json");
+            }
+        }).build();
 
+        service = restAdapter.create(AmbariApi.class);
+        
+        
         serviceUpHttpFeed = HttpFeed.builder()
                 .entity(this)
                 .period(500, TimeUnit.MILLISECONDS)
@@ -124,35 +146,33 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     @Override
     public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName) {
         waitForServiceUp();
-        ambariApiHelper.addHostToCluster(cluster, hostName, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        service.addHostToCluster(cluster, hostName);
     }
 
     @Override
     public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service") String service) {
         waitForServiceUp();
-        ambariApiHelper.addServiceToCluster(cluster, service, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        this.service.addServiceToCluster(cluster, service);
     }
 
     @Override
     public void addComponentToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service name") String service, @EffectorParam(name = "Component name") String component) {
         waitForServiceUp();
-        ambariApiHelper.createComponent(cluster, service, component, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        this.service.createComponent(cluster, service, component);
     }
 
     @Override
     public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName, @EffectorParam(name = "Component name") String component) {
         waitForServiceUp();
-        ambariApiHelper.createHostComponent(cluster, hostName, component, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        this.service.createHostComponent(cluster, hostName, component);
     }
 
     @Override
     public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         waitForServiceUp();
-        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(
-                hosts, services, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
-        ambariApiHelper.createBlueprint(blueprintName, DefaultAmbariBluePrint.createBlueprintFromRecommendation(
-                recommendations.getBlueprint()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
-        ambariApiHelper.createCluster(clusterName, blueprintName, DefaultBluePrintClusterBinding.createFromRecommendation(
-                recommendations.getBlueprintClusterBinding()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
+        RecommendationResponse recommendations = this.service.getRecommendations("HDP", "2.2", new RecommendationRequest(hosts, services));
+        Recommendation recommendation = recommendations.getRecommendations();
+        this.service.createBlueprint(blueprintName, recommendation.getBlueprint());
+        this.service.createCluster(clusterName, recommendation.getBlueprintClusterBinding());
     }
 }
