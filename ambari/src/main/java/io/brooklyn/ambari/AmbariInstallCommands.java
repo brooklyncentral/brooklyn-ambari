@@ -24,23 +24,26 @@ import static brooklyn.util.ssh.BashCommands.commandToDownloadUrlAs;
 import static brooklyn.util.ssh.BashCommands.ifExecutableElse1;
 import static brooklyn.util.ssh.BashCommands.installExecutable;
 import static brooklyn.util.ssh.BashCommands.sudo;
+
 import brooklyn.location.OsDetails;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.ssh.BashCommands;
 
 public class AmbariInstallCommands {
 
-    private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/1.x/updates/1.7.0/ambari.repo";
+    private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/%s/updates/%s/ambari.repo";
     private static final String CENTOS_REPO_LIST_LOCATION = "/etc/yum.repos.d/ambari.repo";
-    private static final String CENTOS_5_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos5/1.x/updates/1.7.0/ambari.repo";
+    private static final String CENTOS_5_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos5/%s/updates/%s/ambari.repo";
+
     private static final String SUSE_REPO_LIST_LOCATION = "/etc/zypp/repos.d/ambari.repo";
+    private static final String SUSE_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/suse11/%s/updates/%s/ambari.repo";
 
-    private static final String SUSE_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/suse11/1.x/updates/1.7.0/ambari.repo";
     private static final String UBUNTU_REPO_LIST_LOCATION = "/etc/apt/sources.list.d/ambari.list";
+    private static final String UBUNTU_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu12/%s/updates/%s/ambari.list";
+    private String version;
 
-    private static final String UBUNTU_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu12/1.x/updates/1.7.0/ambari.list";
-
-    public AmbariInstallCommands() {
+    public AmbariInstallCommands(String version) {
+        this.version = version;
     }
 
     public String installAmbariRequirements(SshMachineLocation machine) {
@@ -54,7 +57,7 @@ public class AmbariInstallCommands {
     }
 
     private String getAptRepo() {
-        return ifExecutableElse1("apt-get", chainGroup(sudo(commandToDownloadUrlAs(UBUNTU_AMBARI_REPO_LOCATION, UBUNTU_REPO_LIST_LOCATION)),
+        return ifExecutableElse1("apt-get", chainGroup(sudo(commandToDownloadUrlAs(String.format(UBUNTU_AMBARI_REPO_LOCATION, getMajorVersion(), version), UBUNTU_REPO_LIST_LOCATION)),
                 sudo("apt-key adv --recv-keys --keyserver keyserver.ubuntu.com B9733A7A07513CAD"),
                 sudo("apt-get update")));
     }
@@ -63,14 +66,14 @@ public class AmbariInstallCommands {
         // Doesn't check machine name as may refer to redhat, centos, or oracle
         String osDetailsVersion = getOsVersion(sshMachineLocation);
         if (osDetailsVersion.startsWith("6")) {
-            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(CENTOS_6_AMBARI_REPO_LOCATION, CENTOS_REPO_LIST_LOCATION)));
+            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_6_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
         } else {
-            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(CENTOS_5_AMBARI_REPO_LOCATION, CENTOS_REPO_LIST_LOCATION)));
+            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_5_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
         }
     }
 
     private String setupSuseRepo() {
-        return ifExecutableElse1("zypper", sudo(commandToDownloadUrlAs(SUSE_AMBARI_REPO_LOCATION, SUSE_REPO_LIST_LOCATION)));
+        return ifExecutableElse1("zypper", sudo(commandToDownloadUrlAs(String.format(SUSE_AMBARI_REPO_LOCATION, getMajorVersion(), version), SUSE_REPO_LIST_LOCATION)));
     }
 
     private String getOsVersion(SshMachineLocation sshMachineLocation) {
@@ -79,5 +82,9 @@ public class AmbariInstallCommands {
         }
         OsDetails osDetails = sshMachineLocation.getOsDetails();
         return osDetails != null ? osDetails.getVersion() : "";
+    }
+
+    private String getMajorVersion() {
+        return version.charAt(0) + ".x";
     }
 }

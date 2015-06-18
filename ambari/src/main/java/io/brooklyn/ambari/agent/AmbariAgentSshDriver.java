@@ -18,22 +18,23 @@
  */
 package io.brooklyn.ambari.agent;
 
-import io.brooklyn.ambari.AmbariInstallCommands;
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
-import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.collections.MutableMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static brooklyn.util.ssh.BashCommands.installPackage;
 import static brooklyn.util.ssh.BashCommands.sudo;
 import static java.lang.String.format;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.SoftwareProcess;
+import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
+import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.util.collections.MutableMap;
+import io.brooklyn.ambari.AmbariInstallCommands;
+
 class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
     public static final Logger log = LoggerFactory.getLogger(AmbariAgentSshDriver.class);
-    private final AmbariInstallCommands defaultAmbariInstallHelper = new AmbariInstallCommands();
+    private final AmbariInstallCommands defaultAmbariInstallHelper = new AmbariInstallCommands(entity.getConfig(SoftwareProcess.SUGGESTED_VERSION));
 
     public AmbariAgentSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
