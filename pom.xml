@@ -38,7 +38,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
+        <project.entry>io.brooklyn.ambari.AmbariMain</project.entry>
 		<brooklyn.version>0.7.0-SNAPSHOT</brooklyn.version>
 	</properties>
 
