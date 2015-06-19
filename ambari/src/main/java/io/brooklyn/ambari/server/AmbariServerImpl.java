@@ -18,7 +18,6 @@
  */
 package io.brooklyn.ambari.server;
 
-import io.brooklyn.ambari.rest.AmbariApiHelper;
 import io.brooklyn.ambari.rest.DefaultAmbariApiHelper;
 import io.brooklyn.ambari.rest.DefaultAmbariBluePrint;
 import io.brooklyn.ambari.rest.DefaultBluePrintClusterBinding;
@@ -26,6 +25,7 @@ import io.brooklyn.ambari.rest.RecommendationResponse;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -46,6 +46,7 @@ import brooklyn.util.http.HttpTool;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
@@ -57,10 +58,10 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     private volatile HttpFeed hostsHttpFeed;
     //TODO clearly needs changed
     private UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin", "admin");
-    private AmbariApiHelper ambariApiHelper = new DefaultAmbariApiHelper();
+    private DefaultAmbariApiHelper ambariApiHelper;
 
     @Override
-    public Class getDriverInterface() {
+    public Class<AmbariServerDriver> getDriverInterface() {
         return AmbariServerDriver.class;
     }
 
@@ -73,6 +74,8 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         String ambariUri = String.format("http://%s:%d/", hp.getHostText(), hp.getPort());
         setAttribute(Attributes.MAIN_URI, URI.create(ambariUri));
+        
+        ambariApiHelper = new DefaultAmbariApiHelper(usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
 
         serviceUpHttpFeed = HttpFeed.builder()
                 .entity(this)
@@ -124,35 +127,37 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     @Override
     public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName) {
         waitForServiceUp();
-        ambariApiHelper.addHostToCluster(cluster, hostName, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.addHostToCluster(cluster, hostName);
     }
 
     @Override
     public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service") String service) {
         waitForServiceUp();
-        ambariApiHelper.addServiceToCluster(cluster, service, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.addServiceToCluster(cluster, service);
     }
 
     @Override
     public void addComponentToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service name") String service, @EffectorParam(name = "Component name") String component) {
         waitForServiceUp();
-        ambariApiHelper.createComponent(cluster, service, component, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.createComponent(cluster, service, component);
     }
 
     @Override
     public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName, @EffectorParam(name = "Component name") String component) {
         waitForServiceUp();
-        ambariApiHelper.createHostComponent(cluster, hostName, component, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        ambariApiHelper.createHostComponent(cluster, hostName, component);
     }
 
     @Override
     public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         waitForServiceUp();
-        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(
-                hosts, services, usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(hosts, services, "HDP", "2.2");
+        
+        Map<String, String> baseBlueprints = ImmutableMap.of("stack_name", "HDP", "stack_version", "2.2");
+        List<? extends Map<?, ?>> configurations = ImmutableList.of(ImmutableMap.of("nagios-env", ImmutableMap.of("nagios_contact", "admin@localhost")));
         ambariApiHelper.createBlueprint(blueprintName, DefaultAmbariBluePrint.createBlueprintFromRecommendation(
-                recommendations.getBlueprint()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
+                recommendations.getBlueprint(), baseBlueprints, configurations));
         ambariApiHelper.createCluster(clusterName, blueprintName, DefaultBluePrintClusterBinding.createFromRecommendation(
-                recommendations.getBlueprintClusterBinding()), getAttribute(Attributes.MAIN_URI), usernamePasswordCredentials);
+                recommendations.getBlueprintClusterBinding()));
     }
 }
