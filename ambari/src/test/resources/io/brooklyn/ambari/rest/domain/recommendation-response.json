@@ -1,0 +1,164 @@
+{
+  "resources" : [
+    {
+      "href" : "http://ec2-54-162-108-165.compute-1.amazonaws.com:8080/api/v1/stacks/HDP/versions/2.2/recommendations/1",
+      "hosts" : [
+        "ip-10-145-177-112.ec2.internal",
+        "ip-10-145-177-96.ec2.internal",
+        "ip-10-166-22-100.ec2.internal"
+      ],
+      "services" : [
+        "ZOOKEEPER",
+        "GANGLIA",
+        "MAPREDUCE2",
+        "HDFS",
+        "NAGIOS",
+        "YARN"
+      ],
+      "Recommendation" : {
+        "id" : 1
+      },
+      "Versions" : {
+        "stack_name" : "HDP",
+        "stack_version" : "2.2"
+      },
+      "recommendations" : {
+        "blueprint" : {
+          "configurations" : null,
+          "host_groups" : [
+            {
+              "name" : "host-group-1",
+              "components" : [
+                {
+                  "name" : "NODEMANAGER"
+                },
+                {
+                  "name" : "ZOOKEEPER_SERVER"
+                },
+                {
+                  "name" : "JOURNALNODE"
+                },
+                {
+                  "name" : "ZKFC"
+                },
+                {
+                  "name" : "GANGLIA_MONITOR"
+                },
+                {
+                  "name" : "DATANODE"
+                }
+              ]
+            },
+            {
+              "name" : "host-group-3",
+              "components" : [
+                {
+                  "name" : "YARN_CLIENT"
+                },
+                {
+                  "name" : "HDFS_CLIENT"
+                },
+                {
+                  "name" : "NODEMANAGER"
+                },
+                {
+                  "name" : "GANGLIA_SERVER"
+                },
+                {
+                  "name" : "GANGLIA_MONITOR"
+                },
+                {
+                  "name" : "DATANODE"
+                },
+                {
+                  "name" : "MAPREDUCE2_CLIENT"
+                },
+                {
+                  "name" : "NAMENODE"
+                },
+                {
+                  "name" : "ZOOKEEPER_CLIENT"
+                },
+                {
+                  "name" : "ZOOKEEPER_SERVER"
+                },
+                {
+                  "name" : "JOURNALNODE"
+                },
+                {
+                  "name" : "ZKFC"
+                },
+                {
+                  "name" : "NAGIOS_SERVER"
+                }
+              ]
+            },
+            {
+              "name" : "host-group-2",
+              "components" : [
+                {
+                  "name" : "NODEMANAGER"
+                },
+                {
+                  "name" : "APP_TIMELINE_SERVER"
+                },
+                {
+                  "name" : "HISTORYSERVER"
+                },
+                {
+                  "name" : "ZOOKEEPER_SERVER"
+                },
+                {
+                  "name" : "JOURNALNODE"
+                },
+                {
+                  "name" : "RESOURCEMANAGER"
+                },
+                {
+                  "name" : "ZKFC"
+                },
+                {
+                  "name" : "GANGLIA_MONITOR"
+                },
+                {
+                  "name" : "DATANODE"
+                },
+                {
+                  "name" : "SECONDARY_NAMENODE"
+                }
+              ]
+            }
+          ]
+        },
+        "blueprint_cluster_binding" : {
+          "host_groups" : [
+            {
+              "name" : "host-group-2",
+              "hosts" : [
+                {
+                  "fqdn" : "ip-10-145-177-96.ec2.internal"
+                }
+              ]
+            },
+            {
+              "name" : "host-group-1",
+              "hosts" : [
+                {
+                  "fqdn" : "ip-10-166-22-100.ec2.internal"
+                }
+              ]
+            },
+            {
+              "name" : "host-group-3",
+              "hosts" : [
+                {
+                  "fqdn" : "ip-10-145-177-112.ec2.internal"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

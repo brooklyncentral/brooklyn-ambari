@@ -18,10 +18,10 @@
 
 package org.apache.ambari.server.state;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL)

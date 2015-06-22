@@ -39,6 +39,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<brooklyn.version>0.7.0-SNAPSHOT</brooklyn.version>
+        <retrofit.version>1.9.0</retrofit.version>
 	</properties>
 
 	<licenses>
@@ -84,7 +85,7 @@
 		<dependency>
 			<groupId>com.squareup.retrofit</groupId>
 			<artifactId>retrofit</artifactId>
-			<version>1.9.0</version>
+            <version>${retrofit.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.brooklyn</groupId>

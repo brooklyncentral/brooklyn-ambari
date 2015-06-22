@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 
 import org.apache.ambari.server.api.services.stackadvisor.recommendations.RecommendationResponse;
 import org.apache.ambari.server.api.services.stackadvisor.recommendations.RecommendationResponse.Recommendation;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 import com.google.common.base.Function;
@@ -46,8 +45,11 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
+import io.brooklyn.ambari.domain.ResourceWrappedResponse;
 import io.brooklyn.ambari.rest.AmbariApi;
-import io.brooklyn.ambari.rest.AmbariApi.RecommendationRequest;
+import io.brooklyn.ambari.domain.RecommendationRequest;
+import io.brooklyn.ambari.rest.AmbariApiHelper;
+import io.brooklyn.ambari.rest.Interceptors;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.client.OkClient;
@@ -148,38 +150,17 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         waitForServiceUp();
         AmbariApi api = getApiService();
-        RecommendationResponse recommendations = api.getRecommendations("HDP", "2.2", new RecommendationRequest(hosts, services));
-        Recommendation recommendation = recommendations.getRecommendations();
+        ResourceWrappedResponse<RecommendationResponse> recommendations = api.getRecommendations("HDP", "2.2", new RecommendationRequest(hosts, services));
+        Recommendation recommendation = recommendations.getResources().get(0).getRecommendations();
         api.createBlueprint(blueprintName, recommendation.getBlueprint());
         api.createCluster(clusterName, recommendation.getBlueprintClusterBinding());
     }
 
     private AmbariApi getApiService() {
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(getAttribute(Attributes.MAIN_URI).toString())
-                .setClient(new OkClient(new OkHttpClient()))
-                .setRequestInterceptor(new ApiRequestInterceptor(
-                        usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword()))
-                .build();
-
-        return restAdapter.create(AmbariApi.class);
+        String uri = getAttribute(Attributes.MAIN_URI).toString();
+        String username = usernamePasswordCredentials.getUserName();
+        String password = usernamePasswordCredentials.getPassword();
+        return AmbariApiHelper.newApi(uri, username, password);
     }
 
-    private static class ApiRequestInterceptor implements RequestInterceptor {
-        final String username;
-        final String password;
-
-        private ApiRequestInterceptor(String username, String password) {
-            this.username = username;
-            this.password = password;
-        }
-
-        @Override
-        public void intercept(RequestFacade request) {
-            String credentials = username + ":" + password;
-            String string = "Basic " + Base64.encodeBase64String(credentials.getBytes());
-            request.addHeader("Authorization", string);
-            request.addHeader("Accept", "application/json");
-        }
-    }
 }
