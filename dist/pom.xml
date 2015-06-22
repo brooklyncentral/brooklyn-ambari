@@ -36,6 +36,10 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <properties>
+        <project.entry>io.brooklyn.ambari.AmbariMain</project.entry>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.brooklyn.ambari</groupId>
