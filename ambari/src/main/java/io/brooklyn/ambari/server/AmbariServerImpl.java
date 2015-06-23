@@ -34,7 +34,6 @@ import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
 import com.jayway.jsonpath.JsonPath;
-import com.squareup.okhttp.OkHttpClient;
 
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.basic.Attributes;
@@ -45,14 +44,10 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
+import io.brooklyn.ambari.domain.RecommendationRequest;
 import io.brooklyn.ambari.domain.ResourceWrappedResponse;
 import io.brooklyn.ambari.rest.AmbariApi;
-import io.brooklyn.ambari.domain.RecommendationRequest;
 import io.brooklyn.ambari.rest.AmbariApiHelper;
-import io.brooklyn.ambari.rest.Interceptors;
-import retrofit.RequestInterceptor;
-import retrofit.RestAdapter;
-import retrofit.client.OkClient;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 

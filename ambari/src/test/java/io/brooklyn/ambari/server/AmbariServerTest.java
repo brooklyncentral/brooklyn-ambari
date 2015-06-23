@@ -23,9 +23,6 @@ import io.brooklyn.ambari.server.AmbariServer;
 
 import java.util.List;
 
-/**
- * Created by duncangrant on 07/01/15.
- */
 @ImplementedBy(AmbariServerTestImpl.class)
 public interface AmbariServerTest extends AmbariServer {
     void emitHosts(List<String> hosts);

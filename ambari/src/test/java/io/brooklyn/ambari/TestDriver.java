@@ -22,9 +22,6 @@ import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.drivers.EntityDriver;
 import brooklyn.location.Location;
 
-/**
- * Created by duncangrant on 07/01/15.
- */
 public class TestDriver implements EntityDriver {
     public TestDriver(EntityLocal entity, Location location) {
     }

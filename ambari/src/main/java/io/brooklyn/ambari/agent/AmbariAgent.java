@@ -27,9 +27,6 @@ import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.javalang.JavaClassNames;
 
-/**
- * Created by duncangrant on 15/12/14.
- */
 @Catalog(name="Ambari Agent", description="Ambari Agent: part of an ambari cluster that runs on each node that will form part of the Hadoop cluster")
 @ImplementedBy(AmbariAgentImpl.class)
 public interface AmbariAgent extends SoftwareProcess, UsesJava {

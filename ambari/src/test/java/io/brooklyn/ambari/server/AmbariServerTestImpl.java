@@ -24,9 +24,6 @@ import io.brooklyn.ambari.server.AmbariServerTest;
 
 import java.util.List;
 
-/**
- * Created by duncangrant on 07/01/15.
- */
 public class AmbariServerTestImpl extends AmbariServerImpl implements AmbariServerTest {
 
     @Override

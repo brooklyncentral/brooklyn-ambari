@@ -20,9 +20,6 @@ package io.brooklyn.ambari.agent;
 
 import brooklyn.entity.basic.SoftwareProcessImpl;
 
-/**
- * Created by duncangrant on 15/12/14.
- */
 public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent {
     @Override
     public Class getDriverInterface() {

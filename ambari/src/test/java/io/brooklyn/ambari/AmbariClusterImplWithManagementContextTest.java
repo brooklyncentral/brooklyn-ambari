@@ -4,6 +4,9 @@ import brooklyn.entity.BrooklynAppUnitTestSupport;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.location.basic.LocalhostMachineProvisioningLocation;
+import io.brooklyn.ambari.rest.AmbariApiHelper;
+import io.brooklyn.ambari.server.AmbariServerTest;
+
 import com.google.common.collect.ImmutableList;
 import org.apache.http.auth.Credentials;
 import org.testng.annotations.AfterMethod;
