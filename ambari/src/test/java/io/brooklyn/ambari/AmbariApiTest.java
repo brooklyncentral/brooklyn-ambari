@@ -35,7 +35,6 @@ public class AmbariApiTest {
         RecommendationResponse rrr = r.getResources().get(0);
         assertNotNull(rrr.getHosts());
         assertNotNull(rrr.getVersion().getStackName());
-        System.out.println(r);
     }
 
 }

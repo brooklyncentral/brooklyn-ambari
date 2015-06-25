@@ -13,8 +13,8 @@ import retrofit.http.Path;
 
 public interface AmbariApi {
     
-    @POST("/api/v1/blueprints/{blueprintname}")
-    void createBlueprint(@Path("blueprintname") String blueprintname, @Body Blueprint blueprint);
+    @POST("/api/v1/blueprints/{name}")
+    void createBlueprint(@Path("name") String name, @Body Blueprint blueprint);
     
     @POST("/api/v1/clusters/{cluster}/hosts/{hostName}/host_components/{component}")
     void createHostComponent(
@@ -34,11 +34,8 @@ public interface AmbariApi {
     @POST("/api/v1/clusters/{cluster}/hosts/{host}")
     void addHostToCluster(@Path("cluster") String cluster, @Path("host") String host);
     
-    @POST("/api/v1/clusters/{cluster}")
-    void createClusterAPI(@Path("cluster") String cluster);
-    
-    @POST("/api/v1/clusters/{clustername}")
-    void createCluster(@Path("clustername") String clustername, @Body BlueprintClusterBinding bluePrintClusterBinding);
+    @POST("/api/v1/clusters/{name}")
+    void createCluster(@Path("name") String name, @Body BlueprintClusterBinding bluePrintClusterBinding);
 
     @Headers({
             "Content-Type: application/x-www-form-urlencoded",

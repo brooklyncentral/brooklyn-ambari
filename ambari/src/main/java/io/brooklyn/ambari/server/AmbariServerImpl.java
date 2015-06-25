@@ -88,7 +88,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                 .entity(this)
                 .period(1000, TimeUnit.MILLISECONDS)
                 .baseUri(ambariUri + "api/v1/hosts")
-                .credentials("admin", "admin")
+                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
                 .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
                 .poll(new HttpPollConfig<List<String>>(REGISTERED_HOSTS)
                         // todo: sure httpvaluefunctions has a method that can replace getHosts()
