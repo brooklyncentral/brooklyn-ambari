@@ -18,9 +18,10 @@
  */
 package io.brooklyn.ambari;
 
-import java.util.List;
+import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.server.AmbariServer;
 
-import com.google.common.reflect.TypeToken;
+import java.util.List;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
@@ -36,7 +37,8 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
-import io.brooklyn.ambari.server.AmbariServer;
+
+import com.google.common.reflect.TypeToken;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
@@ -46,17 +48,21 @@ public interface AmbariCluster extends Entity, Startable {
     ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(Cluster.INITIAL_SIZE, 5);
 
     @SetFromFlag("securityGroup")
-    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server", "");
-
+    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server");
+    
     @SetFromFlag("services")
     ConfigKey<List<String>> HADOOP_SERVICES = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
     }, "services", "List of services to deploy to Hadoop Cluster");
 
     ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {
-    })
-            .name("foo.bar.baz")
-            .defaultValue(EntitySpec.create(AmbariServer.class))
-            .build();
+    }).name("ambaricluster.serverspec")
+      .defaultValue(EntitySpec.create(AmbariServer.class))
+      .build();
+    
+    ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {}
+    ).name("ambaricluster.agentspec")
+     .defaultValue(EntitySpec.create(AmbariAgent.class))
+     .build();
 
     @SetFromFlag("version")
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION, "1.7.0");
