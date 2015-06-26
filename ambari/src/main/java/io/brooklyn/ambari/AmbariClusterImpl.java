@@ -20,19 +20,29 @@ package io.brooklyn.ambari;
 
 import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
 import static com.google.common.base.Preconditions.checkNotNull;
+import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.server.AmbariServer;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
 
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.net.domain.IpPermission;
+import org.jclouds.net.domain.IpProtocol;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
+import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.BasicStartableImpl;
+import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
@@ -40,9 +50,19 @@ import brooklyn.entity.software.ssh.SshCommandSensor;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
+import brooklyn.location.jclouds.BasicJcloudsLocationCustomizer;
+import brooklyn.location.jclouds.JcloudsLocation;
+import brooklyn.location.jclouds.JcloudsLocationConfig;
+import brooklyn.location.jclouds.JcloudsLocationCustomizer;
+import brooklyn.location.jclouds.JcloudsSshMachineLocation;
+import brooklyn.location.jclouds.networking.JcloudsLocationSecurityGroupCustomizer;
 import brooklyn.util.config.ConfigBag;
-import io.brooklyn.ambari.agent.AmbariAgent;
-import io.brooklyn.ambari.server.AmbariServer;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Ints;
 
 /**
                 "minRam", 8192,
@@ -59,46 +79,50 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     public void init() {
         super.init();
 
-        //TODO need to do something better with security groups here
-        Object securityGroup = getConfig(SECURITY_GROUP);
-
         SshCommandSensor<String> hostnameSensor = new SshCommandSensor<String>(ConfigBag.newInstance()
-                .configure(SshCommandSensor.SENSOR_NAME, "fqdn")
-                .configure(SshCommandSensor.SENSOR_COMMAND, "hostname -s"
-                ));
-
-        // TODO Setting the securityGroup explicitly here could cause problems: if the brooklyn.properties
-        //      location already has a security group defined, then this will override it?
-        // Not specifying minRam, osFamily, etc because that can break some locations.
-        setAttribute(AMBARI_SERVER, addChild(getConfig(SERVER_SPEC)
-                        .configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup)
-                        .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
-                        .displayName("Ambari Server")
-                        .addInitializer(hostnameSensor)
+            .configure(SshCommandSensor.SENSOR_NAME, "fqdn")
+            .configure(SshCommandSensor.SENSOR_COMMAND, "hostname -s"
         ));
 
-
-        ImmutableMap<String, Object> agentProvisioningProperties = ImmutableMap.<String, Object>of(
-                "securityGroups", securityGroup);
-
-        EntitySpec<AmbariAgent> agentEntitySpec = EntitySpec.create(AmbariAgent.class)
-                .configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup)
-                .configure(AmbariAgent.AMBARI_SERVER_FQDN, attributeWhenReady(getAttribute(AMBARI_SERVER), AmbariServer.HOSTNAME))
-                .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
-                        //TODO shouldn't use default os
-                .addInitializer(hostnameSensor)
-                .configure(SoftwareProcess.PROVISIONING_PROPERTIES, agentProvisioningProperties);
-
+        Object securityGroup = getConfig(SECURITY_GROUP);
+        setAttribute(AMBARI_SERVER, addChild(createServerSpec(hostnameSensor, securityGroup)));
+        
         setAttribute(AMBARI_AGENTS, addChild(EntitySpec.create(DynamicCluster.class)
-                        .configure(DynamicCluster.INITIAL_SIZE, getRequiredConfig(INITIAL_SIZE))
-                        .configure(DynamicCluster.MEMBER_SPEC, agentEntitySpec)
-                        .displayName("All Nodes")
+            .configure(DynamicCluster.INITIAL_SIZE, getRequiredConfig(INITIAL_SIZE))
+            .configure(DynamicCluster.MEMBER_SPEC, createAgentSpec(hostnameSensor, securityGroup))
+            .displayName("All Nodes")
         ));
         
         addEnricher(Enrichers.builder()
-                .propagating(Attributes.MAIN_URI)
-                .from(getAttribute(AMBARI_SERVER))
-                .build());
+            .propagating(Attributes.MAIN_URI)
+            .from(getAttribute(AMBARI_SERVER))
+            .build());
+    }
+
+    private EntitySpec<? extends AmbariServer> createServerSpec(SshCommandSensor<String> hostnameSensor, Object securityGroup) {
+        EntitySpec<? extends AmbariServer> serverSpec = getConfig(SERVER_SPEC)
+            .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
+            .displayName("Ambari Server")
+            .addInitializer(hostnameSensor);
+        if(securityGroup != null){
+            serverSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
+        }
+        return serverSpec;
+    }
+    
+
+    private EntitySpec<? extends AmbariAgent> createAgentSpec(SshCommandSensor<String> hostnameSensor, Object securityGroup) {
+        EntitySpec<? extends AmbariAgent> agentSpec = getConfig(AGENT_SPEC)
+            .configure(AmbariAgent.AMBARI_SERVER_FQDN, 
+                attributeWhenReady(getAttribute(AMBARI_SERVER),AmbariServer.HOSTNAME))
+            .configure(SoftwareProcess.SUGGESTED_VERSION, 
+                getConfig(AmbariCluster.SUGGESTED_VERSION))
+            //TODO shouldn't use default os
+            .addInitializer(hostnameSensor);
+        if(securityGroup != null){
+            agentSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
+        }
+        return agentSpec;
     }
 
     @Override
