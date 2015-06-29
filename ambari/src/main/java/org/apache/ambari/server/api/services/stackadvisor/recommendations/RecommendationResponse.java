@@ -110,6 +110,9 @@ public class RecommendationResponse extends StackAdvisorResponse {
     @JsonProperty("host_groups")
     private Set<HostGroup> hostGroups;
 
+    @JsonProperty("Blueprints")
+    private Map<String, String> blueprints;
+
     public Map<String, BlueprintConfigurations> getConfigurations() {
       return configurations;
     }
@@ -124,6 +127,14 @@ public class RecommendationResponse extends StackAdvisorResponse {
 
     public void setHostGroups(Set<HostGroup> hostGroups) {
       this.hostGroups = hostGroups;
+    }
+
+    public Map<String, String> getBlueprints() {
+      return blueprints;
+    }
+
+    public void setBlueprints(Map<String, String> blueprints) {
+      this.blueprints = blueprints;
     }
   }
 

@@ -21,15 +21,20 @@ package io.brooklyn.ambari.server;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Nullable;
 
 import org.apache.ambari.server.api.services.stackadvisor.recommendations.RecommendationResponse;
 import org.apache.ambari.server.api.services.stackadvisor.recommendations.RecommendationResponse.Recommendation;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
@@ -48,8 +53,11 @@ import io.brooklyn.ambari.domain.RecommendationRequest;
 import io.brooklyn.ambari.domain.ResourceWrappedResponse;
 import io.brooklyn.ambari.rest.AmbariApi;
 import io.brooklyn.ambari.rest.AmbariApiHelper;
+import retrofit.client.Response;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
+
+    public static final Logger LOG = LoggerFactory.getLogger(AmbariServerImpl.class);
 
     private volatile HttpFeed serviceUpHttpFeed;
     private volatile HttpFeed hostsHttpFeed;
@@ -147,8 +155,25 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         AmbariApi api = getApiService();
         ResourceWrappedResponse<RecommendationResponse> recommendations = api.getRecommendations("HDP", "2.2", new RecommendationRequest(hosts, services));
         Recommendation recommendation = recommendations.getResources().get(0).getRecommendations();
-        api.createBlueprint(blueprintName, recommendation.getBlueprint());
-        api.createCluster(clusterName, recommendation.getBlueprintClusterBinding());
+        RecommendationResponse.Blueprint blueprint = recommendation.getBlueprint();
+        blueprint.setBlueprints(ImmutableMap.<String,String>of("stack_name", "HDP", "stack_version", "2.2"));
+        traceResponse(api.createBlueprint(blueprintName, blueprint));
+        // This is now broken
+        traceResponse(api.createCluster(clusterName, recommendation.getBlueprintClusterBinding()));
+    }
+
+    private <T extends Response> T traceResponse(T blueprint) {
+        if(LOG.isDebugEnabled()) {
+            String string = Objects.toStringHelper(blueprint)
+                    .add("status", blueprint.getStatus())
+                    .add("headers", blueprint.getHeaders())
+                    .add("body", blueprint.getBody())
+                    .add("url", blueprint.getUrl())
+                    .add("reason", blueprint.getReason())
+                    .toString();
+            LOG.debug("Blueprint response " + string);
+        }
+        return blueprint;
     }
 
     private AmbariApi getApiService() {
