@@ -18,24 +18,15 @@
  */
 package io.brooklyn.ambari;
 
-import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
 import static com.google.common.base.Preconditions.checkNotNull;
-import io.brooklyn.ambari.agent.AmbariAgent;
-import io.brooklyn.ambari.server.AmbariServer;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
 
-import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.domain.TemplateBuilder;
-import org.jclouds.net.domain.IpPermission;
-import org.jclouds.net.domain.IpProtocol;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
@@ -46,28 +37,22 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.entity.software.ssh.SshCommandSensor;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
-import brooklyn.location.jclouds.BasicJcloudsLocationCustomizer;
-import brooklyn.location.jclouds.JcloudsLocation;
-import brooklyn.location.jclouds.JcloudsLocationConfig;
-import brooklyn.location.jclouds.JcloudsLocationCustomizer;
-import brooklyn.location.jclouds.JcloudsSshMachineLocation;
-import brooklyn.location.jclouds.networking.JcloudsLocationSecurityGroupCustomizer;
-import brooklyn.util.config.ConfigBag;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
+import io.brooklyn.ambari.agent.AmbariAgentImpl;
+import io.brooklyn.ambari.hostgroup.AmbariHostGroup;
+import io.brooklyn.ambari.rest.AmbariConfig;
+import io.brooklyn.ambari.server.AmbariServer;
 
 /**
-                "minRam", 8192,
-                "osFamily", "ubuntu",
-                "osVersionRegex", "12.*",
+ * The minimum requirements for an ambari hadoop cluster.
+ * These can be set in the provisioning properties of yaml or by
+ * using machines of this spec in a byon cluster.
+ * <p/>
+ * "minRam", 8192,
+ * "osFamily", "ubuntu",
+ * "osVersionRegex", "12.*",
  */
 public class AmbariClusterImpl extends BasicStartableImpl implements AmbariCluster {
 
@@ -79,50 +64,29 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     public void init() {
         super.init();
 
-        SshCommandSensor<String> hostnameSensor = new SshCommandSensor<String>(ConfigBag.newInstance()
-            .configure(SshCommandSensor.SENSOR_NAME, "fqdn")
-            .configure(SshCommandSensor.SENSOR_COMMAND, "hostname -s"
-        ));
+        setAttribute(AMBARI_SERVER, addChild(createServerSpec(getConfig(SECURITY_GROUP))));
 
-        Object securityGroup = getConfig(SECURITY_GROUP);
-        setAttribute(AMBARI_SERVER, addChild(createServerSpec(hostnameSensor, securityGroup)));
-        
-        setAttribute(AMBARI_AGENTS, addChild(EntitySpec.create(DynamicCluster.class)
-            .configure(DynamicCluster.INITIAL_SIZE, getRequiredConfig(INITIAL_SIZE))
-            .configure(DynamicCluster.MEMBER_SPEC, createAgentSpec(hostnameSensor, securityGroup))
-            .displayName("All Nodes")
-        ));
-        
+        List<String> services = getConfig(HADOOP_SERVICES);
+        if (isServicesBasedDeployment(services)) {
+            createSingleClusterOfAgents();
+        } else {
+            calculateTotalAgentsInHostgroups();
+        }
+
         addEnricher(Enrichers.builder()
-            .propagating(Attributes.MAIN_URI)
-            .from(getAttribute(AMBARI_SERVER))
-            .build());
+                .propagating(Attributes.MAIN_URI)
+                .from(getAttribute(AMBARI_SERVER))
+                .build());
     }
 
-    private EntitySpec<? extends AmbariServer> createServerSpec(SshCommandSensor<String> hostnameSensor, Object securityGroup) {
+    private EntitySpec<? extends AmbariServer> createServerSpec(Object securityGroup) {
         EntitySpec<? extends AmbariServer> serverSpec = getConfig(SERVER_SPEC)
-            .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
-            .displayName("Ambari Server")
-            .addInitializer(hostnameSensor);
-        if(securityGroup != null){
+                .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
+                .displayName("Ambari Server");
+        if (securityGroup != null) {
             serverSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
         }
         return serverSpec;
-    }
-    
-
-    private EntitySpec<? extends AmbariAgent> createAgentSpec(SshCommandSensor<String> hostnameSensor, Object securityGroup) {
-        EntitySpec<? extends AmbariAgent> agentSpec = getConfig(AGENT_SPEC)
-            .configure(AmbariAgent.AMBARI_SERVER_FQDN, 
-                attributeWhenReady(getAttribute(AMBARI_SERVER),AmbariServer.HOSTNAME))
-            .configure(SoftwareProcess.SUGGESTED_VERSION, 
-                getConfig(AmbariCluster.SUGGESTED_VERSION))
-            //TODO shouldn't use default os
-            .addInitializer(hostnameSensor);
-        if(securityGroup != null){
-            agentSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
-        }
-        return agentSpec;
     }
 
     @Override
@@ -131,24 +95,29 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         // TODO We could try to prevent setting SERVICE_UP until the services are all intalled
         subscribe(getAttribute(AMBARI_SERVER), AmbariServer.REGISTERED_HOSTS, new RegisteredHostEventListener(this));
+        Iterable<Entity> components = Entities.descendants(this, Predicates.instanceOf(SoftwareProcess.class));
+        EtcHostsManager.setHostsOnMachines(components, getConfig(ETC_HOST_ADDRESS));
     }
 
+
     static final class RegisteredHostEventListener implements SensorEventListener<List<String>> {
+
         private final AmbariCluster entity;
-        
+
         public RegisteredHostEventListener(AmbariCluster entity) {
             this.entity = entity;
         }
-        
+
         @Override
         public void onEvent(SensorEvent<List<String>> event) {
             List<String> hosts = event.getValue();
-            Integer initialClusterSize = entity.getConfig(INITIAL_SIZE);
+            Integer initialClusterSize = entity.getAttribute(EXPECTED_AGENTS);
             Boolean initialised = entity.getAttribute(CLUSTER_SERVICES_INITIALISE_CALLED);
             if (hosts != null && hosts.size() == initialClusterSize && !Boolean.TRUE.equals(initialised)) {
                 entity.installServices();
             }
         }
+
     }
 
     @Override
@@ -158,12 +127,57 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         List<String> services = getConfig(HADOOP_SERVICES);
         List<String> hosts = getAttribute(AMBARI_SERVER).getAttribute(AmbariServer.REGISTERED_HOSTS);
 
-        LOG.debug("About to create cluster with services: " + services);
-        if (services != null && services.size() > 0) {
+        if (isServicesBasedDeployment(services)) {
+            LOG.debug("About to create cluster with services: " + services);
             getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, services);
         } else {
-            getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, DEFAULT_SERVICES);
+            AmbariConfig config = ambariConfigFromHostgroups();
+            if (config.hasHostGroups()) {
+                getAttribute(AMBARI_SERVER).installHDPFromConfig("Cluster1", "mybp", config);
+            } else {
+                getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, DEFAULT_SERVICES);
+            }
         }
+    }
+
+    private boolean isServicesBasedDeployment(List<String> services) {
+        // As opposed to components based deployment
+        return services != null && !services.isEmpty();
+    }
+
+    private AmbariConfig ambariConfigFromHostgroups() {
+        AmbariConfig config = new AmbariConfig();
+
+        for (AmbariHostGroup hostGroup : getHostGroups()) {
+            config.add(
+                    hostGroup.getDisplayName(),
+                    hostGroup.getHostFQDNs(),
+                    hostGroup.getConfig(AmbariHostGroup.HADOOP_COMPONENTS)
+            );
+        }
+        return config;
+    }
+
+    private void calculateTotalAgentsInHostgroups() {
+        int agentsToExpect = 0;
+        for (AmbariHostGroup hostGroup : getHostGroups()) {
+                agentsToExpect += hostGroup.getConfig(AmbariHostGroup.INITIAL_SIZE);
+        }
+        setAttribute(EXPECTED_AGENTS, agentsToExpect);
+    }
+
+    private Iterable<AmbariHostGroup> getHostGroups() {
+        return Entities.descendants(this, AmbariHostGroup.class);
+    }
+
+    private void createSingleClusterOfAgents() {
+        int initialSize = getRequiredConfig(INITIAL_SIZE);
+        setAttribute(EXPECTED_AGENTS, initialSize);
+        setAttribute(AMBARI_AGENTS, addChild(EntitySpec.create(DynamicCluster.class)
+                        .configure(DynamicCluster.INITIAL_SIZE, initialSize)
+                        .configure(DynamicCluster.MEMBER_SPEC, AmbariAgentImpl.createAgentSpec(this))
+                        .displayName("All Nodes")
+        ));
     }
 
     private <T> T getRequiredConfig(ConfigKey<T> key) {

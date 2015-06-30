@@ -20,6 +20,8 @@ package io.brooklyn.ambari.server;
 
 import java.util.List;
 
+import com.google.common.reflect.TypeToken;
+
 import brooklyn.catalog.Catalog;
 import brooklyn.entity.annotation.Effector;
 import brooklyn.entity.annotation.EffectorParam;
@@ -29,8 +31,7 @@ import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
-
-import com.google.common.reflect.TypeToken;
+import io.brooklyn.ambari.rest.AmbariConfig;
 
 @Catalog(name = "Ambari Server", description = "Ambari Server: part of an ambari cluster used to install and monitor a hadoop cluster.")
 @ImplementedBy(AmbariServerImpl.class)
@@ -75,4 +76,8 @@ public interface AmbariServer extends SoftwareProcess, UsesJava {
                            @EffectorParam(name = "Blueprint Name") String blueprintName,
                            @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
                            @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services);
+
+    void installHDPFromConfig(String clusterName, String blueprintName, AmbariConfig config);
+
+    void setFqdn(String fqdn);
 }
