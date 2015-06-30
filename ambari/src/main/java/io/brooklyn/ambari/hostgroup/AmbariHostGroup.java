@@ -27,6 +27,7 @@ import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.UsesJava;
+import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.util.flags.SetFromFlag;
 
@@ -35,7 +36,12 @@ public interface AmbariHostGroup extends DynamicCluster, SoftwareProcess, UsesJa
 
     @SetFromFlag("components")
     ConfigKey<List<String>> HADOOP_COMPONENTS = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
-    }, "services", "List of services to deploy to Hadoop Cluster");
+    }, "components", "List of components to deploy to host group");
+
+    @SetFromFlag("siblingSpec")
+    ConfigKey<EntitySpec<?>> SIBLING_SPEC = ConfigKeys.newConfigKey(
+            new TypeToken<EntitySpec<?>>(){},
+            "ambari.sibling.spec", "Spec for  extra entity to be installed on each of nodes in cluster", null);
 
     List<String> getHostFQDNs();
 }
