@@ -18,8 +18,8 @@
  */
 package io.brooklyn.ambari.rest;
 
-import static io.brooklyn.ambari.rest.DefaultAmbariBluePrint.toMaps;
-import io.brooklyn.ambari.rest.RecommendationResponse.Resource.Recommendations.BlueprintClusterBinding;
+import io.brooklyn.ambari.rest.RecommendationResponse.BlueprintClusterBinding;
+import io.brooklyn.ambari.rest.RecommendationResponse.ClusterBindingHostGroup;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -32,17 +32,17 @@ import com.google.common.collect.ImmutableMap;
 /**
  * @author duncangrant
  */
-public class DefaultBluePrintClusterBinding implements AsMap {
-    private List<AsMap> hostGroups = new LinkedList<AsMap>();
+public class DefaultBluePrintClusterBinding implements Mappable {
+    private List<Mappable> hostGroups = new LinkedList<Mappable>();
     private String bluePrintName;
 
     public DefaultBluePrintClusterBinding(BlueprintClusterBinding blueprintClusterBinding) {
-        for (BlueprintClusterBinding.HostGroup hostGroup : blueprintClusterBinding.host_groups) {
+        for (ClusterBindingHostGroup hostGroup : blueprintClusterBinding.host_groups) {
             hostGroups.add(new HostGroup(hostGroup));
         }
     }
 
-    public static DefaultBluePrintClusterBinding createFromRecommendation(RecommendationResponse.Resource.Recommendations.BlueprintClusterBinding blueprintClusterBinding) {
+    public static DefaultBluePrintClusterBinding createFromRecommendation(BlueprintClusterBinding blueprintClusterBinding) {
         return new DefaultBluePrintClusterBinding(blueprintClusterBinding);
     }
 
@@ -51,44 +51,46 @@ public class DefaultBluePrintClusterBinding implements AsMap {
     }
 
     @Override
-    public Map asMap() {
-        return ImmutableMap.of("blueprint", bluePrintName, "default_password", "admin", "host_groups", toMaps(hostGroups));
+    public Map<?,?> asMap() {
+        return ImmutableMap.of("blueprint", bluePrintName, 
+                "default_password", "admin", 
+                "host_groups", Mappables.toMaps(hostGroups));
     }
 
     public void setBluePrintName(String bluePrintName) {
         this.bluePrintName = bluePrintName;
     }
 
-    private static class HostGroup implements AsMap {
+    private static class HostGroup implements Mappable {
 
         private final String name;
         private final List<Host> hosts = new LinkedList<Host>();
 
-        public HostGroup(BlueprintClusterBinding.HostGroup hostGroup) {
+        public HostGroup(ClusterBindingHostGroup hostGroup) {
             name = hostGroup.name;
-            for (Map host : hostGroup.hosts) {
+            for (Map<?,?> host : hostGroup.hosts) {
                 hosts.add(new Host(host));
             }
         }
 
         @Override
-        public Map asMap() {
-            return ImmutableMap.of("name", name, "hosts", toMaps(hosts));
+        public Map<?,?> asMap() {
+            return ImmutableMap.of("name", name, "hosts", Mappables.toMaps(hosts));
 
         }
+    }
+    
+    private static class Host implements Mappable {
 
-        private class Host implements AsMap {
+        private final Map<?,?> hostParams;
 
-            private final Map hostParams;
+        public Host(Map<?,?> host) {
+            hostParams = ImmutableMap.copyOf(host);
+        }
 
-            public Host(Map host) {
-                hostParams = ImmutableMap.copyOf(host);
-            }
-
-            @Override
-            public Map asMap() {
-                return hostParams;
-            }
+        @Override
+        public Map<?,?> asMap() {
+            return hostParams;
         }
     }
 }

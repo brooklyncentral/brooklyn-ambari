@@ -18,12 +18,26 @@
  */
 package io.brooklyn.ambari.rest;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * Created by duncangrant on 22/01/15.
  */
-public interface AsMap {
+public interface Mappable {
 
-    public Map asMap();
+    public Map<?,?> asMap();
+    
+    public class Mappables {
+        public static List<Map<?,?>> toMaps(List<? extends Mappable> host_groups) {
+            LinkedList<Map<?,?>> maps = new LinkedList<Map<?,?>>();
+            for (Mappable host_group : host_groups) {
+                maps.add(host_group.asMap());
+            }
+            return ImmutableList.<Map<?,?>>copyOf(maps);
+        }
+    }
 }
