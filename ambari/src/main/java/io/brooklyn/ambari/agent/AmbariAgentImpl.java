@@ -18,11 +18,16 @@
  */
 package io.brooklyn.ambari.agent;
 
-import brooklyn.entity.basic.SoftwareProcessImpl;
+import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
 
-/**
- * Created by duncangrant on 15/12/14.
- */
+import brooklyn.entity.Entity;
+import brooklyn.entity.basic.SoftwareProcess;
+import brooklyn.entity.basic.SoftwareProcessImpl;
+import brooklyn.entity.proxying.EntitySpec;
+import io.brooklyn.ambari.AmbariCluster;
+import io.brooklyn.ambari.AmbariConfigAndSensors;
+import io.brooklyn.ambari.server.AmbariServer;
+
 public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent {
     @Override
     public Class getDriverInterface() {
@@ -41,8 +46,27 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
     protected void disconnectSensors() {
         super.disconnectSensors();
     }
-    
+
     public String getAmbariServerFQDN() {
         return getConfig(AMBARI_SERVER_FQDN);
+    }
+
+    @Override
+    public void setFqdn(String fqdn) {
+        setAttribute(AmbariConfigAndSensors.FQDN, fqdn);
+    }
+
+    public static EntitySpec<? extends AmbariAgent> createAgentSpec(Entity ambariCluster) {
+        EntitySpec<? extends AmbariAgent> agentSpec = ambariCluster.getConfig(AmbariCluster.AGENT_SPEC)
+                .configure(AMBARI_SERVER_FQDN,
+                        attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), AmbariServer.HOSTNAME))
+                .configure(SoftwareProcess.SUGGESTED_VERSION,
+                        ambariCluster.getConfig(AmbariCluster.SUGGESTED_VERSION));
+        //TODO shouldn't use default os
+        Object securityGroup1 = ambariCluster.getConfig(AmbariCluster.SECURITY_GROUP);
+        if (securityGroup1 != null) {
+            agentSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup1);
+        }
+        return agentSpec;
     }
 }

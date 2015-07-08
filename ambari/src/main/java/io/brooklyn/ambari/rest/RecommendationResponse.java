@@ -20,9 +20,6 @@ package io.brooklyn.ambari.rest;
 
 import java.util.Map;
 
-/**
-* Created by duncangrant on 21/01/15.
-*/
 public class RecommendationResponse {
     public Resource[] resources;
 

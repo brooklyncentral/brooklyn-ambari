@@ -18,11 +18,6 @@
  */
 package io.brooklyn.ambari.server;
 
-import io.brooklyn.ambari.rest.DefaultAmbariApiHelper;
-import io.brooklyn.ambari.rest.DefaultAmbariBluePrint;
-import io.brooklyn.ambari.rest.DefaultBluePrintClusterBinding;
-import io.brooklyn.ambari.rest.RecommendationResponse;
-
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +26,15 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
+import com.google.common.net.HttpHeaders;
+import com.google.gson.JsonElement;
+import com.jayway.jsonpath.JsonPath;
 
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.annotation.EffectorParam;
@@ -42,15 +46,12 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
-
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.net.HostAndPort;
-import com.google.common.net.HttpHeaders;
-import com.google.gson.JsonElement;
-import com.jayway.jsonpath.JsonPath;
+import io.brooklyn.ambari.AmbariConfigAndSensors;
+import io.brooklyn.ambari.rest.AmbariConfig;
+import io.brooklyn.ambari.rest.DefaultAmbariApiHelper;
+import io.brooklyn.ambari.rest.DefaultAmbariBluePrint;
+import io.brooklyn.ambari.rest.DefaultBluePrintClusterBinding;
+import io.brooklyn.ambari.rest.RecommendationResponse;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
@@ -59,6 +60,8 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     //TODO clearly needs changed
     private UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin", "admin");
     private DefaultAmbariApiHelper ambariApiHelper;
+    public static final Map<String, String> BASE_BLUEPRINTS = ImmutableMap.of("stack_name", "HDP", "stack_version", "2.2");
+    public static final List<? extends Map<?, ?>> CONFIGURATIONS = ImmutableList.of(ImmutableMap.of("nagios-env", ImmutableMap.of("nagios_contact", "admin@localhost")));
 
     @Override
     public Class<AmbariServerDriver> getDriverInterface() {
@@ -151,13 +154,46 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     @Override
     public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
         waitForServiceUp();
-        RecommendationResponse recommendations = ambariApiHelper.getRecommendations(hosts, services, "HDP", "2.2");
-        
-        Map<String, String> baseBlueprints = ImmutableMap.of("stack_name", "HDP", "stack_version", "2.2");
-        List<? extends Map<?, ?>> configurations = ImmutableList.of(ImmutableMap.of("nagios-env", ImmutableMap.of("nagios_contact", "admin@localhost")));
-        ambariApiHelper.createBlueprint(blueprintName, DefaultAmbariBluePrint.createBlueprintFromRecommendation(
-                recommendations.getBlueprint(), baseBlueprints, configurations));
-        ambariApiHelper.createCluster(clusterName, blueprintName, DefaultBluePrintClusterBinding.createFromRecommendation(
-                recommendations.getBlueprintClusterBinding()));
+        RecommendationResponse recommendations =
+                ambariApiHelper.getRecommendations(
+                        hosts,
+                        services,
+                        "HDP",
+                        "2.2");
+
+        ambariApiHelper.createBlueprint(
+                blueprintName,
+                DefaultAmbariBluePrint.createBlueprintFromRecommendation(
+                    recommendations.getBlueprint(),
+                    BASE_BLUEPRINTS,
+                    CONFIGURATIONS));
+
+        ambariApiHelper.createCluster(
+                clusterName,
+                blueprintName,
+                DefaultBluePrintClusterBinding.createFromRecommendation(
+                    recommendations.getBlueprintClusterBinding()));
+
+    }
+
+    @Override
+    public void installHDPFromConfig(String clusterName, String blueprintName, AmbariConfig config) {
+        waitForServiceUp();
+        ambariApiHelper.createBlueprint(
+                blueprintName,
+                DefaultAmbariBluePrint.createBlueprintFromConfig(
+                        config,
+                        BASE_BLUEPRINTS,
+                        CONFIGURATIONS));
+
+        ambariApiHelper.createCluster(
+                clusterName,
+                blueprintName,
+                DefaultBluePrintClusterBinding.createFromConfig(config));
+    }
+
+    @Override
+    public void setFqdn(String fqdn) {
+        setAttribute(AmbariConfigAndSensors.FQDN, fqdn);
     }
 }

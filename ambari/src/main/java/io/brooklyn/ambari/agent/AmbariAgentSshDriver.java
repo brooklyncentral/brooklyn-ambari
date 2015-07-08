@@ -25,11 +25,14 @@ import static java.lang.String.format;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
+
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
+import brooklyn.util.ssh.BashCommands;
 import io.brooklyn.ambari.AmbariInstallCommands;
 
 class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
@@ -56,10 +59,23 @@ class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements Ambar
     }
 
     @Override
+    public AmbariAgentImpl getEntity() {
+        return AmbariAgentImpl.class.cast(super.getEntity());
+    }
+
+    @Override
     public void install() {
-        newScript(INSTALLING).body.append(
-                defaultAmbariInstallHelper.installAmbariRequirements(getMachine()),
-                installPackage("ambari-agent"))
+        String fqdn = entity.getId().toLowerCase();
+        getEntity().setFqdn(fqdn);
+        ImmutableList<String> commands =
+                ImmutableList.<String>builder()
+                        .add(defaultAmbariInstallHelper.installAmbariRequirements(getMachine()))
+                        .addAll(BashCommands.setHostname(fqdn))
+                        .add(installPackage("ambari-agent"))
+                        .build();
+
+        newScript(INSTALLING).body
+                .append(commands)
                 .failOnNonZeroResultCode()
                 .execute();
     }

@@ -1,0 +1,73 @@
+name: Ambari driven cloud installation - centos
+
+location:
+  aws-ec2:us-east-1:
+    minRam: 8192
+    osFamily: ubuntu
+    osVersionRegex: 12.*
+
+services:
+- type: io.brooklyn.ambari.AmbariCluster
+  brooklyn.config:
+    version: 2.0.1
+  securityGroup: <securityGroup>
+  brooklyn.children:
+  - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
+    name: NameNode
+    brooklyn.config:
+      components:
+      - AMBARI_SERVER
+      - GANGLIA_SERVER
+      - ZOOKEEPER_CLIENT
+      - NAMENODE
+      - PIG
+      - OOZIE_CLIENT
+      - HBASE_MASTER
+      - HCAT
+      - HDFS_CLIENT
+      - YARN_CLIENT
+      - MAPREDUCE2_CLIENT
+      - GANGLIA_MONITOR
+      - ZOOKEEPER_SERVER
+      - KNOX_GATEWAY
+      - TEZ_CLIENT
+      - HBASE_CLIENT
+      - HIVE_CLIENT
+  - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
+    name: StandbyNamenode
+    brooklyn.config:
+      components:
+      - ZOOKEEPER_CLIENT
+      - PIG
+      - HISTORYSERVER
+      - HIVE_SERVER
+      - OOZIE_SERVER
+      - SECONDARY_NAMENODE
+      - TEZ_CLIENT
+      - HIVE_METASTORE
+      - APP_TIMELINE_SERVER
+      - MAPREDUCE2_CLIENT
+      - MYSQL_SERVER
+      - RESOURCEMANAGER
+      - ZOOKEEPER_SERVER
+      - HBASE_MASTER
+      - HDFS_CLIENT
+      - YARN_CLIENT
+      - WEBHCAT_SERVER
+      - GANGLIA_MONITOR
+  - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
+    name: DataNode
+    brooklyn.config:
+      initialSize: 3
+      components:
+      - PIG
+      - HBASE_REGIONSERVER
+      - HCAT
+      - TEZ_CLIENT
+      - SLIDER
+      - SQOOP
+      - ZOOKEEPER_SERVER
+      - NODEMANAGER
+      - DATANODE
+      - FLUME_HANDLER
+      - GANGLIA_MONITOR

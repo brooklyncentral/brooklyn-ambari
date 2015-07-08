@@ -37,6 +37,10 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
     }
 
     @Override
+    public AmbariServerImpl getEntity() {
+        return AmbariServerImpl.class.cast(super.getEntity());
+    }
+    @Override
     public boolean isRunning() {
         return newScript(MutableMap.of("usePidFile", false), CHECK_RUNNING)
                 .body.append(BashCommands.sudo("ambari-server status"))
@@ -55,6 +59,7 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     public void install() {
+        getEntity().setFqdn(entity.getId().toLowerCase());
         newScript(INSTALLING).body.append(
                 ambariInstallHelper.installAmbariRequirements(getMachine()),
                 installPackage("ambari-server"),

@@ -18,16 +18,16 @@
  */
 package io.brooklyn.ambari.rest;
 
-import io.brooklyn.ambari.rest.RecommendationResponse.BlueprintClusterBinding;
-import io.brooklyn.ambari.rest.RecommendationResponse.ClusterBindingHostGroup;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import brooklyn.util.collections.Jsonya;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
+
+import brooklyn.util.collections.Jsonya;
+import io.brooklyn.ambari.rest.RecommendationResponse.BlueprintClusterBinding;
+import io.brooklyn.ambari.rest.RecommendationResponse.ClusterBindingHostGroup;
 
 /**
  * @author duncangrant
@@ -36,10 +36,22 @@ public class DefaultBluePrintClusterBinding implements Mappable {
     private List<Mappable> hostGroups = new LinkedList<Mappable>();
     private String bluePrintName;
 
-    public DefaultBluePrintClusterBinding(BlueprintClusterBinding blueprintClusterBinding) {
+    private DefaultBluePrintClusterBinding(BlueprintClusterBinding blueprintClusterBinding) {
         for (ClusterBindingHostGroup hostGroup : blueprintClusterBinding.host_groups) {
             hostGroups.add(new HostGroup(hostGroup));
         }
+    }
+
+    private DefaultBluePrintClusterBinding(AmbariConfig config) {
+        Map<String, List<String>> hostGroupsToHosts = config.getHostGroupsToHosts();
+        Set<Map.Entry<String, List<String>>> entries = hostGroupsToHosts.entrySet();
+        for (Map.Entry<String, List<String>> entry : entries) {
+            hostGroups.add(new HostGroup(entry.getKey(), entry.getValue()));
+        }
+    }
+
+    public static DefaultBluePrintClusterBinding createFromConfig(AmbariConfig config) {
+        return new DefaultBluePrintClusterBinding(config);
     }
 
     public static DefaultBluePrintClusterBinding createFromRecommendation(BlueprintClusterBinding blueprintClusterBinding) {
@@ -71,6 +83,14 @@ public class DefaultBluePrintClusterBinding implements Mappable {
             for (Map<?,?> host : hostGroup.hosts) {
                 hosts.add(new Host(host));
             }
+        }
+
+        public HostGroup(String name, List<String> hosts) {
+            this.name = name;
+            for (String host : hosts) {
+                this.hosts.add(new Host(ImmutableMap.of("fqdn", host)));
+            }
+
         }
 
         @Override

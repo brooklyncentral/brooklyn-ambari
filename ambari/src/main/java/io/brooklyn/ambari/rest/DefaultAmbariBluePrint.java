@@ -18,15 +18,15 @@
  */
 package io.brooklyn.ambari.rest;
 
-import io.brooklyn.ambari.rest.RecommendationResponse.Blueprint;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import brooklyn.util.collections.Jsonya;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
+
+import brooklyn.util.collections.Jsonya;
+import io.brooklyn.ambari.rest.RecommendationResponse.Blueprint;
 
 public class DefaultAmbariBluePrint implements Mappable {
 
@@ -36,6 +36,20 @@ public class DefaultAmbariBluePrint implements Mappable {
 
     public static DefaultAmbariBluePrint createBlueprintFromRecommendation(Blueprint blueprint, Map<String, String> baseBlueprints, List<? extends Map<?,?>> configurations) {
         return new DefaultAmbariBluePrint(blueprint, baseBlueprints, configurations);
+    }
+
+    public static DefaultAmbariBluePrint createBlueprintFromConfig(AmbariConfig config, Map<String, String> baseBlueprints, List<? extends Map<?,?>> configurations) {
+        return new DefaultAmbariBluePrint(config,baseBlueprints, configurations);
+    }
+
+    private DefaultAmbariBluePrint(AmbariConfig config, Map<String, String> baseBlueprints, List<? extends Map<?,?>> configurations) {
+        this.baseBlueprints = baseBlueprints;
+        this.configurations = configurations;
+        this.hostGroups = new LinkedList<HostGroup>();
+        Set<Map.Entry<String, List<String>>> entries = config.getHostGroups().entrySet();
+        for (Map.Entry<String, List<String>> entry : entries) {
+            hostGroups.add(new HostGroup(entry.getKey(), entry.getValue()));
+        }
     }
 
     private DefaultAmbariBluePrint(Blueprint blueprint, Map<String, String> baseBlueprints, List<? extends Map<?,?>> configurations) {
@@ -66,6 +80,13 @@ public class DefaultAmbariBluePrint implements Mappable {
                 if (!component.get("name").equals("ZKFC")) {
                     components.add(new Component(component));
                 }
+            }
+        }
+
+        public HostGroup(String hostGroupName, List<String> hostGroupComponents) {
+            name = hostGroupName;
+            for (String component : hostGroupComponents) {
+                components.add(new Component(ImmutableMap.of("name", component)));
             }
         }
 

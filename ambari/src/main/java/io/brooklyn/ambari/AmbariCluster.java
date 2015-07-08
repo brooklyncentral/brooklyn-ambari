@@ -18,10 +18,9 @@
  */
 package io.brooklyn.ambari;
 
-import io.brooklyn.ambari.agent.AmbariAgent;
-import io.brooklyn.ambari.server.AmbariServer;
-
 import java.util.List;
+
+import com.google.common.reflect.TypeToken;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
@@ -37,15 +36,17 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
-
-import com.google.common.reflect.TypeToken;
+import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.server.AmbariServer;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
 public interface AmbariCluster extends Entity, Startable {
 
     @SetFromFlag("initialSize")
-    ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(Cluster.INITIAL_SIZE, 5);
+    ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(Cluster.INITIAL_SIZE, 0);
+
+    AttributeSensor<Integer> EXPECTED_AGENTS = Sensors.newIntegerSensor("ambaricluster.expectedservers", "Number of ambari agents expected to register with cluster");
 
     @SetFromFlag("securityGroup")
     ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server");
@@ -63,6 +64,9 @@ public interface AmbariCluster extends Entity, Startable {
     ).name("ambaricluster.agentspec")
      .defaultValue(EntitySpec.create(AmbariAgent.class))
      .build();
+
+    @SetFromFlag("hostAddressSensor")
+    ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = AmbariConfigAndSensors.ETC_HOST_ADDRESS;
 
     @SetFromFlag("version")
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION, "1.7.0");

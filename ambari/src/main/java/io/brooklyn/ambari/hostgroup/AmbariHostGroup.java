@@ -16,29 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.brooklyn.ambari.agent;
+package io.brooklyn.ambari.hostgroup;
 
-import brooklyn.catalog.Catalog;
+import java.util.List;
+
+import com.google.common.reflect.TypeToken;
+
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
+import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.util.flags.SetFromFlag;
-import brooklyn.util.javalang.JavaClassNames;
 
-@Catalog(name="Ambari Agent", description="Ambari Agent: part of an ambari cluster that runs on each node that will form part of the Hadoop cluster")
-@ImplementedBy(AmbariAgentImpl.class)
-public interface AmbariAgent extends SoftwareProcess, UsesJava {
+@ImplementedBy(AmbariHostGroupImpl.class)
+public interface AmbariHostGroup extends DynamicCluster, SoftwareProcess, UsesJava {
 
-    @SetFromFlag("configFileUrl")
-    ConfigKey<String> TEMPLATE_CONFIGURATION_URL = ConfigKeys.newConfigKey(
-            "ambari.templateConfigurationUrl", "Template file (in freemarker format) for the ambari-agent.ini file",
-            JavaClassNames.resolveClasspathUrl(AmbariAgent.class, "ambari-agent.ini"));
+    @SetFromFlag("components")
+    ConfigKey<List<String>> HADOOP_COMPONENTS = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
+    }, "services", "List of services to deploy to Hadoop Cluster");
 
-    @SetFromFlag("ambariServerFQDN")
-    ConfigKey<String> AMBARI_SERVER_FQDN = ConfigKeys.newStringConfigKey(
-            "ambari.server.fqdn", "Fully Qualified Domain Name of ambari server that agent should register to");
-
-    void setFqdn(String fqdn);
+    List<String> getHostFQDNs();
 }
