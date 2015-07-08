@@ -35,7 +35,7 @@ import brooklyn.util.collections.MutableMap;
 import brooklyn.util.ssh.BashCommands;
 import io.brooklyn.ambari.AmbariInstallCommands;
 
-class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
+public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
     public static final Logger log = LoggerFactory.getLogger(AmbariAgentSshDriver.class);
     private final AmbariInstallCommands defaultAmbariInstallHelper = new AmbariInstallCommands(entity.getConfig(SoftwareProcess.SUGGESTED_VERSION));
 
