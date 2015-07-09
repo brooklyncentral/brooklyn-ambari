@@ -76,6 +76,14 @@ public class DefaultAmbariApiHelper {
         post(Optional.of(blueprint.toJson()), "/api/v1/blueprints/{blueprintname}", blueprintName);
     }
 
+    public void updateStackRepository(String stack, String version, String os, String repository, String url) {
+        String json = Jsonya.newInstance().at("Repositories")
+                .put("base_url", url)
+                .put("verify_base_url", true)
+                .root().toString();
+        put(json, "/api/v1/stacks/{stack}/versions/{version}/operating_systems/{os}/repositories/{repository}", stack, version, os, repository);
+    }
+
     public RecommendationResponse getRecommendations(List<String> hosts, Iterable<String> services, String stack, String version) {
         String json = Jsonya.newInstance()
                 .root().put("hosts", hosts)
@@ -119,6 +127,26 @@ public class DefaultAmbariApiHelper {
 
     private HttpToolResponse post(Optional<String> body, URI uri, HttpClient httpClient, ImmutableMap<String, String> headers) {
         HttpToolResponse httpToolResponse = HttpTool.httpPost(httpClient, uri, headers, body.isPresent() ? body.get().getBytes() : new byte[0]);
+        if (!isAcceptableReturnCode(httpToolResponse)) {
+            throw new AmbariApiException(httpToolResponse);
+        }
+        LOG.debug("Response from server: {}", httpToolResponse.getContentAsString());
+        return httpToolResponse;
+    }
+
+    private HttpToolResponse put(String body, String path, Object... templateParams) {
+        URI uri = UriBuilder.fromUri(baseUri).path(path).build(templateParams);
+        HttpClient httpClient = createHttpClient(uri);
+        ImmutableMap<String, String> headers = ImmutableMap.of("x-requested-by", "bob", HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials));
+        LOG.debug("PUT: uri={}, headers={}, body={}", new Object[]{
+                uri,
+                Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                body});
+        return put(body, uri, httpClient, headers);
+    }
+
+    private HttpToolResponse put(String body, URI uri, HttpClient httpClient, ImmutableMap<String, String> headers) {
+        HttpToolResponse httpToolResponse = HttpTool.httpPut(httpClient, uri, headers, body.getBytes());
         if (!isAcceptableReturnCode(httpToolResponse)) {
             throw new AmbariApiException(httpToolResponse);
         }
