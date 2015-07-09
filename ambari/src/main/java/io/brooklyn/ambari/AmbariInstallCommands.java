@@ -49,6 +49,7 @@ public class AmbariInstallCommands {
     public String installAmbariRequirements(SshMachineLocation machine) {
         return BashCommands.chainGroup(BashCommands.INSTALL_CURL,
                 installExecutable("ntp"),
+                sudo("service ntpd start"),
                 createCommandToAddAmbariToRepositoriesList(machine));
     }
 
