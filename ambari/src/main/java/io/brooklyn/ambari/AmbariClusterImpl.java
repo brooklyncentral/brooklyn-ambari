@@ -41,6 +41,7 @@ import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
+import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.hostgroup.AmbariHostGroup;
 import io.brooklyn.ambari.rest.AmbariConfig;
 import io.brooklyn.ambari.server.AmbariServer;
@@ -95,8 +96,12 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         // TODO We could try to prevent setting SERVICE_UP until the services are all intalled
         subscribe(getAttribute(AMBARI_SERVER), AmbariServer.REGISTERED_HOSTS, new RegisteredHostEventListener(this));
-        Iterable<Entity> components = Entities.descendants(this, Predicates.instanceOf(SoftwareProcess.class));
+        Iterable<Entity> components = allAmbariNodes();
         EtcHostsManager.setHostsOnMachines(components, getConfig(ETC_HOST_ADDRESS));
+    }
+
+    private Iterable<Entity> allAmbariNodes() {
+        return Entities.descendants(this, Predicates.or(Predicates.instanceOf(AmbariServer.class), Predicates.instanceOf(AmbariAgent.class)));
     }
 
 
