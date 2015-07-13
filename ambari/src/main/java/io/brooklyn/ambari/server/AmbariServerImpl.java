@@ -72,12 +72,12 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     protected void connectSensors() {
         super.connectSensors();
         connectServiceUpIsRunning();
-        
+
         HostAndPort hp = BrooklynAccessUtils.getBrooklynAccessibleAddress(this, getAttribute(HTTP_PORT));
 
         String ambariUri = String.format("http://%s:%d/", hp.getHostText(), hp.getPort());
         setAttribute(Attributes.MAIN_URI, URI.create(ambariUri));
-        
+
         ambariApiHelper = new DefaultAmbariApiHelper(usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
 
         serviceUpHttpFeed = HttpFeed.builder()
@@ -91,7 +91,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         addEnricher(Enrichers.builder().updatingMap(Attributes.SERVICE_NOT_UP_INDICATORS)
                 .from(URL_REACHABLE)
-                .computing(Functionals.ifNotEquals(true).value("URL not reachable") )
+                .computing(Functionals.ifNotEquals(true).value("URL not reachable"))
                 .build());
 
         hostsHttpFeed = HttpFeed.builder()
@@ -122,7 +122,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     public void disconnectSensors() {
         super.disconnectSensors();
         disconnectServiceUpIsRunning();
-        
+
         if (serviceUpHttpFeed != null) serviceUpHttpFeed.stop();
         if (hostsHttpFeed != null) hostsHttpFeed.stop();
     }
@@ -152,8 +152,21 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
-    public void installHDP(String clusterName, String blueprintName, List<String> hosts, List<String> services) {
+    public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
+                           @EffectorParam(name = "Blueprint Name") String blueprintName,
+                           @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
+                           @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services) {
+        installHDP(clusterName, blueprintName, hosts, services, ImmutableMap.<String, Map>of());
+    }
+
+    @Override
+    public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
+                           @EffectorParam(name = "Blueprint Name") String blueprintName,
+                           @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
+                           @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services,
+                           @EffectorParam(name = "Configurations", description = "Map of configurations to apply to blueprint") Map<String, Map> config) {
         waitForServiceUp();
+
         RecommendationResponse recommendations =
                 ambariApiHelper.getRecommendations(
                         hosts,
@@ -164,16 +177,30 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         ambariApiHelper.createBlueprint(
                 blueprintName,
                 DefaultAmbariBluePrint.createBlueprintFromRecommendation(
-                    recommendations.getBlueprint(),
-                    BASE_BLUEPRINTS,
-                    CONFIGURATIONS));
+                        recommendations.getBlueprint(),
+                        BASE_BLUEPRINTS,
+                        getConfigurations(config)));
 
         ambariApiHelper.createCluster(
                 clusterName,
                 blueprintName,
                 DefaultBluePrintClusterBinding.createFromRecommendation(
-                    recommendations.getBlueprintClusterBinding()));
+                        recommendations.getBlueprintClusterBinding()));
 
+    }
+
+    private List<? extends Map<?, ?>> getConfigurations(Map<String, Map> config) {
+        ImmutableList.Builder<Map<?, ?>> builder = ImmutableList.<Map<?, ?>>builder();
+//        builder.addAll(CONFIGURATIONS);
+        for (Map.Entry<String, Map> stringMapEntry : config.entrySet()) {
+            builder.add(
+                    ImmutableMap.of(
+                            stringMapEntry.getKey(),
+                            ImmutableMap.<String,Map>of(
+                                    "properties",
+                                    stringMapEntry.getValue())));
+        }
+        return builder.build();
     }
 
     @Override
@@ -184,7 +211,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                 DefaultAmbariBluePrint.createBlueprintFromConfig(
                         config,
                         BASE_BLUEPRINTS,
-                        CONFIGURATIONS));
+                        getConfigurations(config.getConfigurations())));
 
         ambariApiHelper.createCluster(
                 clusterName,

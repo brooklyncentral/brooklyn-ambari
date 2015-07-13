@@ -129,7 +129,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         if (isServicesBasedDeployment(services)) {
             LOG.debug("About to create cluster with services: " + services);
-            getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, services);
+            getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, services, getConfig(AMBARI_CONFIGURATIONS));
         } else {
             AmbariConfig config = ambariConfigFromHostgroups();
             if (config.hasHostGroups()) {
@@ -146,7 +146,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private AmbariConfig ambariConfigFromHostgroups() {
-        AmbariConfig config = new AmbariConfig();
+        AmbariConfig config = new AmbariConfig(getConfig(AMBARI_CONFIGURATIONS));
 
         for (AmbariHostGroup hostGroup : getHostGroups()) {
             config.add(

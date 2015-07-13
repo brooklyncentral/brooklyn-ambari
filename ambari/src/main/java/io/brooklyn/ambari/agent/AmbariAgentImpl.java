@@ -62,10 +62,9 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
                         attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), AmbariServer.HOSTNAME))
                 .configure(SoftwareProcess.SUGGESTED_VERSION,
                         ambariCluster.getConfig(AmbariCluster.SUGGESTED_VERSION));
-        //TODO shouldn't use default os
-        Object securityGroup1 = ambariCluster.getConfig(AmbariCluster.SECURITY_GROUP);
-        if (securityGroup1 != null) {
-            agentSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup1);
+        Object securityGroup = ambariCluster.getConfig(AmbariCluster.SECURITY_GROUP);
+        if (securityGroup != null) {
+            agentSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
         }
         return agentSpec;
     }

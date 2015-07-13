@@ -64,8 +64,8 @@ public class DefaultBluePrintClusterBinding implements Mappable {
 
     @Override
     public Map<?,?> asMap() {
-        return ImmutableMap.of("blueprint", bluePrintName, 
-                "default_password", "admin", 
+        return ImmutableMap.of("blueprint", bluePrintName,
+                "default_password", "admin",
                 "host_groups", Mappables.toMaps(hostGroups));
     }
 
@@ -99,7 +99,7 @@ public class DefaultBluePrintClusterBinding implements Mappable {
 
         }
     }
-    
+
     private static class Host implements Mappable {
 
         private final Map<?,?> hostParams;
