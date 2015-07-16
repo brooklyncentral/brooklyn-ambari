@@ -22,11 +22,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
@@ -40,8 +42,8 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
-import io.brooklyn.ambari.agent.AmbariAgentImpl;
 import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.agent.AmbariAgentImpl;
 import io.brooklyn.ambari.hostgroup.AmbariHostGroup;
 import io.brooklyn.ambari.rest.AmbariConfig;
 import io.brooklyn.ambari.server.AmbariServer;
@@ -59,6 +61,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(BasicStartableImpl.class);
     public static final ImmutableList<String> DEFAULT_SERVICES = ImmutableList.<String>of("ZOOKEEPER");
+    public static final ImmutableMap<String, Map> EMPTY_CONFIG_MAP = ImmutableMap.<String, Map>of();
     //TODO is there an issue with rebind here?  On rebind should be populated from somewhere else?
 
     @Override
@@ -140,7 +143,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             if (config.hasHostGroups()) {
                 getAttribute(AMBARI_SERVER).installHDPFromConfig("Cluster1", "mybp", config);
             } else {
-                getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, DEFAULT_SERVICES);
+                getAttribute(AMBARI_SERVER).installHDP("Cluster1", "mybp", hosts, DEFAULT_SERVICES, getConfig(AMBARI_CONFIGURATIONS));
             }
         }
     }

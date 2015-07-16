@@ -26,7 +26,6 @@ import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.proxying.EntitySpec;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariConfigAndSensors;
-import io.brooklyn.ambari.server.AmbariServer;
 
 public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent {
     @Override
@@ -59,7 +58,7 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
     public static EntitySpec<? extends AmbariAgent> createAgentSpec(Entity ambariCluster) {
         EntitySpec<? extends AmbariAgent> agentSpec = ambariCluster.getConfig(AmbariCluster.AGENT_SPEC)
                 .configure(AMBARI_SERVER_FQDN,
-                        attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), AmbariServer.HOSTNAME))
+                        attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), AmbariConfigAndSensors.FQDN))
                 .configure(SoftwareProcess.SUGGESTED_VERSION,
                         ambariCluster.getConfig(AmbariCluster.SUGGESTED_VERSION));
         Object securityGroup = ambariCluster.getConfig(AmbariCluster.SECURITY_GROUP);

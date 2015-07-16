@@ -72,12 +72,6 @@ public interface AmbariServer extends SoftwareProcess, UsesJava {
                                     @EffectorParam(name = "Host FQDN") String hostName,
                                     @EffectorParam(name = "Component name") String component);
 
-    @Effector(description = "Create and install cluster on hosts with services")
-    public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
-                           @EffectorParam(name = "Blueprint Name") String blueprintName,
-                           @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
-                           @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services);
-
     @Effector(description = "Create, configure and install cluster on hosts with services")
     public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
                            @EffectorParam(name = "Blueprint Name") String blueprintName,
