@@ -33,6 +33,7 @@ import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.ssh.BashCommands;
+import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariInstallCommands;
 
 public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
@@ -65,7 +66,7 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
 
     @Override
     public void install() {
-        String fqdn = entity.getId().toLowerCase();
+        String fqdn = entity.getId().toLowerCase() + AmbariCluster.DOMAIN_NAME;
         getEntity().setFqdn(fqdn);
         ImmutableList<String> commands =
                 ImmutableList.<String>builder()

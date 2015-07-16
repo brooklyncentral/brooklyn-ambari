@@ -85,5 +85,7 @@ public interface AmbariCluster extends Entity, Startable {
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INITIALISE_CALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInitialiseCalled");
 
+    String DOMAIN_NAME = ".ambari.local";
+
     void installServices();
 }
