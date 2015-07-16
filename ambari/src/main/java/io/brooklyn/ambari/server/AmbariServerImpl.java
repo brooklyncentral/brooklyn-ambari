@@ -155,14 +155,6 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
                            @EffectorParam(name = "Blueprint Name") String blueprintName,
                            @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
-                           @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services) {
-        installHDP(clusterName, blueprintName, hosts, services, ImmutableMap.<String, Map>of());
-    }
-
-    @Override
-    public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
-                           @EffectorParam(name = "Blueprint Name") String blueprintName,
-                           @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
                            @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services,
                            @EffectorParam(name = "Configurations", description = "Map of configurations to apply to blueprint") Map<String, Map> config) {
         waitForServiceUp();
@@ -191,14 +183,15 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
     private List<? extends Map<?, ?>> getConfigurations(Map<String, Map> config) {
         ImmutableList.Builder<Map<?, ?>> builder = ImmutableList.<Map<?, ?>>builder();
-//        builder.addAll(CONFIGURATIONS);
-        for (Map.Entry<String, Map> stringMapEntry : config.entrySet()) {
-            builder.add(
-                    ImmutableMap.of(
-                            stringMapEntry.getKey(),
-                            ImmutableMap.<String,Map>of(
-                                    "properties",
-                                    stringMapEntry.getValue())));
+        if(config != null) {
+            for (Map.Entry<String, Map> stringMapEntry : config.entrySet()) {
+                builder.add(
+                        ImmutableMap.of(
+                                stringMapEntry.getKey(),
+                                ImmutableMap.<String, Map>of(
+                                        "properties",
+                                        stringMapEntry.getValue())));
+            }
         }
         return builder.build();
     }
