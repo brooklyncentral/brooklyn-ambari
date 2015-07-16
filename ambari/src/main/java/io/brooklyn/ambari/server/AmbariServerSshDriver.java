@@ -20,13 +20,16 @@ package io.brooklyn.ambari.server;
 
 import static brooklyn.util.ssh.BashCommands.installPackage;
 
-import brooklyn.entity.basic.SoftwareProcess;
-import io.brooklyn.ambari.AmbariInstallCommands;
+import com.google.common.collect.ImmutableList;
+
 import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.ssh.BashCommands;
+import io.brooklyn.ambari.AmbariCluster;
+import io.brooklyn.ambari.AmbariInstallCommands;
 
 public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implements AmbariServerDriver {
 
@@ -59,11 +62,18 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     public void install() {
-        getEntity().setFqdn(entity.getId().toLowerCase());
-        newScript(INSTALLING).body.append(
-                ambariInstallHelper.installAmbariRequirements(getMachine()),
-                installPackage("ambari-server"),
-                BashCommands.sudo("ambari-server setup -s"))
+        String fqdn = entity.getId().toLowerCase() + AmbariCluster.DOMAIN_NAME;
+        getEntity().setFqdn(fqdn);
+        ImmutableList<String> commands =
+                ImmutableList.<String>builder()
+                .add(ambariInstallHelper.installAmbariRequirements(getMachine()))
+                .addAll(BashCommands.setHostname(fqdn))
+                .add(installPackage("ambari-server"))
+                .add(BashCommands.sudo("ambari-server setup -s"))
+                .build();
+
+        newScript(INSTALLING).body
+                .append(commands)
                 .failOnNonZeroResultCode()
                 .execute();
     }
