@@ -19,21 +19,25 @@
 
 package io.brooklyn.ambari;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.event.AttributeSensor;
-import com.google.common.reflect.TypeToken;
+import com.google.common.base.Function;
 
-public class AmbariConfigAndSensors {
-    private AmbariConfigAndSensors() {}
+/**
+ * Basic object that bind a {@link Function} to a listener.
+ *
+ * @param <T> the listener type.
+ */
+public class FunctionRunningCallable<T> implements Runnable {
 
-    /**
-     * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
-     */
-    public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
-            "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
-            Attributes.SUBNET_ADDRESS);
+    final T listener;
+    final Function<T, ?> function;
+
+    public FunctionRunningCallable(T listener, Function<T, ?> function) {
+        this.listener = listener;
+        this.function = function;
+    }
+
+    @Override
+    public void run() {
+        function.apply(listener);
+    }
 }

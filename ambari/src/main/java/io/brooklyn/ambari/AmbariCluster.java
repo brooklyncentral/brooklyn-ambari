@@ -16,12 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.brooklyn.ambari;
-
-import java.util.List;
-import java.util.Map;
-
-import com.google.common.reflect.TypeToken;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
@@ -38,8 +34,13 @@ import brooklyn.event.basic.BasicConfigKey;
 import brooklyn.event.basic.MapConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
+import com.google.common.reflect.TypeToken;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.server.AmbariServer;
+import io.brooklyn.ambari.service.ExtraService;
+
+import java.util.List;
+import java.util.Map;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
@@ -52,16 +53,29 @@ public interface AmbariCluster extends Entity, Startable {
 
     @SetFromFlag("securityGroup")
     ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server");
-    
+
     @SetFromFlag("services")
     ConfigKey<List<String>> HADOOP_SERVICES = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
     }, "services", "List of services to deploy to Hadoop Cluster");
+
+    @SetFromFlag("stackName")
+    ConfigKey<String> HADOOP_STACK_NAME = ConfigKeys.newStringConfigKey("stackName", "Hadoop stack name", "HDP");
+
+    @SetFromFlag("stackVersion")
+    ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.2");
+
+    @SetFromFlag("extraServices")
+    ConfigKey<EntitySpec<? extends ExtraService>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends ExtraService>>() {})
+            .name("extraServices")
+            .description("List of extra services to deploy to Hadoop Cluster")
+            //.defaultValue(ImmutableList.<EntitySpec<? extends ExtraService>>of())
+            .build();
 
     ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {
     }).name("ambaricluster.serverspec")
       .defaultValue(EntitySpec.create(AmbariServer.class))
       .build();
-    
+
     ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {}
     ).name("ambaricluster.agentspec")
      .defaultValue(EntitySpec.create(AmbariAgent.class))
@@ -85,7 +99,38 @@ public interface AmbariCluster extends Entity, Startable {
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INITIALISE_CALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInitialiseCalled");
 
+    AttributeSensor<Boolean> CLUSTER_SERVICES_INSTALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInstalled");
+
     String DOMAIN_NAME = ".ambari.local";
 
-    void installServices();
+    /**
+     * Returns all Ambari nodes, i.e {@link AmbariServer} and {@link AmbariAgent} contains within the cluster.
+     *
+     * @return a collection of Ambari nodes.
+     */
+    Iterable<AmbariNode> getAmbariNodes();
+
+    /**
+     * Returns the Ambari servers installed on the cluster.
+     *
+     * @return a collection of Ambari servers, if applicable.
+     */
+    Iterable<AmbariServer> getAmbariServers();
+
+    /**
+     * Returns the Ambari agents installed on the cluster.
+     *
+     * @return a collection of Ambari agents.
+     */
+    Iterable<AmbariAgent> getAmbariAgents();
+
+    /**
+     * Configure and deploy a new Hadoop cluster on the registered Ambari agents.
+     */
+    void deployCluster();
+
+    /**
+     * Call after a the hadoop cluster has been deployed
+     */
+    void postDeployCluster();
 }

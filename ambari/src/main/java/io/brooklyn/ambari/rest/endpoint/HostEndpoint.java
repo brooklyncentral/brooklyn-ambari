@@ -17,23 +17,22 @@
  * under the License.
  */
 
-package io.brooklyn.ambari;
+package io.brooklyn.ambari.rest.endpoint;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.event.AttributeSensor;
-import com.google.common.reflect.TypeToken;
+import io.brooklyn.ambari.rest.domain.HostComponents;
+import retrofit.client.Response;
+import retrofit.http.GET;
+import retrofit.http.POST;
+import retrofit.http.Path;
 
-public class AmbariConfigAndSensors {
-    private AmbariConfigAndSensors() {}
+public interface HostEndpoint {
 
-    /**
-     * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
-     */
-    public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
-            "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
-            Attributes.SUBNET_ADDRESS);
+    @POST("/api/v1/clusters/{cluster}/hosts/{host}")
+    void addHost(@Path("cluster") String cluster, @Path("host") String host);
+
+    @GET("/api/v1/clusters/{cluster}/hosts/{host}/host_components")
+    HostComponents getHostComponents(@Path("cluster") String cluster, @Path("host") String host);
+
+    @POST("/api/v1/clusters/{cluster}/hosts/{host}/host_components/{component}")
+    Response createHostComponent(@Path("cluster") String cluster, @Path("host") String host, @Path("component") String component);
 }

@@ -16,22 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.brooklyn.ambari.hostgroup;
-
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableList;
 
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SameServerEntity;
 import brooklyn.entity.group.DynamicClusterImpl;
 import brooklyn.entity.proxying.EntitySpec;
-import io.brooklyn.ambari.AmbariConfigAndSensors;
+import com.google.common.collect.ImmutableList;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class AmbariHostGroupImpl extends DynamicClusterImpl implements AmbariHostGroup {
     public static final Logger LOG = LoggerFactory.getLogger(AmbariHostGroup.class);
@@ -51,12 +50,18 @@ public class AmbariHostGroupImpl extends DynamicClusterImpl implements AmbariHos
     public List<String> getHostFQDNs() {
         ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
         for (AmbariAgent agent : Entities.descendants(this, AmbariAgent.class)) {
-            String attribute = agent.getAttribute(AmbariConfigAndSensors.FQDN);
-            if (attribute != null) {
-                builder.add(attribute);
+            String fqdn = agent.getFqdn();
+            if (fqdn != null) {
+                builder.add(fqdn);
             }
         }
         return builder.build();
+    }
+
+    @Nullable
+    @Override
+    public List<String> getComponents() {
+        return getConfig(HADOOP_COMPONENTS);
     }
 
     private EntitySpec<? extends AmbariAgent> ambariAgentSpec() {

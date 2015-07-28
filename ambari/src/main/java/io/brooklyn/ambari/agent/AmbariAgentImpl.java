@@ -16,16 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.brooklyn.ambari.agent;
 
-import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
+package io.brooklyn.ambari.agent;
 
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.proxying.EntitySpec;
 import io.brooklyn.ambari.AmbariCluster;
-import io.brooklyn.ambari.AmbariConfigAndSensors;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
 
 public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent {
     @Override
@@ -52,13 +55,29 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
 
     @Override
     public void setFqdn(String fqdn) {
-        setAttribute(AmbariConfigAndSensors.FQDN, fqdn);
+        setAttribute(FQDN, fqdn);
+    }
+
+    @Override
+    public String getFqdn() {
+        return getAttribute(FQDN);
+    }
+
+    @Override
+    public void setComponents(List<String> components) {
+        setAttribute(COMPONENTS, components);
+    }
+
+    @Nullable
+    @Override
+    public List<String> getComponents() {
+        return getAttribute(COMPONENTS);
     }
 
     public static EntitySpec<? extends AmbariAgent> createAgentSpec(Entity ambariCluster) {
         EntitySpec<? extends AmbariAgent> agentSpec = ambariCluster.getConfig(AmbariCluster.AGENT_SPEC)
                 .configure(AMBARI_SERVER_FQDN,
-                        attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), AmbariConfigAndSensors.FQDN))
+                        attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), FQDN))
                 .configure(SoftwareProcess.SUGGESTED_VERSION,
                         ambariCluster.getConfig(AmbariCluster.SUGGESTED_VERSION));
         Object securityGroup = ambariCluster.getConfig(AmbariCluster.SECURITY_GROUP);

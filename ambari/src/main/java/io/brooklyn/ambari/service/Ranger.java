@@ -17,23 +17,13 @@
  * under the License.
  */
 
-package io.brooklyn.ambari;
+package io.brooklyn.ambari.service;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.event.AttributeSensor;
-import com.google.common.reflect.TypeToken;
+import brooklyn.entity.proxying.ImplementedBy;
 
-public class AmbariConfigAndSensors {
-    private AmbariConfigAndSensors() {}
-
-    /**
-     * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
-     */
-    public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
-            "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
-            Attributes.SUBNET_ADDRESS);
+/**
+ * Ranger hadoop service
+ */
+@ImplementedBy(RangerImpl.class)
+public interface Ranger extends ExtraService {
 }

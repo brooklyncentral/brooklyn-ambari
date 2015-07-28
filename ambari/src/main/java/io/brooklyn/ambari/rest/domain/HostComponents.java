@@ -17,23 +17,34 @@
  * under the License.
  */
 
-package io.brooklyn.ambari;
+package io.brooklyn.ambari.rest.domain;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.event.AttributeSensor;
-import com.google.common.reflect.TypeToken;
+import brooklyn.util.collections.MutableList;
+import com.google.gson.annotations.SerializedName;
 
-public class AmbariConfigAndSensors {
-    private AmbariConfigAndSensors() {}
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.List;
 
-    /**
-     * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
-     */
-    public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
-            "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
-            Attributes.SUBNET_ADDRESS);
+public class HostComponents {
+
+    @SerializedName("href")
+    private String href;
+
+    @SerializedName("items")
+    private List<HostComponent> components;
+
+    public HostComponents() {
+        this.components = MutableList.of();
+    }
+
+    @Nullable
+    public String getHref() {
+        return href;
+    }
+
+    @Nonnull
+    public List<HostComponent> getComponents() {
+        return components;
+    }
 }

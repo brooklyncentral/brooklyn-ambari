@@ -16,28 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.brooklyn.ambari.rest;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+package io.brooklyn.ambari.rest.endpoint;
 
-import com.google.common.collect.ImmutableList;
+import io.brooklyn.ambari.rest.domain.Request;
+import io.brooklyn.ambari.rest.domain.Requests;
+import retrofit.http.GET;
+import retrofit.http.Path;
 
-/**
- * Created by duncangrant on 22/01/15.
- */
-public interface Mappable {
+public interface RequestEndpoint {
 
-    public Map<?,?> asMap();
-    
-    public class Mappables {
-        public static List<Map<?,?>> toMaps(List<? extends Mappable> host_groups) {
-            LinkedList<Map<?,?>> maps = new LinkedList<Map<?,?>>();
-            for (Mappable host_group : host_groups) {
-                maps.add(host_group.asMap());
-            }
-            return ImmutableList.<Map<?,?>>copyOf(maps);
-        }
-    }
+    @GET("/api/v1/clusters/{cluster}/requests")
+    Requests getRequests(@Path("cluster") String cluster);
+
+    @GET("/api/v1/clusters/{cluster}/requests/{id}")
+    Request getRequest(@Path("cluster") String cluster, @Path("id") int id);
 }

@@ -41,6 +41,7 @@
     <modules>
         <module>ambari</module>
         <module>dist</module>
+        <module>service</module>
     </modules>
 
     <properties>

@@ -17,23 +17,27 @@
  * under the License.
  */
 
-package io.brooklyn.ambari;
+package ${groupId};
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.event.AttributeSensor;
-import com.google.common.reflect.TypeToken;
+import io.brooklyn.ambari.AmbariCluster;
+import io.brooklyn.ambari.service.AbstractExtraService;
 
-public class AmbariConfigAndSensors {
-    private AmbariConfigAndSensors() {}
+import java.util.Map;
 
-    /**
-     * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
-     */
-    public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
-            "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
-            Attributes.SUBNET_ADDRESS);
+public class MyServiceImpl extends AbstractExtraService implements MyService {
+
+    @Override
+    public Map<String, Map> getAmbariConfig() {
+        return null;
+    }
+
+    @Override
+    public void preClusterDeploy(AmbariCluster ambariCluster) {
+
+    }
+
+    @Override
+    public void postClusterDeploy(AmbariCluster ambariCluster) {
+
+    }
 }

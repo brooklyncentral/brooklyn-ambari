@@ -16,20 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.brooklyn.ambari.agent;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.ImplementedBy;
+import brooklyn.event.AttributeSensor;
+import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.javalang.JavaClassNames;
+import com.google.common.reflect.TypeToken;
+import io.brooklyn.ambari.AmbariNode;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 @Catalog(name="Ambari Agent", description="Ambari Agent: part of an ambari cluster that runs on each node that will form part of the Hadoop cluster")
 @ImplementedBy(AmbariAgentImpl.class)
-public interface AmbariAgent extends SoftwareProcess, UsesJava {
+public interface AmbariAgent extends AmbariNode {
 
     @SetFromFlag("configFileUrl")
     ConfigKey<String> TEMPLATE_CONFIGURATION_URL = ConfigKeys.newConfigKey(
@@ -40,5 +46,24 @@ public interface AmbariAgent extends SoftwareProcess, UsesJava {
     ConfigKey<String> AMBARI_SERVER_FQDN = ConfigKeys.newStringConfigKey(
             "ambari.server.fqdn", "Fully Qualified Domain Name of ambari server that agent should register to");
 
-    void setFqdn(String fqdn);
+
+    AttributeSensor<List<String>> COMPONENTS = Sensors.newSensor(
+            new TypeToken<List<String>>() {},
+            "hadoop.components",
+            "List of installed components");
+
+    /**
+     * Set the list of {@link AmbariAgent#COMPONENTS} that will be / are installed on this node.
+     *
+     * @param components the list of component to set.
+     */
+    void setComponents(@Nullable List<String> components);
+
+    /**
+     * Returns the list of {@link AmbariAgent#COMPONENTS} that will be / are installed on this node.
+     *
+     * @return a list of string that represents the components to be installed.
+     */
+    @Nullable
+    List<String> getComponents();
 }
