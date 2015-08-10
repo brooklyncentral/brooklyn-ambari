@@ -6,7 +6,7 @@ blueprints for [Apache Ambari](https://ambari.apache.org) servers and for deploy
 Ambari stacks to those servers.
 
 
-[![Build Status](https://api.travis-ci.org/brooklyncentral/clocker.svg?branch=master)](https://travis-ci.org/brooklyncentral/clocker)
+[![Build Status](https://api.travis-ci.org/brooklyncentral/brooklyn-ambari.svg?branch=master)](https://travis-ci.org/brooklyncentral/brooklyn-ambari)
 
 
 ## Sample Blueprint
