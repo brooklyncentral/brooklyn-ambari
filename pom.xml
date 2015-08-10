@@ -103,7 +103,22 @@
 		<groupId>org.apache.brooklyn</groupId>
 		<artifactId>brooklyn-launcher</artifactId>
 	</dependency>
-</dependencies>
+    </dependencies>
+    
+    <distributionManagement>
+        <repository>
+            <id>cloudsoft-release</id>
+            <name>cloudsoft-release</name>
+            <url>http://ccweb.cloudsoftcorp.com/maven/cloudsoft-release/</url>
+            <uniqueVersion>true</uniqueVersion>
+        </repository>
+        <snapshotRepository>
+            <id>cloudsoft-snapshot</id>
+            <name>cloudsoft-snapshot</name>
+            <url>http://ccweb.cloudsoftcorp.com/maven/cloudsoft-snapshot/</url>
+            <uniqueVersion>true</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
 
