@@ -16,17 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.brooklyn.ambari;
-
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Attributes;
@@ -36,6 +27,14 @@ import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.guava.Maybe;
 import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.text.Identifiers;
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 public class EtcHostsManager {
 
@@ -48,11 +47,11 @@ public class EtcHostsManager {
      *
      * @param machines machines to have their hostname and /etc/hosts set
      */
-    public static void setHostsOnMachines(Iterable<Entity> machines) {
+    public static void setHostsOnMachines(Iterable<? extends Entity> machines) {
         setHostsOnMachines(machines, Attributes.SUBNET_ADDRESS);
     }
 
-    public static void setHostsOnMachines(Iterable<Entity> machines, AttributeSensor<String> addressSensor) {
+    public static void setHostsOnMachines(Iterable<? extends Entity> machines, AttributeSensor<String> addressSensor) {
         Map<String, String> mapping = gatherIpHostnameMapping(machines, addressSensor);
 
         for (Entity e : machines) {
@@ -109,7 +108,7 @@ public class EtcHostsManager {
         }
     }
 
-    public static Map<String, String> gatherIpHostnameMapping(Iterable<Entity> entities) {
+    public static Map<String, String> gatherIpHostnameMapping(Iterable<? extends Entity> entities) {
         return gatherIpHostnameMapping(entities, Attributes.SUBNET_ADDRESS);
     }
 
@@ -121,10 +120,10 @@ public class EtcHostsManager {
      * @param addressSensor the sensor containing the IP address for each entity.
      * @return a map with an entry for each entity, mapping its IP address to its fully-qualified domain name.
      */
-    public static Map<String, String> gatherIpHostnameMapping(Iterable<Entity> entities, AttributeSensor<String> addressSensor) {
+    public static Map<String, String> gatherIpHostnameMapping(Iterable<? extends Entity> entities, AttributeSensor<String> addressSensor) {
         Map<String, String> mapping = Maps.newHashMap();
         for (Entity e : entities) {
-            Optional<String> name = Optional.fromNullable(e.getAttribute(AmbariConfigAndSensors.FQDN))
+            Optional<String> name = Optional.fromNullable(e.getAttribute(AmbariNode.FQDN))
                     .or(Optional.fromNullable(Machines.findSubnetOrPublicHostname(e).orNull()));
             Maybe<String> ip = Maybe.fromNullable(e.getAttribute(addressSensor));
             if (name.isPresent() && ip.isPresentAndNonNull()) {

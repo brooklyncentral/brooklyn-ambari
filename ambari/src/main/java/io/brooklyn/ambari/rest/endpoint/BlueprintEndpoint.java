@@ -17,23 +17,26 @@
  * under the License.
  */
 
-package io.brooklyn.ambari;
+package io.brooklyn.ambari.rest.endpoint;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.event.AttributeSensor;
-import com.google.common.reflect.TypeToken;
+import io.brooklyn.ambari.rest.domain.Blueprint;
+import io.brooklyn.ambari.rest.domain.Blueprints;
+import retrofit.client.Response;
+import retrofit.http.Body;
+import retrofit.http.GET;
+import retrofit.http.POST;
+import retrofit.http.Path;
 
-public class AmbariConfigAndSensors {
-    private AmbariConfigAndSensors() {}
+import java.util.Map;
 
-    /**
-     * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
-     */
-    public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
-            "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
-            Attributes.SUBNET_ADDRESS);
+public interface BlueprintEndpoint {
+
+    @GET("/api/v1/blueprints")
+    Blueprints getBlueprints();
+
+    @GET("/api/v1/blueprints/{blueprint}")
+    Blueprint getBlueprint(@Path("blueprint") String blueprint);
+
+    @POST("/api/v1/blueprints/{blueprint}")
+    Response createBlueprint(@Path("blueprint") String blueprint, @Body Map body);
 }

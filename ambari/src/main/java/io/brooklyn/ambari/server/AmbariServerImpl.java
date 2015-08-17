@@ -16,25 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.brooklyn.ambari.server;
-
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nullable;
-
-import org.apache.http.auth.UsernamePasswordCredentials;
-
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.net.HostAndPort;
-import com.google.common.net.HttpHeaders;
-import com.google.gson.JsonElement;
-import com.jayway.jsonpath.JsonPath;
 
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.annotation.EffectorParam;
@@ -46,20 +29,40 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
-import io.brooklyn.ambari.AmbariConfigAndSensors;
-import io.brooklyn.ambari.rest.AmbariConfig;
-import io.brooklyn.ambari.rest.DefaultAmbariApiHelper;
-import io.brooklyn.ambari.rest.DefaultAmbariBluePrint;
-import io.brooklyn.ambari.rest.DefaultBluePrintClusterBinding;
-import io.brooklyn.ambari.rest.RecommendationResponse;
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
+import com.google.common.net.HttpHeaders;
+import com.google.gson.JsonElement;
+import com.jayway.jsonpath.JsonPath;
+import io.brooklyn.ambari.rest.AmbariRequestInterceptor;
+import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
+import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
+import io.brooklyn.ambari.rest.domain.Request;
+import io.brooklyn.ambari.rest.endpoint.*;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import retrofit.RestAdapter;
+
+import javax.annotation.Nullable;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
     private volatile HttpFeed serviceUpHttpFeed;
     private volatile HttpFeed hostsHttpFeed;
+    private volatile HttpFeed clusterHttpFeed;
+
+    private String ambariUri;
+    private RestAdapter restAdapter;
+
     //TODO clearly needs changed
     private UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin", "admin");
-    private DefaultAmbariApiHelper ambariApiHelper;
     public static final Map<String, String> BASE_BLUEPRINTS = ImmutableMap.of("stack_name", "HDP", "stack_version", "2.2");
     public static final List<? extends Map<?, ?>> CONFIGURATIONS = ImmutableList.of(ImmutableMap.of("nagios-env", ImmutableMap.of("nagios_contact", "admin@localhost")));
 
@@ -75,10 +78,15 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         HostAndPort hp = BrooklynAccessUtils.getBrooklynAccessibleAddress(this, getAttribute(HTTP_PORT));
 
-        String ambariUri = String.format("http://%s:%d/", hp.getHostText(), hp.getPort());
+        ambariUri = String.format("http://%s:%d", hp.getHostText(), hp.getPort());
+
         setAttribute(Attributes.MAIN_URI, URI.create(ambariUri));
 
-        ambariApiHelper = new DefaultAmbariApiHelper(usernamePasswordCredentials, getAttribute(Attributes.MAIN_URI));
+        restAdapter = new RestAdapter.Builder()
+                .setEndpoint(ambariUri)
+                .setRequestInterceptor(new AmbariRequestInterceptor(usernamePasswordCredentials))
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .build();
 
         serviceUpHttpFeed = HttpFeed.builder()
                 .entity(this)
@@ -97,12 +105,26 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         hostsHttpFeed = HttpFeed.builder()
                 .entity(this)
                 .period(1000, TimeUnit.MILLISECONDS)
-                .baseUri(ambariUri + "api/v1/hosts")
+                .baseUri(String.format("%s/api/v1/hosts", ambariUri))
                 .credentials("admin", "admin")
                 .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
                 .poll(new HttpPollConfig<List<String>>(REGISTERED_HOSTS)
                         .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getHosts()))
                         .onFailureOrException(Functions.<List<String>>constant(ImmutableList.<String>of())))
+                .build();
+
+        clusterHttpFeed = HttpFeed.builder()
+                .entity(this)
+                .period(1000, TimeUnit.MILLISECONDS)
+                .baseUri(String.format("%s/api/v1/clusters/%s/requests/%d",
+                        ambariUri,
+                        "Cluster1",
+                        1))
+                .credentials("admin", "admin")
+                .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
+                .poll(new HttpPollConfig<String>(CLUSTER_STATE)
+                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getClusterState()))
+                        .onFailureOrException(Functions.<String>constant(null)))
                 .build();
     }
 
@@ -118,6 +140,18 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         return path;
     }
 
+    Function<JsonElement, String> getClusterState() {
+        Function<JsonElement, String> path = new Function<JsonElement, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable JsonElement jsonElement) {
+                String jsonString = jsonElement.toString();
+                return JsonPath.read(jsonString, "$.Requests.request_status");
+            }
+        };
+        return path;
+    }
+
     @Override
     public void disconnectSensors() {
         super.disconnectSensors();
@@ -125,60 +159,127 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         if (serviceUpHttpFeed != null) serviceUpHttpFeed.stop();
         if (hostsHttpFeed != null) hostsHttpFeed.stop();
+        if (clusterHttpFeed != null) clusterHttpFeed.stop();
     }
 
     @Override
-    public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName) {
+    public RecommendationWrappers getRecommendations(String stackName, String stackVersion, List<String> hosts, List<String> services) {
         waitForServiceUp();
-        ambariApiHelper.addHostToCluster(cluster, hostName);
+
+        return restAdapter.create(StackEndpoint.class).getRecommendations(stackName, stackVersion, ImmutableMap.builder()
+                .put("hosts", hosts)
+                .put("services", services)
+                .put("recommend", "host_groups")
+                .build());
     }
 
     @Override
-    public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service") String service) {
-        waitForServiceUp();
-        ambariApiHelper.addServiceToCluster(cluster, service);
+    public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config) {
+        Preconditions.checkNotNull(recommendationWrapper);
+        Preconditions.checkNotNull(recommendationWrapper.getStack());
+        Preconditions.checkNotNull(recommendationWrapper.getRecommendation());
+        Preconditions.checkNotNull(recommendationWrapper.getRecommendation().getBlueprint());
+        Preconditions.checkNotNull(recommendationWrapper.getRecommendation().getBindings());
+
+        restAdapter.create(BlueprintEndpoint.class).createBlueprint(blueprintName, ImmutableMap.builder()
+                .put("host_groups", recommendationWrapper.getRecommendation().getBlueprint().getHostGroups())
+                .put("configurations", getConfigurations(config))
+                .put("Blueprints", recommendationWrapper.getStack())
+                .build());
+
+        return restAdapter.create(ClusterEndpoint.class).createCluster(clusterName, ImmutableMap.builder()
+                .put("blueprint", blueprintName)
+                .put("default_password", "admin")
+                .put("host_groups", recommendationWrapper.getRecommendation().getBindings().getHostGroups())
+                .build());
     }
 
     @Override
-    public void addComponentToCluster(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Service name") String service, @EffectorParam(name = "Component name") String component) {
+    public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster,
+                                 @EffectorParam(name = "Host FQDN") String hostName) {
         waitForServiceUp();
-        ambariApiHelper.createComponent(cluster, service, component);
+        restAdapter.create(HostEndpoint.class).addHost(cluster, hostName);
+
     }
 
     @Override
-    public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster, @EffectorParam(name = "Host FQDN") String hostName, @EffectorParam(name = "Component name") String component) {
+    public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster,
+                                    @EffectorParam(name = "Service") String service) {
         waitForServiceUp();
-        ambariApiHelper.createHostComponent(cluster, hostName, component);
+        restAdapter.create(ServiceEndpoint.class).addService(cluster, service);
     }
 
     @Override
-    public void installHDP(@EffectorParam(name = "Cluster Name") String clusterName,
-                           @EffectorParam(name = "Blueprint Name") String blueprintName,
-                           @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
-                           @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services,
-                           @EffectorParam(name = "Configurations", description = "Map of configurations to apply to blueprint") Map<String, Map> config) {
+    public void createComponentToCluster(@EffectorParam(name = "Cluster name") String cluster,
+                                         @EffectorParam(name = "Service name") String service,
+                                         @EffectorParam(name = "Component name") String component) {
         waitForServiceUp();
+        restAdapter.create(ServiceEndpoint.class).createComponent(cluster, service, component);
+    }
 
-        RecommendationResponse recommendations =
-                ambariApiHelper.getRecommendations(
-                        hosts,
-                        services,
-                        "HDP",
-                        "2.2");
+    @Override
+    public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster,
+                                    @EffectorParam(name = "Host FQDN") String hostName,
+                                    @EffectorParam(name = "Component name") String component) {
+        waitForServiceUp();
+        restAdapter.create(HostEndpoint.class).createHostComponent(cluster, hostName, component);
+    }
 
-        ambariApiHelper.createBlueprint(
-                blueprintName,
-                DefaultAmbariBluePrint.createBlueprintFromRecommendation(
-                        recommendations.getBlueprint(),
-                        BASE_BLUEPRINTS,
-                        getConfigurations(config)));
+    @Override
+    public void createComponentConfiguration(@EffectorParam(name = "Cluster name") String cluster,
+                                             @EffectorParam(name = "Component configuration key") String key,
+                                             @EffectorParam(name = "Component configuration") Map<Object, Object> config) {
+        waitForServiceUp();
+        restAdapter.create(ConfigurationEnpoint.class).createConfiguration(cluster, ImmutableMap.builder()
+                .put("Clusters", ImmutableMap.builder()
+                        .put("desired_configs", ImmutableMap.builder()
+                                .put("type", key)
+                                .put("tag", String.format("version%d", System.currentTimeMillis()))
+                                .put("properties", config)
+                                .build())
+                        .build())
+                .build());
+    }
 
-        ambariApiHelper.createCluster(
-                clusterName,
-                blueprintName,
-                DefaultBluePrintClusterBinding.createFromRecommendation(
-                        recommendations.getBlueprintClusterBinding()));
+    @Override
+    public Request installService(@EffectorParam(name = "Cluster name") String cluster,
+                                  @EffectorParam(name = "Service name") String service) {
+        waitForServiceUp();
+        return restAdapter.create(ServiceEndpoint.class).updateService(cluster, service, ImmutableMap.builder()
+                .put("RequestInfo", ImmutableMap.builder()
+                        .put("context", String.format("Install %s service", service))
+                        .build())
+                .put("ServiceInfo", ImmutableMap.builder()
+                        .put("state", "INSTALLED")
+                        .build())
+                .build());
+    }
 
+    @Override
+    public Request startService(@EffectorParam(name = "Cluster name") String cluster,
+                                @EffectorParam(name = "Service name") String service) {
+        waitForServiceUp();
+        return restAdapter.create(ServiceEndpoint.class).updateService(cluster, service, ImmutableMap.builder()
+                .put("RequestInfo", ImmutableMap.builder()
+                        .put("context", String.format("Start %s service", service))
+                        .build())
+                .put("ServiceInfo", ImmutableMap.builder()
+                        .put("state", "STARTED")
+                        .build())
+                .build());
+    }
+
+    @Override
+    public void createCluster(@EffectorParam(name = "Cluster Name") String clusterName,
+                              @EffectorParam(name = "Blueprint Name") String blueprintName,
+                              @EffectorParam(name = "Stack Name") String stackName,
+                              @EffectorParam(name = "Stack version") String stackVersion,
+                              @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
+                              @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services,
+                              @EffectorParam(name = "Configurations", description = "Map of configurations to apply to blueprint") Map<String, Map> config) {
+        final RecommendationWrappers recommendationWrappers = getRecommendations(stackName, stackVersion, hosts, services);
+
+        deployCluster(clusterName, blueprintName, recommendationWrappers.getRecommendationWrappers().size() > 0 ? recommendationWrappers.getRecommendationWrappers().get(0) : null, config);
     }
 
     private List<? extends Map<?, ?>> getConfigurations(Map<String, Map> config) {
@@ -197,23 +298,12 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
-    public void installHDPFromConfig(String clusterName, String blueprintName, AmbariConfig config) {
-        waitForServiceUp();
-        ambariApiHelper.createBlueprint(
-                blueprintName,
-                DefaultAmbariBluePrint.createBlueprintFromConfig(
-                        config,
-                        BASE_BLUEPRINTS,
-                        getConfigurations(config.getConfigurations())));
-
-        ambariApiHelper.createCluster(
-                clusterName,
-                blueprintName,
-                DefaultBluePrintClusterBinding.createFromConfig(config));
+    public void setFqdn(String fqdn) {
+        setAttribute(FQDN, fqdn);
     }
 
     @Override
-    public void setFqdn(String fqdn) {
-        setAttribute(AmbariConfigAndSensors.FQDN, fqdn);
+    public String getFqdn() {
+        return getAttribute(FQDN);
     }
 }

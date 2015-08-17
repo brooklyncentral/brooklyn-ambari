@@ -131,3 +131,42 @@ Upload this to the Brooklyn server:
     curl https://127.0.0.1:8443/v1/catalog --data-binary @/path/to/ambari-catalog.yaml
 
 Users can then provision an Ambari cluster using the YAML shown in the first section.
+
+## Extra services
+
+### Usage
+
+To add an extra service to the cluster (i.e. not fully supported by the default stack such as Apache Ranger of Apache Spark)
+the new configuration key `extraServices` can be used:
+
+    ...
+    services:
+    - type: io.brooklyn.ambari.AmbariCluster
+      brooklyn.config:
+        ...
+        extraServices:
+        $brooklyn:entitySpec:
+          type: io.brooklyn.ambari.service.Ranger
+          brooklyn.config:
+            bindTo: NameNode
+            serviceName: RANGER
+            componentNames:
+            - RANGER_ADMIN
+            - RANGER_USERSYNC
+
+If the YAML uses the `services` configuration key, then the extra service has to use `serviceName`. Otherwise, in case of
+an Ambari host groups deployment, `componentNames` is the one that must to be used. The configuration key `bindTo` is
+**optional**. By default, the entity will be bind to the Ambari server node.
+
+### Create an extra service
+
+brooklyn-ambari comes with an archetype to bootstrap the creation of a new extra services. Simply run the following
+command:
+
+    mvn archetype:generate \
+        -DarchetypeGroupId=io.brooklyn.ambari \
+        -DarchetypeArtifactId=brooklyn-ambari-service \
+        -DarchetypeVersion=0.2.0-SNAPSHOT \
+        -DgroupId=<my.groupid> \
+        -DartifactId=<my-artifactId>
+  

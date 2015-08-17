@@ -3,7 +3,7 @@ services:
 - type: io.brooklyn.ambari.AmbariCluster
   name: Ambari Cluster
   brooklyn.config:
-    version: 2.0.1
+    version: 2.1.0
     ambaricluster.serverspec:
       $brooklyn:entitySpec:
         type: io.brooklyn.ambari.server.AmbariServer
@@ -29,25 +29,14 @@ services:
         httpfs.proxyuser.hue.groups: '*'
     initialSize: 3
     services:
-    - FALCON
-    - FLUME
     - GANGLIA
     - HBASE
     - HDFS
-    - KAFKA
-    - KERBEROS
     - MAPREDUCE2
-    - NAGIOS
-    - OOZIE
-    - PIG
-    - SLIDER
-    - SQOOP
-    - STORM
-    - TEZ
     - YARN
     - ZOOKEEPER
     extraServices:
       $brooklyn:entitySpec:
         type: io.brooklyn.ambari.service.Ranger
         brooklyn.config:
-          onNodeType: host-group-1
+          serviceName: RANGER

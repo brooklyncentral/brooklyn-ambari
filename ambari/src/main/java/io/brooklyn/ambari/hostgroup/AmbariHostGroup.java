@@ -16,11 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.brooklyn.ambari.hostgroup;
-
-import java.util.List;
-
-import com.google.common.reflect.TypeToken;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.ConfigKeys;
@@ -30,6 +27,10 @@ import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.util.flags.SetFromFlag;
+import com.google.common.reflect.TypeToken;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 @ImplementedBy(AmbariHostGroupImpl.class)
 public interface AmbariHostGroup extends DynamicCluster, SoftwareProcess, UsesJava {
@@ -44,4 +45,13 @@ public interface AmbariHostGroup extends DynamicCluster, SoftwareProcess, UsesJa
             "ambari.sibling.spec", "Spec for  extra entity to be installed on each of nodes in cluster", null);
 
     List<String> getHostFQDNs();
+
+    /**
+     * Returns the list of {@link io.brooklyn.ambari.agent.AmbariAgent#COMPONENTS} that will be / are installed on all
+     * node within this host group.
+     *
+     * @return a list of string that represents the components to be installed.
+     */
+    @Nullable
+    List<String> getComponents();
 }
