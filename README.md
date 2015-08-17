@@ -156,7 +156,7 @@ the new configuration key `extraServices` can be used:
 
 If the YAML uses the `services` configuration key, then the extra service has to use `serviceName`. Otherwise, in case of
 an Ambari host groups deployment, `componentNames` is the one that must to be used. The configuration key `bindTo` is
-**optional**. By default, the entoty will be bind to the Ambari server node.
+**optional**. By default, the entity will be bind to the Ambari server node.
 
 ### Create an extra service
 
