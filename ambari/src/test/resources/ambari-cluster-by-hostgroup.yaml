@@ -1,16 +1,10 @@
-name: Ambari driven cloud installation - centos
-
-location:
-  aws-ec2:us-east-1:
-    minRam: 8192
-    osFamily: ubuntu
-    osVersionRegex: 12.*
-
+name: Ambari driven cloud - By host group
 services:
 - type: io.brooklyn.ambari.AmbariCluster
+  name: Ambari Cluster
   brooklyn.config:
     version: 2.0.1
-  securityGroup: <securityGroup>
+    securityGroup: test-ambari
   brooklyn.children:
   - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
     name: NameNode
