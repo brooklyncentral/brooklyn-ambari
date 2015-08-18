@@ -31,8 +31,9 @@ import brooklyn.util.ssh.BashCommands;
 
 public class AmbariInstallCommands {
 
-    private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/%s/updates/%s/ambari.repo";
     private static final String CENTOS_REPO_LIST_LOCATION = "/etc/yum.repos.d/ambari.repo";
+    private static final String CENTOS_7_AMBARI_REPO_LOCATION = "http://s3.amazonaws.com/dev.hortonworks.com/ambari/centos7/2.x/BUILDS/2.1.0-1409/ambaribn.repo";
+    private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/%s/updates/%s/ambari.repo";
     private static final String CENTOS_5_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos5/%s/updates/%s/ambari.repo";
 
     private static final String SUSE_REPO_LIST_LOCATION = "/etc/zypp/repos.d/ambari.repo";
@@ -67,7 +68,9 @@ public class AmbariInstallCommands {
     private String setupCentos6Repo(SshMachineLocation sshMachineLocation) {
         // Doesn't check machine name as may refer to redhat, centos, or oracle
         String osDetailsVersion = getOsVersion(sshMachineLocation);
-        if (osDetailsVersion.startsWith("6")) {
+        if (osDetailsVersion.startsWith("7")) {
+            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_7_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
+        } else if (osDetailsVersion.startsWith("6")) {
             return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_6_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
         } else {
             return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_5_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
