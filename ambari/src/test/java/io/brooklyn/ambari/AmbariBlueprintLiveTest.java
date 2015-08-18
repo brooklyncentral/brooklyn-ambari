@@ -6,7 +6,7 @@ import brooklyn.launcher.blueprints.AbstractBlueprintTest;
 
 public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
 
-    @Test(groups={"Live", "WIP"})
+    @Test(groups = {"Live"})
     public void testAmbariCluster() throws Exception {
         runTest("ambari-cluster.yaml");
     }
