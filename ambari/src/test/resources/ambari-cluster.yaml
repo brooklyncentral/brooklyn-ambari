@@ -1,25 +1,14 @@
-location: AWS-US-WEST-1-CENTOS6
+location:
+  aws-ec2:us-east-1:
+    minRam: 8192
+    osFamily: ubuntu
+    osVersionRegex: 12.*
+    securityGroup: test-ambari
 services:
 - type: io.brooklyn.ambari.AmbariCluster
   name: Ambari Cluster
   brooklyn.config:
     version: 2.0.1
-    ambaricluster.serverspec:
-      $brooklyn:entitySpec:
-        type: io.brooklyn.ambari.server.AmbariServer
-        brooklyn.config:
-          provisioning.properties:
-            customizers:
-            - $brooklyn:object:
-                type: com.canopy.location.customizer.CommonSecurityGroupJcloudsLocationCustomizer
-    ambaricluster.agentspec:
-      $brooklyn:entitySpec:
-        type: io.brooklyn.ambari.agent.AmbariAgent
-        brooklyn.config:
-          provisioning.properties:
-            customizers:
-            - $brooklyn:object:
-                type: com.canopy.location.customizer.CommonSecurityGroupJcloudsLocationCustomizer
     ambariConfigMap:
       hdfs-site:
         dfs.webhdfs.enabled: true
@@ -46,8 +35,3 @@ services:
     - TEZ
     - YARN
     - ZOOKEEPER
-    extraServices:
-      $brooklyn:entitySpec:
-        type: io.brooklyn.ambari.service.Ranger
-        brooklyn.config:
-          onNodeType: host-group-1
