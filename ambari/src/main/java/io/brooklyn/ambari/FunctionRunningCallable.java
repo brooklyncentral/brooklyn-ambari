@@ -20,6 +20,9 @@
 package io.brooklyn.ambari;
 
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+
+import javax.annotation.Nonnull;
 
 /**
  * Basic object that bind a {@link Function} to a listener.
@@ -31,9 +34,9 @@ public class FunctionRunningCallable<T> implements Runnable {
     final T listener;
     final Function<T, ?> function;
 
-    public FunctionRunningCallable(T listener, Function<T, ?> function) {
-        this.listener = listener;
-        this.function = function;
+    public FunctionRunningCallable(@Nonnull T listener, @Nonnull Function<T, ?> function) {
+        this.listener = Preconditions.checkNotNull(listener, "Parameter listener must not be null");
+        this.function = Preconditions.checkNotNull(function, "Parameter function must not be null");
     }
 
     @Override
