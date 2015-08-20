@@ -65,7 +65,7 @@ public class AmbariHostGroupImpl extends DynamicClusterImpl implements AmbariHos
     }
 
     private EntitySpec<? extends AmbariAgent> ambariAgentSpec() {
-        return AmbariAgentImpl.createAgentSpec(getParent());
+        return AmbariAgentImpl.createAgentSpec(getParent(), config().getLocalBag());
     }
 
     private EntitySpec agentWithSiblingsSpec(EntitySpec<?> siblingSpec) {

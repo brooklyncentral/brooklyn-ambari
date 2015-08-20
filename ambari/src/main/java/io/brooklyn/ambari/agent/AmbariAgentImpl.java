@@ -23,6 +23,7 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.util.config.ConfigBag;
 import io.brooklyn.ambari.AmbariCluster;
 
 import javax.annotation.Nullable;
@@ -74,12 +75,15 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
         return getAttribute(COMPONENTS);
     }
 
-    public static EntitySpec<? extends AmbariAgent> createAgentSpec(Entity ambariCluster) {
-        EntitySpec<? extends AmbariAgent> agentSpec = ambariCluster.getConfig(AmbariCluster.AGENT_SPEC)
+    public static EntitySpec<? extends AmbariAgent> createAgentSpec(Entity ambariCluster, ConfigBag configBag) {
+        EntitySpec<? extends AmbariAgent> agentSpec = EntitySpec.create(ambariCluster.getConfig(AmbariCluster.AGENT_SPEC))
                 .configure(AMBARI_SERVER_FQDN,
                         attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), FQDN))
                 .configure(SoftwareProcess.SUGGESTED_VERSION,
                         ambariCluster.getConfig(AmbariCluster.SUGGESTED_VERSION));
+        if (configBag != null) {
+            agentSpec.configure(configBag.getAllConfig());
+        }
         Object securityGroup = ambariCluster.getConfig(AmbariCluster.SECURITY_GROUP);
         if (securityGroup != null) {
             agentSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
