@@ -294,8 +294,9 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private EntitySpec<? extends AmbariServer> createServerSpec(Object securityGroup) {
-        EntitySpec<? extends AmbariServer> serverSpec = getConfig(SERVER_SPEC)
+        EntitySpec<? extends AmbariServer> serverSpec = EntitySpec.create(getConfig(SERVER_SPEC))
                 .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
+                .configure(config().getBag().getAllConfig())
                 .displayName("Ambari Server");
         if (securityGroup != null) {
             serverSpec.configure(SoftwareProcess.PROVISIONING_PROPERTIES.subKey("securityGroups"), securityGroup);
@@ -426,7 +427,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         setAttribute(EXPECTED_AGENTS, initialSize);
         setAttribute(AMBARI_AGENTS, addChild(EntitySpec.create(DynamicCluster.class)
                         .configure(DynamicCluster.INITIAL_SIZE, initialSize)
-                        .configure(DynamicCluster.MEMBER_SPEC, AmbariAgentImpl.createAgentSpec(this))
+                        .configure(DynamicCluster.MEMBER_SPEC, AmbariAgentImpl.createAgentSpec(this, null))
                         .displayName("All Nodes")
         ));
     }
