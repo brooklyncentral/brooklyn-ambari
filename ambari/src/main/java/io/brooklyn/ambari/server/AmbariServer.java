@@ -19,6 +19,11 @@
 
 package io.brooklyn.ambari.server;
 
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.reflect.TypeToken;
+
 import brooklyn.catalog.Catalog;
 import brooklyn.entity.annotation.Effector;
 import brooklyn.entity.annotation.EffectorParam;
@@ -26,14 +31,10 @@ import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
-import com.google.common.reflect.TypeToken;
 import io.brooklyn.ambari.AmbariNode;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
 import io.brooklyn.ambari.rest.domain.Request;
-
-import java.util.List;
-import java.util.Map;
 
 @Catalog(name = "Ambari Server", description = "Ambari Server: part of an ambari cluster used to install and monitor a hadoop cluster.")
 @ImplementedBy(AmbariServerImpl.class)
@@ -61,10 +62,10 @@ public interface AmbariServer extends AmbariNode {
     /**
      * Retrieves the Ambari recommendations for the given hosts / services from the REST API.
      *
-     * @param stackName the stack name to use.
+     * @param stackName    the stack name to use.
      * @param stackVersion the stack version to use.
-     * @param hosts a list of registered hosts to the Ambari server.
-     * @param services a list of services to install.
+     * @param hosts        a list of registered hosts to the Ambari server.
+     * @param services     a list of services to install.
      * @return the recommendations formulated by Ambari.
      */
     public RecommendationWrappers getRecommendations(String stackName, String stackVersion, List<String> hosts, List<String> services);
@@ -72,10 +73,10 @@ public interface AmbariServer extends AmbariNode {
     /**
      * Creates a new blueprint and deploys it, based on the Ambari recommendations.
      *
-     * @param clusterName the cluster name to use.
-     * @param blueprintName the blueprint name to use.
+     * @param clusterName           the cluster name to use.
+     * @param blueprintName         the blueprint name to use.
      * @param recommendationWrapper the Ambari recommendation to create the blueprint and deploy it.
-     * @param config the additional configuration for the Hadoop services.
+     * @param config                the additional configuration for the Hadoop services.
      * @return a request corresponding to the Ambari's operation.
      */
     public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config);
@@ -119,6 +120,13 @@ public interface AmbariServer extends AmbariNode {
                               @EffectorParam(name = "Hosts", description = "List of FQDNs to add to cluster") List<String> hosts,
                               @EffectorParam(name = "Services", description = "List of services to install on cluster") List<String> services,
                               @EffectorParam(name = "Configurations", description = "Map of configurations to apply to blueprint") Map<String, Map> config);
+
+    @Effector(description = "Update the stack url")
+    public void updateStackRepository(@EffectorParam(name = "Stack Name") String stackName,
+                                      @EffectorParam(name = "Stack Version") String stackVersion,
+                                      @EffectorParam(name = "Operating System") String os,
+                                      @EffectorParam(name = "Repository Name") String repoName,
+                                      @EffectorParam(name = "Repository URL") String url);
 }
 
 

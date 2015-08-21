@@ -19,6 +19,25 @@
 
 package io.brooklyn.ambari.server;
 
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nullable;
+
+import org.apache.http.auth.UsernamePasswordCredentials;
+
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
+import com.google.common.net.HttpHeaders;
+import com.google.gson.JsonElement;
+import com.jayway.jsonpath.JsonPath;
+
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.Attributes;
@@ -29,28 +48,17 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.net.HostAndPort;
-import com.google.common.net.HttpHeaders;
-import com.google.gson.JsonElement;
-import com.jayway.jsonpath.JsonPath;
 import io.brooklyn.ambari.rest.AmbariRequestInterceptor;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
 import io.brooklyn.ambari.rest.domain.Request;
-import io.brooklyn.ambari.rest.endpoint.*;
-import org.apache.http.auth.UsernamePasswordCredentials;
+import io.brooklyn.ambari.rest.endpoint.BlueprintEndpoint;
+import io.brooklyn.ambari.rest.endpoint.ClusterEndpoint;
+import io.brooklyn.ambari.rest.endpoint.ConfigurationEnpoint;
+import io.brooklyn.ambari.rest.endpoint.HostEndpoint;
+import io.brooklyn.ambari.rest.endpoint.ServiceEndpoint;
+import io.brooklyn.ambari.rest.endpoint.StackEndpoint;
 import retrofit.RestAdapter;
-
-import javax.annotation.Nullable;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
@@ -282,9 +290,21 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         deployCluster(clusterName, blueprintName, recommendationWrappers.getRecommendationWrappers().size() > 0 ? recommendationWrappers.getRecommendationWrappers().get(0) : null, config);
     }
 
+    @Override
+    public void updateStackRepository(@EffectorParam(name = "Stack Name") String stackName, @EffectorParam(name = "Stack Version") String stackVersion, @EffectorParam(name = "Operating System") String os, @EffectorParam(name = "Repository Name") String repoName, @EffectorParam(name = "Repository URL") String url) {
+        waitForServiceUp();
+        restAdapter.create(StackEndpoint.class)
+                .updateStackRepository(stackName, stackVersion, os, repoName, ImmutableMap.builder()
+                        .put("Repositories", ImmutableMap.builder()
+                                .put("base_url", url)
+                                .put("verify_base_url", true)
+                                .build())
+                        .build());
+    }
+
     private List<? extends Map<?, ?>> getConfigurations(Map<String, Map> config) {
         ImmutableList.Builder<Map<?, ?>> builder = ImmutableList.<Map<?, ?>>builder();
-        if(config != null) {
+        if (config != null) {
             for (Map.Entry<String, Map> stringMapEntry : config.entrySet()) {
                 builder.add(
                         ImmutableMap.of(
