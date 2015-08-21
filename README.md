@@ -136,8 +136,8 @@ Users can then provision an Ambari cluster using the YAML shown in the first sec
 
 ### Usage
 
-To add an extra service to the cluster (i.e. not fully supported by the default stack such as Apache Ranger of Apache Spark)
-the new configuration key `extraServices` can be used:
+To add an extra service to the cluster (i.e. not fully supported by the default stack, such as [Apache Ranger](http://ranger.incubator.apache.org/)
+or [Apache Spark](http://spark.apache.org/)) the new configuration key `extraServices` can be used:
 
     ...
     services:
@@ -145,22 +145,22 @@ the new configuration key `extraServices` can be used:
       brooklyn.config:
         ...
         extraServices:
-        $brooklyn:entitySpec:
-          type: io.brooklyn.ambari.service.Ranger
-          brooklyn.config:
-            bindTo: NameNode
-            serviceName: RANGER
-            componentNames:
-            - RANGER_ADMIN
-            - RANGER_USERSYNC
+          $brooklyn:entitySpec:
+            type: io.brooklyn.ambari.service.Ranger
+            brooklyn.config:
+              bindTo: NameNode
+              serviceName: RANGER
+              componentNames:
+              - RANGER_ADMIN
+              - RANGER_USERSYNC
 
-If the YAML uses the `services` configuration key, then the extra service has to use `serviceName`. Otherwise, in case of
-an Ambari host groups deployment, `componentNames` is the one that must to be used. The configuration key `bindTo` is
-**optional**. By default, the entity will be bind to the Ambari server node.
+If the blueprint uses the `services` configuration key to define its topology, then the extra service has to use `serviceName`.
+Otherwise, in case of an Ambari host groups deployment, `componentNames` is the one that must to be used.
+The configuration key `bindTo` is **optional**. By default, the entity will be bind to the Ambari server node.
 
 ### Create an extra service
 
-brooklyn-ambari comes with an archetype to bootstrap the creation of a new extra services. Simply run the following
+brooklyn-ambari comes with an archetype to bootstrap the creation of a new extra service. Simply run the following
 command:
 
     mvn archetype:generate \
