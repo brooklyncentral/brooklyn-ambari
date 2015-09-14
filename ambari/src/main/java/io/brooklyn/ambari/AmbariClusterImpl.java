@@ -76,8 +76,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     private List<String> services;
     private Map<String, Map> configuration;
-    private Map<String, List<EntitySpec<? extends ExtraService>>> extraServiceByNodeName;
-    private Map<String, List<String>> extraComponentsByNodeName;
+    private Map<String, List<EntitySpec<? extends ExtraService>>> entitySpecsByNode;
+    private Map<String, List<String>> componentsByNode;
 
     @Override
     public void init() {
@@ -106,8 +106,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 .from(getAttribute(AMBARI_SERVER))
                 .build());
 
-        extraServiceByNodeName = new MutableMap<String, List<EntitySpec<? extends ExtraService>>>();
-        extraComponentsByNodeName = new MutableMap<String, List<String>>();
+        entitySpecsByNode = new MutableMap<String, List<EntitySpec<? extends ExtraService>>>();
+        componentsByNode = new MutableMap<String, List<String>>();
         EntitySpec<? extends ExtraService> entitySpec = getConfig(EXTRA_HADOOP_SERVICES);
         // There is a bug within Brooklyn which returns EntitySpecConfig if we try to get a list of EntitySpec.
         //for (EntitySpec<?> entitySpec : getConfig(EXTRA_HADOOP_SERVICES)) {
@@ -122,17 +122,23 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     ? (List<String>) entitySpec.getFlags().get(ExtraService.COMPONENT_NAMES.getName())
                     : ExtraService.COMPONENT_NAMES.getDefaultValue();
 
+
+            if (!entitySpecsByNode.containsKey(bindTo)) {
+                entitySpecsByNode.put(bindTo, new MutableList<EntitySpec<? extends ExtraService>>());
+            }
+            entitySpecsByNode.get(bindTo).add(entitySpec);
+
             if (isHostGroupBasedDeployment()) {
                 Preconditions.checkNotNull(componentNames,
                         "Please specify the list of components names (%s) for \"%s\" as this is a host groups based deployment.",
                         ExtraService.COMPONENT_NAMES.getName(),
                         entitySpec.getType().getName());
 
-                if (!extraComponentsByNodeName.containsKey(bindTo)) {
-                    extraComponentsByNodeName.put(bindTo, new MutableList<String>());
+                if (!componentsByNode.containsKey(bindTo)) {
+                    componentsByNode.put(bindTo, new MutableList<String>());
                 }
                 if (componentNames.size() > 0) {
-                    extraComponentsByNodeName.get(bindTo).addAll(componentNames);
+                    componentsByNode.get(bindTo).addAll(componentNames);
                 }
             } else {
                 Preconditions.checkNotNull(serviceName,
@@ -140,10 +146,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                         ExtraService.SERVICE_NAME.getName(),
                         entitySpec.getType().getName());
 
-                if (!extraServiceByNodeName.containsKey(bindTo)) {
-                    extraServiceByNodeName.put(bindTo, new MutableList<EntitySpec<? extends ExtraService>>());
-                }
-                extraServiceByNodeName.get(bindTo).add(entitySpec);
                 if (StringUtils.isNotBlank(serviceName)) {
                     services.add(serviceName);
                 }
@@ -255,24 +257,25 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         }
 
         for (HostGroup hostGroup : recommendationWrapper.getRecommendation().getBindings().getHostGroups()) {
+            AmbariAgent ambariAgent = null;
+
             for (int i = 0; i < hostGroup.getHosts().size(); i++) {
                 final Map<String, String> host = hostGroup.getHosts().get(i);
                 final String fqdn = host.get("fqdn");
                 if (StringUtils.isNotBlank(fqdn)) {
-                    final AmbariAgent ambariAgent = getAmbariAgentByFqdn(fqdn);
                     final List<String> components = componentsByNodeName.get(hostGroup.getName());
+                    ambariAgent = getAmbariAgentByFqdn(fqdn);
                     if (ambariAgent != null && components != null) {
                         ambariAgent.setComponents(components);
-                        // We want to bind our extra service only once!
-                        if (extraServiceByNodeName.containsKey(hostGroup.getName()) && i == 0) {
-                            bindExtraServices(extraServiceByNodeName.get(hostGroup.getName()), ambariAgent);
-                        }
                     }
                 }
             }
+            if (entitySpecsByNode.containsKey(hostGroup.getName()) && ambariAgent != null) {
+                bindExtraServices(entitySpecsByNode.get(hostGroup.getName()), isHostGroupBasedDeployment() ? ambariAgent.getParent() : ambariAgent);
+            }
         }
-        if (extraServiceByNodeName.containsKey("server")) {
-            bindExtraServices(extraServiceByNodeName.get("server"), getAttribute(AMBARI_SERVER));
+        if (entitySpecsByNode.containsKey("server")) {
+            bindExtraServices(entitySpecsByNode.get("server"), getAttribute(AMBARI_SERVER));
         }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
@@ -312,8 +315,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             HostGroup.Builder hostGroupBuilder = new HostGroup.Builder()
                     .setName(ambariHostGroup.getDisplayName())
                     .addComponents(ambariHostGroup.getComponents());
-            if (extraComponentsByNodeName.containsKey(ambariHostGroup.getDisplayName())) {
-                hostGroupBuilder.addComponents(extraComponentsByNodeName.get(ambariHostGroup.getDisplayName()));
+            if (componentsByNode.containsKey(ambariHostGroup.getDisplayName())) {
+                hostGroupBuilder.addComponents(componentsByNode.get(ambariHostGroup.getDisplayName()));
             }
             blueprintBuilder.addHostGroup(hostGroupBuilder.build());
 

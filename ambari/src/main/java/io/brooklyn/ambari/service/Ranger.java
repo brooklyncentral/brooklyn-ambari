@@ -19,11 +19,20 @@
 
 package io.brooklyn.ambari.service;
 
+import brooklyn.config.ConfigKey;
+import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.proxying.ImplementedBy;
+import brooklyn.util.flags.SetFromFlag;
 
 /**
  * Ranger hadoop service
  */
 @ImplementedBy(RangerImpl.class)
 public interface Ranger extends ExtraService {
+
+    @SetFromFlag("dbUser")
+    ConfigKey<String> DB_USER = ConfigKeys.newStringConfigKey("db.user", "MySQL user", "ranger");
+
+    @SetFromFlag("dbPassword")
+    ConfigKey<String> DB_PASSWORD = ConfigKeys.newStringConfigKey("db.password", "MySQL user password", "rangerpassword");
 }
