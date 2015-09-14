@@ -45,8 +45,6 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     private static final Logger LOG = LoggerFactory.getLogger(RangerImpl.class);
 
     private static final String DB_HOST = "localhost";
-    private static final String DB_USER = "ranger";
-    private static final String DB_PASSWORD = "rangerpassword";
 
     private static final List<String> REQUIRES_JDBC_DRIVER = Lists.newArrayList("NAMENODE", "HBASE_MASTER", "HBASE_REGIONSERVER");
     private static final List<String> REQUIRES_MYSQL_CLIENT = Lists.newArrayList("RANGER_ADMIN");
@@ -55,9 +53,9 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     public Map<String, Map> getAmbariConfig() {
         return ImmutableMap.<String, Map>builder()
                 .put("admin-properties", ImmutableMap.builder()
-                        .put("db_host", "localhost")
-                        .put("db_root_user", DB_USER)
-                        .put("db_root_password", DB_PASSWORD)
+                        .put("db_host", DB_HOST)
+                        .put("db_root_user", getConfig(DB_USER))
+                        .put("db_root_password", getConfig(DB_PASSWORD))
                         .build())
                 .build();
     }
@@ -80,31 +78,6 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     @Override
     public void postClusterDeploy(AmbariCluster ambariCluster) {
 
-    }
-
-    private class MysqlRequirementsFunction implements Function<AmbariAgent, Void> {
-        @Nullable
-        @Override
-        public Void apply(AmbariAgent ambariAgent) {
-            Task<Integer> sshTask = SshEffectorTasks.ssh(new String[] {
-                        BashCommands.installExecutable("mysql-server"),
-                        BashCommands.installExecutable("mysql"),
-                        BashCommands.sudo("service mysqld start"),
-                        String.format("mysql -u root -e 'create user `%s`@`%s` identified by \"%s\";'", DB_USER, DB_HOST, DB_PASSWORD),
-                        String.format("mysql -u root -e 'grant all privileges on *.* to `%s`@`%s` identified by \"%s\" with grant option; flush privileges;'", DB_USER, DB_HOST, DB_PASSWORD)})
-                    .summary("Initialise MySQL requirements on " + ambariAgent.getId())
-                    .machine(EffectorTasks.getSshMachine(ambariAgent))
-                    .newTask()
-                    .asTask();
-            Entities.submit(ambariAgent, sshTask);
-            sshTask.blockUntilEnded();
-            Integer result = sshTask.getUnchecked();
-            if (result != 0) {
-                throw new RuntimeException("Non-zero result code indicating failure when initialising MySQL requirement for Ranger: " + result);
-            }
-
-            return null;
-        }
     }
 
     private class AmbariServerRequirementsFunction implements Function<AmbariServer, Void> {
@@ -143,6 +116,31 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
             Integer result = sshTask.getUnchecked();
             if (result != 0) {
                 throw new RuntimeException("Non-zero result code indicating failure when initialising Ranger requirements: " + result);
+            }
+
+            return null;
+        }
+    }
+
+    private class MysqlRequirementsFunction implements Function<AmbariAgent, Void> {
+        @Nullable
+        @Override
+        public Void apply(AmbariAgent ambariAgent) {
+            Task<Integer> sshTask = SshEffectorTasks.ssh(new String[] {
+                    BashCommands.installExecutable("mysql-server"),
+                    BashCommands.installExecutable("mysql"),
+                    BashCommands.sudo("service mysqld start"),
+                    String.format("mysql -u root -e 'create user `%s`@`%s` identified by \"%s\";'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD)),
+                    String.format("mysql -u root -e 'grant all privileges on *.* to `%s`@`%s` identified by \"%s\" with grant option; flush privileges;'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD))})
+                    .summary("Initialise MySQL requirements on " + ambariAgent.getId())
+                    .machine(EffectorTasks.getSshMachine(ambariAgent))
+                    .newTask()
+                    .asTask();
+            Entities.submit(ambariAgent, sshTask);
+            sshTask.blockUntilEnded();
+            Integer result = sshTask.getUnchecked();
+            if (result != 0) {
+                throw new RuntimeException("Non-zero result code indicating failure when initialising MySQL requirement for Ranger: " + result);
             }
 
             return null;
