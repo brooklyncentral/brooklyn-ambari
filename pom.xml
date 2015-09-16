@@ -108,15 +108,15 @@
     
     <distributionManagement>
         <repository>
-            <id>cloudsoft-lib-release</id>
-            <name>cloudsoft-lib-release</name>
-            <url>http://ccweb.cloudsoftcorp.com/maven/libs-release-local/</url>
+            <id>sonatype-nexus-staging</id>
+            <name>sonatype-nexus-staging</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
             <uniqueVersion>true</uniqueVersion>
         </repository>
         <snapshotRepository>
-            <id>cloudsoft-lib-snapshot</id>
-            <name>cloudsoft-lib-snapshot</name>
-            <url>http://ccweb.cloudsoftcorp.com/maven/libs-snapshot-local/</url>
+            <id>sonatype-nexus-snapshots</id>
+            <name>sonatype-nexus-snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
             <uniqueVersion>true</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
