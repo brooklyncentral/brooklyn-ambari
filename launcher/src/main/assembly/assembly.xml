@@ -18,7 +18,7 @@
     under the License.
 -->
 <assembly>
-    <id>dist</id>
+    <id>launcher</id>
     <!-- Generates an archive and a dir containing the needed files; 
          can add e.g. zip to the following
          (but executable bit is not preserved) -->
