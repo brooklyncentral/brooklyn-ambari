@@ -40,7 +40,7 @@
 
     <modules>
         <module>ambari</module>
-        <module>dist</module>
+        <module>launcher</module>
         <module>service</module>
     </modules>
 

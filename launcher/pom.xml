@@ -21,10 +21,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>brooklyn-ambari-distribution</artifactId>
+    <artifactId>brooklyn-ambari-launcher</artifactId>
     <packaging>jar</packaging>
 
-    <name>Brooklyn Ambari distribution</name>
+    <name>Brooklyn Ambari launcher</name>
     <description>
         Packages Brooklyn and Brooklyn-Ambari.
     </description>
