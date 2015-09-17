@@ -19,6 +19,25 @@
 
 package io.brooklyn.ambari;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.Entity;
@@ -35,28 +54,20 @@ import brooklyn.management.Task;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.task.Tasks;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
 import io.brooklyn.ambari.hostgroup.AmbariHostGroup;
-import io.brooklyn.ambari.rest.domain.*;
+import io.brooklyn.ambari.rest.domain.Bindings;
+import io.brooklyn.ambari.rest.domain.Blueprint;
+import io.brooklyn.ambari.rest.domain.HostComponent;
+import io.brooklyn.ambari.rest.domain.HostGroup;
+import io.brooklyn.ambari.rest.domain.Recommendation;
+import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
+import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
+import io.brooklyn.ambari.rest.domain.Request;
+import io.brooklyn.ambari.rest.domain.Stack;
 import io.brooklyn.ambari.server.AmbariServer;
 import io.brooklyn.ambari.service.ExtraService;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The minimum requirements for an ambari hadoop cluster.
@@ -177,6 +188,11 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     @Override
     public Iterable<AmbariServer> getAmbariServers() {
         return Entities.descendants(this, AmbariServer.class);
+    }
+
+    @Override
+    public List<String> getExtraStackDefinitionsUrls() {
+        return getConfig(STACK_DEFINITION_URLS);
     }
 
     static final class RegisteredHostEventListener implements SensorEventListener<List<String>> {

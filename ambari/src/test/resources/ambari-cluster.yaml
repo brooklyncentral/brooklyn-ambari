@@ -5,6 +5,8 @@ services:
   brooklyn.config:
     version: 2.0.1
     securityGroup: test-ambari
+    ambariStackDefsUrl:
+    - https://github.com/abajwa-hw/openldap-stack/archive/master.zip
     ambariConfigMap:
       hdfs-site:
         dfs.webhdfs.enabled: true
