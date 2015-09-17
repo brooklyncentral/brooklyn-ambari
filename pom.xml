@@ -90,7 +90,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
+    
     <dependencies>
         <dependency>
             <groupId>org.apache.brooklyn</groupId>
@@ -105,7 +105,7 @@
             <artifactId>brooklyn-launcher</artifactId>
         </dependency>
     </dependencies>
-
+    
     <distributionManagement>
         <repository>
             <id>sonatype-nexus-staging</id>
@@ -148,7 +148,47 @@
                     </instructions>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>0.10</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!--
+                         If you wish to override this list in the component (child) pom, ensure you use
+                             <excludes combine.children="merge">
+                         so that the child pom entries replace the parent entries
+                     -->
+                    <excludes combine.children="append">
+                        <!-- git and IDE project files -->
+                        <!-- see https://issues.apache.org/jira/browse/RAT-107 -->
+                        <exclude>**/.git/**</exclude>
+                        <exclude>**/.gitignore</exclude>
+                        <exclude>**/.idea/**</exclude>
+                        <exclude>**/*.iml</exclude>
+                        <exclude>**/.classpath/**</exclude>
+                        <exclude>**/.project</exclude>
+                        <exclude>**/.settings/**</exclude>
+                        <exclude>**/*.log</exclude>
+                        <exclude>**/brooklyn*.log.*</exclude>
+                        <exclude>**/target/**</exclude>
+                        <!-- files not requiring licence -->
+                        <exclude>README.md</exclude>
+                        <exclude>LICENSE.md</exclude>
+                        <exclude>.travis.yml</exclude>
+                        <exclude>**/*.yaml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
 </project>
 
