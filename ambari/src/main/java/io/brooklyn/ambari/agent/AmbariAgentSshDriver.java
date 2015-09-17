@@ -35,6 +35,7 @@ import brooklyn.util.collections.MutableMap;
 import brooklyn.util.ssh.BashCommands;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariInstallCommands;
+import io.brooklyn.ambari.server.AmbariServer;
 
 public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
     public static final Logger log = LoggerFactory.getLogger(AmbariAgentSshDriver.class);
@@ -66,7 +67,15 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
 
     @Override
     public void install() {
-        String fqdn = entity.getId().toLowerCase() + AmbariCluster.DOMAIN_NAME;
+        String parentFQDN =
+        entity.getParent() instanceof AmbariServer
+                ? ((AmbariServer) entity.getParent()).getFqdn()
+                : "";
+        String fqdn =
+                parentFQDN.isEmpty()
+                ? entity.getId().toLowerCase() + AmbariCluster.DOMAIN_NAME
+                : parentFQDN;
+
         getEntity().setFqdn(fqdn);
         ImmutableList<String> commands =
                 ImmutableList.<String>builder()

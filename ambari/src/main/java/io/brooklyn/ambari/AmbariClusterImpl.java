@@ -89,12 +89,26 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     private Map<String, Map> configuration;
     private Map<String, List<EntitySpec<? extends ExtraService>>> entitySpecsByNode;
     private Map<String, List<String>> componentsByNode;
+    private Function<AmbariServer, String> mapAmbariServerToFQDN = new Function<AmbariServer, String>() {
+        @Nullable
+        @Override
+        public String apply(@Nullable AmbariServer ambariServer) {
+            return ambariServer.getFqdn();
+        }
+    };
 
     @Override
     public void init() {
         super.init();
 
         setAttribute(AMBARI_SERVER, addChild(createServerSpec(getConfig(SECURITY_GROUP))));
+        if(!getConfig(SERVER_COMPONENTS).isEmpty()) {
+            for (AmbariServer ambariServer : getAmbariServers()) {
+                ambariServer.config().set(SoftwareProcess.CHILDREN_STARTABLE_MODE, SoftwareProcess.ChildStartableMode.BACKGROUND_LATE);
+                EntitySpec<? extends AmbariAgent> agentSpec = AmbariAgentImpl.createAgentSpec(this, null);
+                ambariServer.addChild(agentSpec);
+            }
+        }
 
         configuration = MutableMap.copyOf(getConfig(AMBARI_CONFIGURATIONS));
         services = MutableList.copyOf(getConfig(HADOOP_SERVICES));
@@ -342,6 +356,24 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     .build());
         }
 
+        List<String> serverComponentsList = getConfig(AmbariCluster.SERVER_COMPONENTS);
+        if (!serverComponentsList.isEmpty()) {
+             HostGroup.Builder hostGroupBuilder = new HostGroup.Builder()
+                    .setName("server-group")
+                    .addComponents(serverComponentsList);
+            if (componentsByNode.containsKey("server-group")) {
+                hostGroupBuilder.addComponents(componentsByNode.get("server-group"));
+            }
+            blueprintBuilder.addHostGroup(hostGroupBuilder.build());
+            Iterable<AmbariServer> ambariServers = getAmbariServers();
+            Iterable<String> fqdns = Iterables.transform(ambariServers, mapAmbariServerToFQDN);
+
+            bindingsBuilder.addHostGroup(new HostGroup.Builder()
+                    .setName("server-group")
+                    .addHosts(Lists.newArrayList(fqdns))
+                    .build());
+        }
+
         return new RecommendationWrapper.Builder()
                 .setStack(new Stack.Builder()
                         .setName(getConfig(HADOOP_STACK_NAME))
@@ -432,9 +464,16 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     private void calculateTotalAgentsInHostgroups() {
         int agentsToExpect = 0;
         for (AmbariHostGroup hostGroup : getHostGroups()) {
-                agentsToExpect += hostGroup.getConfig(AmbariHostGroup.INITIAL_SIZE);
+            agentsToExpect += hostGroup.getConfig(AmbariHostGroup.INITIAL_SIZE);
+        }
+        if (getServer().agentOnServer()) {
+            agentsToExpect += Iterables.size(getAmbariServers());
         }
         setAttribute(EXPECTED_AGENTS, agentsToExpect);
+    }
+
+    private AmbariServer getServer() {
+        return Iterables.getFirst(Entities.descendants(this, AmbariServer.class), null);
     }
 
     private Iterable<AmbariHostGroup> getHostGroups() {

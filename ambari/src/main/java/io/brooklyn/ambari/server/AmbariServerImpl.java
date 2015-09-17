@@ -27,20 +27,25 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.JsonElement;
 import com.jayway.jsonpath.JsonPath;
 
 import brooklyn.enricher.Enrichers;
+import brooklyn.entity.Entity;
 import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.Attributes;
+import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.event.feed.http.HttpFeed;
 import brooklyn.event.feed.http.HttpPollConfig;
@@ -48,6 +53,7 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
+import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.rest.AmbariRequestInterceptor;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
@@ -62,6 +68,7 @@ import retrofit.RestAdapter;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
+    public static final Logger LOG = LoggerFactory.getLogger(AmbariServerImpl.class);
     private volatile HttpFeed serviceUpHttpFeed;
     private volatile HttpFeed hostsHttpFeed;
     private volatile HttpFeed clusterHttpFeed;
@@ -300,6 +307,15 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                                 .put("verify_base_url", true)
                                 .build())
                         .build());
+    }
+
+    @Override
+    public boolean agentOnServer() {
+        Iterable<AmbariCluster> ambariClusters = Iterables.filter(Entities.ancestors(this), AmbariCluster.class);
+        for(Entity parent: ambariClusters) {
+                return !parent.getConfig(AmbariCluster.SERVER_COMPONENTS).isEmpty();
+        }
+        return false;
     }
 
     private List<? extends Map<?, ?>> getConfigurations(Map<String, Map> config) {

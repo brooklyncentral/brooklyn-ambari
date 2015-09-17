@@ -127,6 +127,14 @@ public interface AmbariServer extends AmbariNode {
                                       @EffectorParam(name = "Operating System") String os,
                                       @EffectorParam(name = "Repository Name") String repoName,
                                       @EffectorParam(name = "Repository URL") String url);
+
+    /**
+     * Are we installing the ambari agent on the same server as the ambari server?
+     * Calculated based on whether any components are configured to be installed on server.
+     *
+     * @return true if agent to be installed on server
+     */
+    public boolean agentOnServer();
 }
 
 
