@@ -19,9 +19,16 @@
 package io.brooklyn.ambari.server;
 
 import static brooklyn.util.ssh.BashCommands.installPackage;
+import static brooklyn.util.ssh.BashCommands.sudo;
+import static brooklyn.util.ssh.BashCommands.unzip;
+import static java.lang.String.format;
+
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
+import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
@@ -33,6 +40,7 @@ import io.brooklyn.ambari.AmbariInstallCommands;
 
 public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implements AmbariServerDriver {
 
+    public static final String RESOURCE_STACK_LOCATION = "/var/lib/ambari-server/resources/stacks/%s/%s/services/";
     private final AmbariInstallCommands ambariInstallHelper = new AmbariInstallCommands(entity.getConfig(SoftwareProcess.SUGGESTED_VERSION));
 
     public AmbariServerSshDriver(EntityLocal entity, SshMachineLocation machine) {
@@ -43,10 +51,11 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
     public AmbariServerImpl getEntity() {
         return AmbariServerImpl.class.cast(super.getEntity());
     }
+
     @Override
     public boolean isRunning() {
         return newScript(MutableMap.of("usePidFile", false), CHECK_RUNNING)
-                .body.append(BashCommands.sudo("ambari-server status"))
+                .body.append(sudo("ambari-server status"))
                 .execute() == 0;
     }
 
@@ -57,7 +66,7 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     public void stop() {
-        newScript(STOPPING).body.append(BashCommands.sudo("ambari-server stop")).execute();
+        newScript(STOPPING).body.append(sudo("ambari-server stop")).execute();
     }
 
     @Override
@@ -66,11 +75,11 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
         getEntity().setFqdn(fqdn);
         ImmutableList<String> commands =
                 ImmutableList.<String>builder()
-                .add(ambariInstallHelper.installAmbariRequirements(getMachine()))
-                .addAll(BashCommands.setHostname(fqdn))
-                .add(installPackage("ambari-server"))
-                .add(BashCommands.sudo("ambari-server setup -s"))
-                .build();
+                        .add(ambariInstallHelper.installAmbariRequirements(getMachine()))
+                        .addAll(BashCommands.setHostname(fqdn))
+                        .add(installPackage("ambari-server"))
+                        .add(sudo("ambari-server setup -s"))
+                        .build();
 
         newScript(INSTALLING).body
                 .append(commands)
@@ -80,13 +89,65 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     public void customize() {
+        List<String> extraStackDefinitions = getExtraStackDefinitionUrls();
+        ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
+        if (!extraStackDefinitions.isEmpty()) {
+            for (String extraStackDefinition : extraStackDefinitions) {
+                String destination = copyToTmp(extraStackDefinition);
+                builder.add(getUnpackCommand(destination));
+            }
+
+            newScript(CUSTOMIZING)
+                    .body.append(builder.build())
+                    .failOnNonZeroResultCode()
+                    .execute();
+        }
     }
 
     @Override
     public void launch() {
         newScript(LAUNCHING)
-                .body.append(BashCommands.sudo("ambari-server start"))
+                .body.append(sudo("ambari-server start"))
                 .failOnNonZeroResultCode()
                 .execute();
     }
+
+    private String copyToTmp(String extraStackDefinition) {
+        String filename = extraStackDefinition.substring(extraStackDefinition.lastIndexOf('/') + 1);
+        String destination = "/tmp/" + filename;
+        getMachine().copyTo(resource.getResourceFromUrl(extraStackDefinition), destination);
+        return destination;
+    }
+
+    private String getUnpackCommand(String destination) {
+        if (destination.endsWith("tar")) {
+            return sudo(format("tar xvf %s -C %s", destination, stackResourceLocation()));
+        } else if (destination.endsWith("tar.gz")) {
+            return sudo(format("tar zxvf %s -C %s", destination, stackResourceLocation()));
+        } else if (destination.endsWith("zip")) {
+            return BashCommands.chain(
+                    BashCommands.INSTALL_UNZIP,
+                    sudo(unzip(destination, stackResourceLocation())));
+        }
+
+        throw new IllegalStateException("Stack locations must be of type tar, tar.gz, zip");
+    }
+
+    private List<String> getExtraStackDefinitionUrls() {
+        AmbariCluster parent = getParentAmbariCluster();
+        return parent.getExtraStackDefinitionsUrls();
+    }
+
+    private String stackResourceLocation() {
+        AmbariCluster parent = getParentAmbariCluster();
+        String stackName = parent.getConfig(AmbariCluster.HADOOP_STACK_NAME);
+        String stackVersion = parent.getConfig(AmbariCluster.HADOOP_STACK_VERSION);
+        return format(RESOURCE_STACK_LOCATION, stackName, stackVersion);
+    }
+
+    private AmbariCluster getParentAmbariCluster() {
+        Iterable<AmbariCluster> ancestors = Iterables.filter(Entities.ancestors(entity), AmbariCluster.class);
+        return Iterables.getFirst(ancestors, null);
+    }
+
 }

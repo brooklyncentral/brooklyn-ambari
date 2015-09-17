@@ -19,6 +19,12 @@
 
 package io.brooklyn.ambari;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.reflect.TypeToken;
+
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
@@ -34,13 +40,9 @@ import brooklyn.event.basic.BasicConfigKey;
 import brooklyn.event.basic.MapConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
-import com.google.common.reflect.TypeToken;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.server.AmbariServer;
 import io.brooklyn.ambari.service.ExtraService;
-
-import java.util.List;
-import java.util.Map;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
@@ -91,6 +93,11 @@ public interface AmbariCluster extends Entity, Startable {
     ConfigKey<Map<String, Map>> AMBARI_CONFIGURATIONS =
             new MapConfigKey<Map>(Map.class, "ambari.configurations", "Map of maps");
 
+    @SetFromFlag("ambariStackDefsUrl")
+    ConfigKey<List<String>> STACK_DEFINITION_URLS =
+            ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
+            }, "ambari.stack.urls", "stack definitions as tar.gz", new LinkedList<String>());
+
     AttributeSensor<AmbariServer> AMBARI_SERVER = Sensors.newSensor(
             AmbariServer.class, "ambaricluster.configservers", "Config servers");
 
@@ -133,4 +140,10 @@ public interface AmbariCluster extends Entity, Startable {
      * Call after a the hadoop cluster has been deployed
      */
     void postDeployCluster();
+
+    /**
+     * Urls for extra stack definitions e.g. Kerberos
+     * @return List of Strings of form http://host/def.tar.gz
+     */
+    List<String> getExtraStackDefinitionsUrls();
 }
