@@ -93,7 +93,7 @@ public interface AmbariCluster extends Entity, Startable {
     ConfigKey<Map<String, Map>> AMBARI_CONFIGURATIONS =
             new MapConfigKey<Map>(Map.class, "ambari.configurations", "Map of maps");
 
-    @SetFromFlag("ambariStackDefsUrl")
+    @SetFromFlag("ambariStackDefsUrls")
     ConfigKey<List<String>> STACK_DEFINITION_URLS =
             ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
             }, "ambari.stack.urls", "stack definitions as tar.gz", new LinkedList<String>());
