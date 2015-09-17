@@ -170,3 +170,19 @@ command:
         -DgroupId=<my.groupid> \
         -DartifactId=<my-artifactId>
   
+## Extra Stack definitions
+
+If you want brooklyn can install extra stack definitions on the server.  It will accept this in archive 
+form e.g. tar, tar.gz, or zip.  These can be located via a url - either http(s)://, classpath://, or file:// 
+
+### Add extra stack definitions to yaml
+
+You can add extra stack definitions using yaml using the ambariStackDefsUrls:
+
+    ...
+    services:
+    - type: io.brooklyn.ambari.AmbariCluster
+      brooklyn.config:
+        ...
+        ambariStackDefsUrls:
+        - https://github.com/abajwa-hw/openldap-stack/archive/master.zip
