@@ -90,7 +90,7 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         public Void apply(AmbariServer ambariServer) {
             Task<Integer> sshTask = SshEffectorTasks
                     .ssh(
-                            installExecutable("mysql-connector-java"),
+                            alternatives(installExecutable("mysql-connector-java"), installExecutable("libmysql-java")),
                             sudo("ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar"))
                     .summary("Initialise Ranger requirements on " + ambariServer.getId())
                     .machine(EffectorTasks.getSshMachine(ambariServer))
@@ -112,7 +112,7 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         @Override
         public Void apply(AmbariAgent ambariAgent) {
             Task<Integer> sshTask = SshEffectorTasks
-                    .ssh(installExecutable("mysql-connector-java"))
+                    .ssh(alternatives(installExecutable("mysql-connector-java"), installExecutable("libmysql-java")))
                     .summary("Initialise Ranger requirements on " + ambariAgent.getId())
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
