@@ -186,3 +186,20 @@ You can add extra stack definitions using yaml using the ambariStackDefsUrls:
         ...
         ambariStackDefsUrls:
         - https://github.com/abajwa-hw/openldap-stack/archive/master.zip
+        
+## Ambari server as part of cluster
+
+Brooklyn can install the ambari agent on the same host as the ambari server.
+This is only available if you are using the hostgroup approach to defining your cluster in yaml.
+
+### Add ambari component to install on ambari server
+
+If you wish to install ambari components on the server use the serverComponents key:
+
+    ...
+    services:
+    - type: io.brooklyn.ambari.AmbariCluster
+      brooklyn.config:
+        ...
+        serverComponents:
+        - HDFS_CLIENT

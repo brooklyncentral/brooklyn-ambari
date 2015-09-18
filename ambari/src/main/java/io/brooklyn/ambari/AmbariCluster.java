@@ -89,6 +89,13 @@ public interface AmbariCluster extends Entity, Startable {
     @SetFromFlag("version")
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION, "1.7.0");
 
+    @SetFromFlag("serverComponents")
+    ConfigKey<List<String>> SERVER_COMPONENTS =
+            ConfigKeys.newConfigKey(
+                    new TypeToken<List<String>>() {
+                    }, "ambari.server.components", "List of components to install on Ambari Server.  " +
+                            "If non-empty then ambari agent will be added to server", new LinkedList<String>());
+
     @SetFromFlag("ambariConfigMap")
     ConfigKey<Map<String, Map>> AMBARI_CONFIGURATIONS =
             new MapConfigKey<Map>(Map.class, "ambari.configurations", "Map of maps");

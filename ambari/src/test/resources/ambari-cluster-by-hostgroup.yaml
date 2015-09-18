@@ -5,6 +5,8 @@ services:
   brooklyn.config:
     version: 2.0.1
     securityGroup: test-ambari
+    serverComponents:
+    - HDFS_CLIENT
   brooklyn.children:
   - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
     name: NameNode
