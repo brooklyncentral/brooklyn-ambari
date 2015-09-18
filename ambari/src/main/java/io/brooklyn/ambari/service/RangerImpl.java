@@ -19,6 +19,10 @@
 
 package io.brooklyn.ambari.service;
 
+import static brooklyn.util.ssh.BashCommands.alternatives;
+import static brooklyn.util.ssh.BashCommands.installExecutable;
+import static brooklyn.util.ssh.BashCommands.sudo;
+
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.effector.EffectorTasks;
 import brooklyn.entity.software.SshEffectorTasks;
@@ -84,9 +88,10 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         @Nullable
         @Override
         public Void apply(AmbariServer ambariServer) {
-            Task<Integer> sshTask = SshEffectorTasks.ssh(new String[]{
-                        BashCommands.installExecutable("mysql-connector-java"),
-                        BashCommands.sudo("ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar")})
+            Task<Integer> sshTask = SshEffectorTasks
+                    .ssh(
+                            installExecutable("mysql-connector-java"),
+                            sudo("ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar"))
                     .summary("Initialise Ranger requirements on " + ambariServer.getId())
                     .machine(EffectorTasks.getSshMachine(ambariServer))
                     .newTask()
@@ -106,7 +111,8 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         @Nullable
         @Override
         public Void apply(AmbariAgent ambariAgent) {
-            Task<Integer> sshTask = SshEffectorTasks.ssh(BashCommands.installExecutable("mysql-connector-java"))
+            Task<Integer> sshTask = SshEffectorTasks
+                    .ssh(installExecutable("mysql-connector-java"))
                     .summary("Initialise Ranger requirements on " + ambariAgent.getId())
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
@@ -126,12 +132,13 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         @Nullable
         @Override
         public Void apply(AmbariAgent ambariAgent) {
-            Task<Integer> sshTask = SshEffectorTasks.ssh(new String[] {
-                    BashCommands.installExecutable("mysql-server"),
-                    BashCommands.installExecutable("mysql"),
-                    BashCommands.sudo("service mysqld start"),
-                    String.format("mysql -u root -e 'create user `%s`@`%s` identified by \"%s\";'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD)),
-                    String.format("mysql -u root -e 'grant all privileges on *.* to `%s`@`%s` identified by \"%s\" with grant option; flush privileges;'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD))})
+            Task<Integer> sshTask = SshEffectorTasks
+                    .ssh(
+                            installExecutable("mysql-server"),
+                            alternatives(installExecutable("mysql"), installExecutable("mysql-client")),
+                            alternatives(sudo("service mysqld restart"), sudo("service mysql restart")),
+                            String.format("mysql -u root -e 'create user `%s`@`%s` identified by \"%s\";'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD)),
+                            String.format("mysql -u root -e 'grant all privileges on *.* to `%s`@`%s` identified by \"%s\" with grant option; flush privileges;'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD)))
                     .summary("Initialise MySQL requirements on " + ambariAgent.getId())
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()

@@ -21,6 +21,7 @@ package io.brooklyn.ambari;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -32,11 +33,17 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import brooklyn.entity.Application;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.rebind.RebindOptions;
+import brooklyn.entity.rebind.RebindTestUtils;
 import brooklyn.launcher.blueprints.AbstractBlueprintTest;
+import brooklyn.management.ManagementContext;
+import brooklyn.management.internal.LocalManagementContext;
 import brooklyn.test.EntityTestUtils;
 import brooklyn.util.ResourceUtils;
 import brooklyn.util.collections.MutableMap;
@@ -71,12 +78,13 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
         //Do nothing
     }
 
+    @Override
     protected void runTest(Reader yaml) throws Exception {
         Application app = this.launcher.launchAppYaml(yaml);
         this.assertNoFires(app);
-        Application newApp = this.rebind();
+        Application newApp = this.rebind(app, RebindOptions.create());
         this.assertNoFires(newApp);
-        assertHadoopClusterEventuallyDeployed(newApp);
+        this.assertHadoopClusterEventuallyDeployed(newApp);
     }
 
     @DataProvider(name = "providerData", parallel = true)
@@ -84,40 +92,45 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
 
         return new Object[][]{
                 new Object[]{
-                        "ambari-cluster.yaml", "aws-ec2", "us-east-1", "UbuntuOnAWS", MutableMap.<String, String>builder()
-                        .put("minRam", "8192")
+                        "ambari-cluster.yaml", "softlayer", "ams01", "UbuntuOnSoftlayer", MutableMap.<String, String>builder()
+                        .put("minRam", "16384")
+                        .put("minCores", "4")
                         .put("osFamily", "ubuntu")
                         .put("osVersionRegex", "12.*")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster.yaml", "aws-ec2", "us-west-1", "CentOSOnAWS", MutableMap.<String, String>builder()
-                        .put("minRam", "8192")
+                        "ambari-cluster.yaml", "softlayer", "ams03", "CentOSOnSoftlayer", MutableMap.<String, String>builder()
+                        .put("minRam", "16384")
+                        .put("minCores", "4")
                         .put("osFamily", "centos")
                         .put("osVersionRegex", "6.*")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster.yaml", "aws-ec2", "eu-west-1", "RHEDOnAWS", MutableMap.<String, String>builder()
-                        .put("minRam", "8192")
+                        "ambari-cluster.yaml", "softlayer", "lon02", "RHEDOnSoftlayer", MutableMap.<String, String>builder()
+                        .put("minRam", "16384")
+                        .put("minCores", "4")
                         .put("osFamily", "rhel")
                         .put("osVersionRegex", "6.*")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster-by-hostgroup.yaml", "aws-ec2", "eu-west-1", "UbuntuOnAWS", MutableMap.<String, String>builder()
-                        .put("minRam", "8192")
+                        "ambari-cluster-by-hostgroup.yaml", "softlayer", "sea01", "UbuntuOnSoftlayer", MutableMap.<String, String>builder()
+                        .put("minRam", "16384")
+                        .put("minCores", "4")
                         .put("osFamily", "ubuntu")
                         .put("osVersionRegex", "12.*")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster-w-extra-services.yaml", "aws-ec2", "us-east-1", "UbuntuOnAWS", MutableMap.<String, String>builder()
-                        .put("minRam", "8192")
+                        "ambari-cluster-w-extra-services.yaml", "softlayer", "dal05", "UbuntuOnSoftlayer", MutableMap.<String, String>builder()
+                        .put("minRam", "16384")
+                        .put("minCores", "4")
                         .put("osFamily", "ubuntu")
                         .put("osVersionRegex", "12.*")
                         .put("stopIptables", "true")
@@ -135,12 +148,52 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
         runTest(new StringReader(yaml));
     }
 
-    private void assertHadoopClusterEventuallyDeployed(Application newApp) {
+    protected Application rebind(Application currentApp, RebindOptions options) throws Exception {
+        ManagementContext origMgmt = this.mgmt;
+        LocalManagementContext newMgmt = this.createNewManagementContext();
+        options = RebindOptions.create(options);
+        if(options.classLoader == null) {
+            options.classLoader(this.classLoader);
+        }
+
+        if(options.mementoDir == null) {
+            options.mementoDir(this.mementoDir);
+        }
+
+        if(options.origManagementContext == null) {
+            options.origManagementContext(origMgmt);
+        }
+
+        if(options.newManagementContext == null) {
+            options.newManagementContext(newMgmt);
+        }
+
+        RebindTestUtils.waitForPersisted(currentApp);
+
+        this.mgmt = options.newManagementContext;
+        final Collection<Application> newApps = RebindTestUtils.rebindAll(options);
+        for (Application newApp : newApps) {
+            if (newApp.getId().equals(currentApp.getId())) {
+                return newApp;
+            }
+        }
+
+        throw new IllegalStateException("Application could not be rebinded; serialization probably failed");
+    }
+
+    protected void assertHadoopClusterEventuallyDeployed(Application newApp) {
         AmbariServer ambariServer = Entities.descendants(newApp, AmbariServer.class).iterator().next();
-        EntityTestUtils.assertAttributeEqualsEventually(
+        EntityTestUtils.assertAttributeEventually(
                 ImmutableMap.of("timeout", Duration.minutes(60)),
-                ambariServer, AmbariServer.CLUSTER_STATE,
-                "COMPLETED");
+                ambariServer,
+                AmbariServer.CLUSTER_STATE,
+                Predicates.and(
+                        Predicates.equalTo("COMPLETED"),
+                        Predicates.not(Predicates.in(ImmutableList.of(
+                                "ABORTED",
+                                "FAILED",
+                                "TIMEDOUT"
+                        )))));
     }
 
     private String buildLocation(String provider, String region, Map<String, String> options) {
