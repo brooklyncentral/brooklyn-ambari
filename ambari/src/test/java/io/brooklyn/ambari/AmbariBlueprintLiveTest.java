@@ -128,11 +128,11 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster-w-extra-services.yaml", "softlayer", "dal05", "UbuntuOnSoftlayer", MutableMap.<String, String>builder()
+                        "ambari-cluster-w-extra-services.yaml", "softlayer", "dal05", "CentOSOnSoftlayer", MutableMap.<String, String>builder()
                         .put("minRam", "16384")
                         .put("minCores", "4")
-                        .put("osFamily", "ubuntu")
-                        .put("osVersionRegex", "12.*")
+                        .put("osFamily", "centos")
+                        .put("osVersionRegex", "6.*")
                         .put("stopIptables", "true")
                         .build()
                 }
