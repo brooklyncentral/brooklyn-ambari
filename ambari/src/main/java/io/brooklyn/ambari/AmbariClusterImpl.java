@@ -24,11 +24,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
@@ -44,6 +46,8 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.ServiceStateLogic;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
@@ -57,6 +61,7 @@ import brooklyn.util.task.Tasks;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
 import io.brooklyn.ambari.hostgroup.AmbariHostGroup;
+import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.rest.domain.Bindings;
 import io.brooklyn.ambari.rest.domain.Blueprint;
 import io.brooklyn.ambari.rest.domain.HostComponent;
@@ -68,6 +73,7 @@ import io.brooklyn.ambari.rest.domain.Request;
 import io.brooklyn.ambari.rest.domain.Stack;
 import io.brooklyn.ambari.server.AmbariServer;
 import io.brooklyn.ambari.service.ExtraService;
+import io.brooklyn.ambari.service.ExtraServiceException;
 
 /**
  * The minimum requirements for an ambari hadoop cluster.
@@ -223,7 +229,15 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             Integer initialClusterSize = entity.getAttribute(EXPECTED_AGENTS);
             Boolean initialised = entity.getAttribute(CLUSTER_SERVICES_INITIALISE_CALLED);
             if (hosts != null && hosts.size() == initialClusterSize && !Boolean.TRUE.equals(initialised)) {
-                entity.deployCluster();
+                try {
+                    entity.deployCluster();
+                } catch (AmbariApiException ex) {
+                    ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) entity, "ambari.api", ex.getMessage());
+                    throw ex;
+                } catch (ExtraServiceException ex) {
+                    ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) entity, "ambari.extra.service", ex.getMessage());
+                    throw ex;
+                }
             }
         }
     }
@@ -240,13 +254,18 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         public void onEvent(SensorEvent<String> sensorEvent) {
             Boolean installed = entity.getAttribute(CLUSTER_SERVICES_INSTALLED);
             if (StringUtils.isNotBlank(sensorEvent.getValue()) && sensorEvent.getValue().equals("COMPLETED") && !Boolean.TRUE.equals(installed)) {
-                entity.postDeployCluster();
+                try {
+                    entity.postDeployCluster();
+                } catch (ExtraServiceException ex) {
+                    ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) entity, "ambari.extra.service", ex.getMessage());
+                    throw ex;
+                }
             }
         }
     }
 
     @Override
-    public void deployCluster() {
+    public void deployCluster() throws AmbariApiException, ExtraServiceException {
         // Set the flag to true so the deployment won't happen multiple times
         setAttribute(CLUSTER_SERVICES_INITIALISE_CALLED, true);
 
@@ -309,21 +328,48 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
-        Task<List<?>> preDeployClusterTasks = parallelListenerTask(new PreClusterDeployFunction());
-        Entities.submit(this, preDeployClusterTasks).getUnchecked();
+        try {
+            Task<List<?>> preDeployClusterTasks = parallelListenerTask(new PreClusterDeployFunction());
+            Entities.submit(this, preDeployClusterTasks).get();
+        } catch (ExecutionException|InterruptedException ex) {
+            // If something failed within an extra service, we propagate the exception for the cluster to handle it properly.
+            Throwable rootCause = ExceptionUtils.getRootCause(ex);
+            if (rootCause != null && rootCause instanceof ExtraServiceException) {
+                throw (ExtraServiceException) rootCause;
+            } else {
+                throw new ExtraServiceException(ex.getMessage());
+            }
+        }
 
         LOG.info("{} calling cluster-deploy with services: {}", this, services);
-        Request request = getAttribute(AMBARI_SERVER).deployCluster("Cluster1", "mybp", recommendationWrapper, configuration);
+        try {
+            Request request = getAttribute(AMBARI_SERVER).deployCluster("Cluster1", "mybp", recommendationWrapper, configuration);
+        } catch (AmbariApiException ex) {
+            // If the cluster failed to deploy, we first put the server "ON FIRE" and throw again the exception for the
+            // cluster to handle it properly.
+            ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) getAttribute(AMBARI_SERVER), "ambari.api", ex.getMessage());
+            throw ex;
+        }
     }
 
     @Override
-    public void postDeployCluster() {
+    public void postDeployCluster() throws ExtraServiceException {
         // Set the flag to true so the post deployment won't happen multiple times
         setAttribute(CLUSTER_SERVICES_INSTALLED, true);
 
         LOG.info("{} calling post-cluster-deploy on all Ambari nodes", this);
-        Task<List<?>> postDeployClusterTasks = parallelListenerTask(new PostClusterDeployFunction());
-        Entities.submit(this, postDeployClusterTasks).getUnchecked();
+        try {
+            Task<List<?>> postDeployClusterTasks = parallelListenerTask(new PostClusterDeployFunction());
+            Entities.submit(this, postDeployClusterTasks).get();
+        } catch (ExecutionException|InterruptedException ex) {
+            // If something failed within an extra service, we propagate the exception for the cluster to handle it properly.
+            Throwable rootCause = ExceptionUtils.getRootCause(ex);
+            if (rootCause != null && rootCause instanceof ExtraServiceException) {
+                throw (ExtraServiceException) rootCause;
+            } else {
+                throw new ExtraServiceException(ex.getMessage());
+            }
+        }
     }
 
     private EntitySpec<? extends AmbariServer> createServerSpec(Object securityGroup) {

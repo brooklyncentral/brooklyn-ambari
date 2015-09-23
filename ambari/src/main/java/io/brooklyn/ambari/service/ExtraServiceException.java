@@ -16,20 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.brooklyn.ambari.rest;
 
-import java.text.MessageFormat;
+package io.brooklyn.ambari.service;
 
-import retrofit.RetrofitError;
-import retrofit.mime.TypedByteArray;
+public class ExtraServiceException extends RuntimeException {
 
-public class AmbariApiException extends IllegalStateException {
-
-    private static final long serialVersionUID = -4818661501394443750L;
-
-    static final String ERROR_MESSAGE = "Error from the Ambari REST API - HTTP/{0} [{1}]:\n{2}";
-
-    public AmbariApiException(RetrofitError retrofitError) {
-        super(MessageFormat.format(ERROR_MESSAGE, retrofitError.getResponse().getStatus(), retrofitError.getUrl(), new String(((TypedByteArray) retrofitError.getResponse().getBody()).getBytes())));
+    public ExtraServiceException(String message) {
+        super(message);
     }
 }

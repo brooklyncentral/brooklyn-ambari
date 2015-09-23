@@ -32,6 +32,7 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
 import io.brooklyn.ambari.AmbariNode;
+import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
 import io.brooklyn.ambari.rest.domain.Request;
@@ -71,7 +72,8 @@ public interface AmbariServer extends AmbariNode {
     public RecommendationWrappers getRecommendations(String stackName, String stackVersion, List<String> hosts, List<String> services);
 
     /**
-     * Creates a new blueprint and deploys it, based on the Ambari recommendations.
+     * Creates a new blueprint and deploys it, based on the Ambari recommendations. If an error occurred, the method
+     * will throw an {@link AmbariApiException} for the error to be propagated properly to the tree.
      *
      * @param clusterName           the cluster name to use.
      * @param blueprintName         the blueprint name to use.
@@ -79,7 +81,7 @@ public interface AmbariServer extends AmbariNode {
      * @param config                the additional configuration for the Hadoop services.
      * @return a request corresponding to the Ambari's operation.
      */
-    public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config);
+    public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config) throws AmbariApiException;
 
     @Effector(description = "Adds a host to a cluster")
     public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster,
