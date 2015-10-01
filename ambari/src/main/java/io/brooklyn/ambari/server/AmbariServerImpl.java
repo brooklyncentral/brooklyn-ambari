@@ -54,6 +54,7 @@ import brooklyn.location.access.BrooklynAccessUtils;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
 import io.brooklyn.ambari.AmbariCluster;
+import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.rest.AmbariRequestInterceptor;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
@@ -65,6 +66,7 @@ import io.brooklyn.ambari.rest.endpoint.HostEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ServiceEndpoint;
 import io.brooklyn.ambari.rest.endpoint.StackEndpoint;
 import retrofit.RestAdapter;
+import retrofit.RetrofitError;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
@@ -189,24 +191,28 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
-    public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config) {
+    public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config) throws AmbariApiException {
         Preconditions.checkNotNull(recommendationWrapper);
         Preconditions.checkNotNull(recommendationWrapper.getStack());
         Preconditions.checkNotNull(recommendationWrapper.getRecommendation());
         Preconditions.checkNotNull(recommendationWrapper.getRecommendation().getBlueprint());
         Preconditions.checkNotNull(recommendationWrapper.getRecommendation().getBindings());
 
-        restAdapter.create(BlueprintEndpoint.class).createBlueprint(blueprintName, ImmutableMap.builder()
-                .put("host_groups", recommendationWrapper.getRecommendation().getBlueprint().getHostGroups())
-                .put("configurations", getConfigurations(config))
-                .put("Blueprints", recommendationWrapper.getStack())
-                .build());
+        try {
+            restAdapter.create(BlueprintEndpoint.class).createBlueprint(blueprintName, ImmutableMap.builder()
+                    .put("host_groups", recommendationWrapper.getRecommendation().getBlueprint().getHostGroups())
+                    .put("configurations", getConfigurations(config))
+                    .put("Blueprints", recommendationWrapper.getStack())
+                    .build());
 
-        return restAdapter.create(ClusterEndpoint.class).createCluster(clusterName, ImmutableMap.builder()
-                .put("blueprint", blueprintName)
-                .put("default_password", "admin")
-                .put("host_groups", recommendationWrapper.getRecommendation().getBindings().getHostGroups())
-                .build());
+            return restAdapter.create(ClusterEndpoint.class).createCluster(clusterName, ImmutableMap.builder()
+                    .put("blueprint", blueprintName)
+                    .put("default_password", "admin")
+                    .put("host_groups", recommendationWrapper.getRecommendation().getBindings().getHostGroups())
+                    .build());
+        } catch (RetrofitError retrofitError) {
+            throw new AmbariApiException(retrofitError);
+        }
     }
 
     @Override

@@ -19,27 +19,32 @@
 
 package io.brooklyn.ambari.service;
 
-import static brooklyn.util.ssh.BashCommands.alternatives;
-import static brooklyn.util.ssh.BashCommands.installExecutable;
-import static brooklyn.util.ssh.BashCommands.sudo;
+import static brooklyn.util.ssh.BashCommands.*;
 
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.effector.EffectorTasks;
-import brooklyn.entity.software.SshEffectorTasks;
-import brooklyn.management.Task;
-import brooklyn.util.ssh.BashCommands;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import io.brooklyn.ambari.AmbariCluster;
-import io.brooklyn.ambari.agent.AmbariAgent;
-import io.brooklyn.ambari.server.AmbariServer;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+
+import brooklyn.entity.Entity;
+import brooklyn.entity.basic.BrooklynTaskTags;
+import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.ServiceStateLogic;
+import brooklyn.entity.effector.EffectorTasks;
+import brooklyn.entity.software.SshEffectorTasks;
+import brooklyn.management.Task;
+import io.brooklyn.ambari.AmbariCluster;
+import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.server.AmbariServer;
 
 /**
  * Ranger hadoop service implementation. This will install and preform all the prerequisites needed for Ranger.
@@ -65,26 +70,53 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     }
 
     @Override
-    public void preClusterDeploy(AmbariCluster ambariCluster) {
-        LOG.info("{} performing Ranger requirements on Ambari server", this);
-        Task<List<?>> rangerServerRequirementsTasks = parallelListenerTask(ambariCluster.getAmbariServers(), new AmbariServerRequirementsFunction());
-        Entities.submit(this, rangerServerRequirementsTasks).getUnchecked();
+    public void preClusterDeploy(AmbariCluster ambariCluster) throws ExtraServiceException {
+        try {
+            LOG.info("{} performing Ranger requirements on Ambari server", this);
+            Task<List<?>> rangerServerRequirementsTasks = parallelListenerTask(ambariCluster.getAmbariServers(), new AmbariServerRequirementsFunction());
+            Entities.submit(this, rangerServerRequirementsTasks).get();
 
-        LOG.info("{} performing Ranger requirements on Ambari nodes with {} components installed", this, REQUIRES_JDBC_DRIVER);
-        Task<List<?>> rangerAgentRequirementsTasks = parallelListenerTask(ambariCluster.getAmbariAgents(), new AmbariAgentRequirementsFunction(), REQUIRES_JDBC_DRIVER);
-        Entities.submit(this, rangerAgentRequirementsTasks).getUnchecked();
+            LOG.info("{} performing Ranger requirements on Ambari nodes with {} components installed", this, REQUIRES_JDBC_DRIVER);
+            Task<List<?>> rangerAgentRequirementsTasks = parallelListenerTask(ambariCluster.getAmbariAgents(), new AmbariAgentRequirementsFunction(), REQUIRES_JDBC_DRIVER);
+            Entities.submit(this, rangerAgentRequirementsTasks).get();
 
-        LOG.info("{} performing MySQL requirements on the Ranger host", this);
-        Task<List<?>> mysqlRequirementTasks = parallelListenerTask(ambariCluster.getAmbariAgents(), new MysqlRequirementsFunction(), REQUIRES_MYSQL_CLIENT);
-        Entities.submit(this, mysqlRequirementTasks).getUnchecked();
+            LOG.info("{} performing Ranger requirements on the Ranger host", this);
+            Task<List<?>> mysqlRequirementTasks = parallelListenerTask(ambariCluster.getAmbariAgents(), new MysqlRequirementsFunction(), REQUIRES_MYSQL_CLIENT);
+            Entities.submit(this, mysqlRequirementTasks).get();
+        } catch (ExecutionException|InterruptedException ex) {
+            // If something failed, we propagate the exception.
+            throw new ExtraServiceException(ex.getMessage());
+        }
     }
 
     @Override
-    public void postClusterDeploy(AmbariCluster ambariCluster) {
+    public void postClusterDeploy(AmbariCluster ambariCluster) throws ExtraServiceException {
 
     }
 
-    private class AmbariServerRequirementsFunction implements Function<AmbariServer, Void> {
+    abstract class BaseFunction<T extends Entity> implements Function<T, Void> {
+
+        protected Void chechResult(Task<Integer> task, T node) {
+            Entities.submit(node, task);
+            task.blockUntilEnded();
+
+            Integer result = task.getUnchecked();
+            if (result != 0) {
+                final String errorKey = "ranger.mysql";
+                final String errorDescription = "Error initialising Ranger requirements";
+
+                BrooklynTaskTags.WrappedStream stream = BrooklynTaskTags.stream(task, "stderr");
+                final String errorMessage = String.format("%s: %s", errorDescription, stream != null ? stream.streamContents.get() : "Unexpected error");
+
+                ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) node, errorKey, errorMessage);
+                throw new RuntimeException(String.format("[Node %s] %s", node.getDisplayName(), errorMessage));
+            }
+
+            return null;
+        }
+    }
+
+    class AmbariServerRequirementsFunction extends BaseFunction<AmbariServer> {
         @Nullable
         @Override
         public Void apply(AmbariServer ambariServer) {
@@ -96,18 +128,12 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
                     .machine(EffectorTasks.getSshMachine(ambariServer))
                     .newTask()
                     .asTask();
-            Entities.submit(ambariServer, sshTask);
-            sshTask.blockUntilEnded();
-            Integer result = sshTask.getUnchecked();
-            if (result != 0) {
-                throw new RuntimeException("Non-zero result code indicating failure when initialising Ranger requirements: " + result);
-            }
 
-            return null;
+            return chechResult(sshTask, ambariServer);
         }
     }
 
-    private class AmbariAgentRequirementsFunction implements Function<AmbariAgent, Void> {
+    class AmbariAgentRequirementsFunction extends BaseFunction<AmbariAgent> {
         @Nullable
         @Override
         public Void apply(AmbariAgent ambariAgent) {
@@ -117,18 +143,12 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
                     .asTask();
-            Entities.submit(ambariAgent, sshTask);
-            sshTask.blockUntilEnded();
-            Integer result = sshTask.getUnchecked();
-            if (result != 0) {
-                throw new RuntimeException("Non-zero result code indicating failure when initialising Ranger requirements: " + result);
-            }
 
-            return null;
+            return chechResult(sshTask, ambariAgent);
         }
     }
 
-    private class MysqlRequirementsFunction implements Function<AmbariAgent, Void> {
+    class MysqlRequirementsFunction extends BaseFunction<AmbariAgent> {
         @Nullable
         @Override
         public Void apply(AmbariAgent ambariAgent) {
@@ -143,14 +163,16 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
                     .asTask();
-            Entities.submit(ambariAgent, sshTask);
-            sshTask.blockUntilEnded();
-            Integer result = sshTask.getUnchecked();
-            if (result != 0) {
-                throw new RuntimeException("Non-zero result code indicating failure when initialising MySQL requirement for Ranger: " + result);
-            }
 
-            return null;
+            return chechResult(sshTask, ambariAgent);
+
+//            Integer result = sshTask.getUnchecked();
+//            if (result != 0) {
+//                ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) ambariAgent, "ranger.mysql", sshTask.getStatusSummary());
+//                throw new ExtraServiceException("Error initialising Ranger requirement: " + result);
+//            }
+//
+//            return null;
         }
     }
 }

@@ -41,8 +41,10 @@ import brooklyn.event.basic.MapConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 import io.brooklyn.ambari.agent.AmbariAgent;
+import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.server.AmbariServer;
 import io.brooklyn.ambari.service.ExtraService;
+import io.brooklyn.ambari.service.ExtraServiceException;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
@@ -141,12 +143,12 @@ public interface AmbariCluster extends Entity, Startable {
     /**
      * Configure and deploy a new Hadoop cluster on the registered Ambari agents.
      */
-    void deployCluster();
+    void deployCluster() throws AmbariApiException, ExtraServiceException;
 
     /**
      * Call after a the hadoop cluster has been deployed
      */
-    void postDeployCluster();
+    void postDeployCluster() throws ExtraServiceException;
 
     /**
      * Urls for extra stack definitions e.g. Kerberos

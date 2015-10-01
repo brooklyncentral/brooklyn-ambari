@@ -19,15 +19,16 @@
 
 package io.brooklyn.ambari.service;
 
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.reflect.TypeToken;
+
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.util.flags.SetFromFlag;
-import com.google.common.reflect.TypeToken;
 import io.brooklyn.ambari.AmbariCluster;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Defines an "extra service" for the Hadoop cluster. An entity implementing this interface will be assured to be called
@@ -57,16 +58,18 @@ public interface ExtraService extends Entity {
     Map<String, Map> getAmbariConfig();
 
     /**
-     * Called just before the hadoop cluster will be deployed.
+     * Called just before the hadoop cluster will be deployed. If an error occurred during this phase, the subclasses
+     * should throw an {@link ExtraServiceException} for the error to be propagated properly to the tree.
      *
      * @param ambariCluster the current Ambari cluster entity.
      */
-    void preClusterDeploy(AmbariCluster ambariCluster);
+    void preClusterDeploy(AmbariCluster ambariCluster) throws ExtraServiceException;
 
     /**
-     * Called just after the hadoop cluster has been deployed.
+     * Called just after the hadoop cluster has been deployed. If an error occurred during this phase, the subclasses
+     * should throw an {@link ExtraServiceException} for the error to be propagated properly to the tree.
      *
      * @param ambariCluster the current Ambari cluster entity.
      */
-    void postClusterDeploy(AmbariCluster ambariCluster);
+    void postClusterDeploy(AmbariCluster ambariCluster) throws ExtraServiceException;
 }
