@@ -107,12 +107,6 @@ public interface AmbariCluster extends Entity, Startable {
             ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
             }, "ambari.stack.urls", "stack definitions as tar.gz", new LinkedList<String>());
 
-    AttributeSensor<AmbariServer> AMBARI_SERVER = Sensors.newSensor(
-            AmbariServer.class, "ambaricluster.configservers", "Config servers");
-
-    AttributeSensor<DynamicCluster> AMBARI_AGENTS = Sensors.newSensor(
-            DynamicCluster.class, "ambaricluster.configagents", "Config agents");
-
     AttributeSensor<Boolean> CLUSTER_SERVICES_INITIALISE_CALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInitialiseCalled");
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INSTALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInstalled");
@@ -139,6 +133,16 @@ public interface AmbariCluster extends Entity, Startable {
      * @return a collection of Ambari agents.
      */
     Iterable<AmbariAgent> getAmbariAgents();
+
+    /**
+     * Returns the first Ambari server installed on the cluster. This is fine for now as we support only one server
+     * for the entire hadoop cluster and therefore, this method will always return the same result.
+     *
+     * TODO: This however will need to be changed to properly handle a "cluster of server" once HA will be implemented
+     *
+     * @return the first Ambari server.
+     */
+    AmbariServer getMasterAmbariServer();
 
     /**
      * Configure and deploy a new Hadoop cluster on the registered Ambari agents.

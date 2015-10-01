@@ -75,10 +75,10 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
         return getAttribute(COMPONENTS);
     }
 
-    public static EntitySpec<? extends AmbariAgent> createAgentSpec(Entity ambariCluster, ConfigBag configBag) {
+    public static EntitySpec<? extends AmbariAgent> createAgentSpec(AmbariCluster ambariCluster, ConfigBag configBag) {
         EntitySpec<? extends AmbariAgent> agentSpec = EntitySpec.create(ambariCluster.getConfig(AmbariCluster.AGENT_SPEC))
                 .configure(AMBARI_SERVER_FQDN,
-                        attributeWhenReady(ambariCluster.getAttribute(AmbariCluster.AMBARI_SERVER), FQDN))
+                        attributeWhenReady(ambariCluster.getMasterAmbariServer(), FQDN))
                 .configure(SoftwareProcess.SUGGESTED_VERSION,
                         ambariCluster.getConfig(AmbariCluster.SUGGESTED_VERSION));
         if (configBag != null) {

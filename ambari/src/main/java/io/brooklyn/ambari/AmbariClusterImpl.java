@@ -49,7 +49,6 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.basic.ServiceStateLogic;
 import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
@@ -91,6 +90,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     public static final ImmutableMap<String, Map> DEFAULT_CONFIG_MAP = ImmutableMap.<String, Map>of();
     //TODO is there an issue with rebind here?  On rebind should be populated from somewhere else?
 
+    private boolean isHostGroupsDeployment;
     private List<String> services;
     private Map<String, Map> configuration;
     private Map<String, List<EntitySpec<? extends ExtraService>>> entitySpecsByNode;
@@ -107,7 +107,9 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     public void init() {
         super.init();
 
-        setAttribute(AMBARI_SERVER, addChild(createServerSpec(getConfig(SECURITY_GROUP))));
+        isHostGroupsDeployment = Iterables.size(getHostGroups()) > 0;
+
+        addChild(createServerSpec(getConfig(SECURITY_GROUP)));
         if(!getConfig(SERVER_COMPONENTS).isEmpty()) {
             for (AmbariServer ambariServer : getAmbariServers()) {
                 ambariServer.config().set(SoftwareProcess.CHILDREN_STARTABLE_MODE, SoftwareProcess.ChildStartableMode.BACKGROUND_LATE);
@@ -119,10 +121,9 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         configuration = MutableMap.copyOf(getConfig(AMBARI_CONFIGURATIONS));
         services = MutableList.copyOf(getConfig(HADOOP_SERVICES));
 
-        if (isHostGroupBasedDeployment()) {
-            calculateTotalAgentsInHostgroups();
-        } else {
-            createSingleClusterOfAgents();
+        calculateTotalAgents();
+        if (!isHostGroupsDeployment) {
+            createClusterTopology();
             if (services.size() == 0) {
                 services.addAll(DEFAULT_SERVICES);
             }
@@ -134,7 +135,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         addEnricher(Enrichers.builder()
                 .propagating(Attributes.MAIN_URI)
-                .from(getAttribute(AMBARI_SERVER))
+                .from(getMasterAmbariServer())
                 .build());
 
         entitySpecsByNode = new MutableMap<String, List<EntitySpec<? extends ExtraService>>>();
@@ -159,7 +160,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
             entitySpecsByNode.get(bindTo).add(entitySpec);
 
-            if (isHostGroupBasedDeployment()) {
+            if (isHostGroupsDeployment) {
                 Preconditions.checkNotNull(componentNames,
                         "Please specify the list of components names (%s) for \"%s\" as this is a host groups based deployment.",
                         ExtraService.COMPONENT_NAMES.getName(),
@@ -189,8 +190,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     public void start(Collection<? extends Location> locations) {
         super.start(locations);
 
-        subscribe(getAttribute(AMBARI_SERVER), AmbariServer.REGISTERED_HOSTS, new RegisteredHostEventListener(this));
-        subscribe(getAttribute(AMBARI_SERVER), AmbariServer.CLUSTER_STATE, new ClusterStateEventListener(this));
+        subscribe(getMasterAmbariServer(), AmbariServer.REGISTERED_HOSTS, new RegisteredHostEventListener(this));
+        subscribe(getMasterAmbariServer(), AmbariServer.CLUSTER_STATE, new ClusterStateEventListener(this));
 
         EtcHostsManager.setHostsOnMachines(getAmbariNodes(), getConfig(ETC_HOST_ADDRESS));
     }
@@ -208,6 +209,11 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     @Override
     public Iterable<AmbariServer> getAmbariServers() {
         return Entities.descendants(this, AmbariServer.class);
+    }
+
+    @Override
+    public AmbariServer getMasterAmbariServer() {
+        return Iterables.getFirst(Entities.descendants(this, AmbariServer.class), null);
     }
 
     @Override
@@ -270,13 +276,13 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         setAttribute(CLUSTER_SERVICES_INITIALISE_CALLED, true);
 
         // Wait for the Ambari server to be up
-        getAttribute(AMBARI_SERVER).waitForServiceUp();
+        getMasterAmbariServer().waitForServiceUp();
 
         final Map<String, List<String>> componentsByNodeName = new MutableMap<String, List<String>>();
 
         RecommendationWrapper recommendationWrapper = null;
 
-        if (isHostGroupBasedDeployment()) {
+        if (isHostGroupsDeployment) {
             LOG.info("{} getting the recommendation from AmbariHostGroup configuration", this);
             recommendationWrapper = getRecommendationWrapperFromAmbariHostGroups();
         } else {
@@ -320,11 +326,11 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 }
             }
             if (entitySpecsByNode.containsKey(hostGroup.getName()) && ambariAgent != null) {
-                bindExtraServices(entitySpecsByNode.get(hostGroup.getName()), isHostGroupBasedDeployment() ? ambariAgent.getParent() : ambariAgent);
+                bindExtraServices(entitySpecsByNode.get(hostGroup.getName()), ambariAgent.getParent());
             }
         }
         if (entitySpecsByNode.containsKey("server")) {
-            bindExtraServices(entitySpecsByNode.get("server"), getAttribute(AMBARI_SERVER));
+            bindExtraServices(entitySpecsByNode.get("server"), getMasterAmbariServer());
         }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
@@ -343,11 +349,11 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         LOG.info("{} calling cluster-deploy with services: {}", this, services);
         try {
-            Request request = getAttribute(AMBARI_SERVER).deployCluster("Cluster1", "mybp", recommendationWrapper, configuration);
+            Request request = getMasterAmbariServer().deployCluster("Cluster1", "mybp", recommendationWrapper, configuration);
         } catch (AmbariApiException ex) {
             // If the cluster failed to deploy, we first put the server "ON FIRE" and throw again the exception for the
             // cluster to handle it properly.
-            ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) getAttribute(AMBARI_SERVER), "ambari.api", ex.getMessage());
+            ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) getMasterAmbariServer(), "ambari.api", ex.getMessage());
             throw ex;
         }
     }
@@ -433,8 +439,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private RecommendationWrapper getRecommendationWrapperFromAmbariServer() {
-        final List<String> hosts = getAttribute(AMBARI_SERVER).getAttribute(AmbariServer.REGISTERED_HOSTS);
-        final RecommendationWrappers recommendationWrappers = getAttribute(AMBARI_SERVER)
+        final List<String> hosts = getMasterAmbariServer().getAttribute(AmbariServer.REGISTERED_HOSTS);
+        final RecommendationWrappers recommendationWrappers = getMasterAmbariServer()
                 .getRecommendations(getConfig(HADOOP_STACK_NAME), getConfig(HADOOP_STACK_VERSION), hosts, services);
 
         return recommendationWrappers.getRecommendationWrappers().size() > 0
@@ -503,37 +509,34 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         }
     }
 
-    private boolean isHostGroupBasedDeployment() {
-        return Iterables.size(getHostGroups()) > 0;
-    }
-
-    private void calculateTotalAgentsInHostgroups() {
+    private void calculateTotalAgents() {
         int agentsToExpect = 0;
-        for (AmbariHostGroup hostGroup : getHostGroups()) {
-            agentsToExpect += hostGroup.getConfig(AmbariHostGroup.INITIAL_SIZE);
+
+        if (isHostGroupsDeployment) {
+            for (AmbariHostGroup hostGroup : getHostGroups()) {
+                agentsToExpect += hostGroup.getConfig(AmbariHostGroup.INITIAL_SIZE);
+            }
+        } else {
+            agentsToExpect += getRequiredConfig(INITIAL_SIZE);
         }
-        if (getServer().agentOnServer()) {
+
+        if (getMasterAmbariServer().agentOnServer()) {
             agentsToExpect += Iterables.size(getAmbariServers());
         }
-        setAttribute(EXPECTED_AGENTS, agentsToExpect);
-    }
 
-    private AmbariServer getServer() {
-        return Iterables.getFirst(Entities.descendants(this, AmbariServer.class), null);
+        setAttribute(EXPECTED_AGENTS, agentsToExpect);
     }
 
     private Iterable<AmbariHostGroup> getHostGroups() {
         return Entities.descendants(this, AmbariHostGroup.class);
     }
 
-    private void createSingleClusterOfAgents() {
-        int initialSize = getRequiredConfig(INITIAL_SIZE);
-        setAttribute(EXPECTED_AGENTS, initialSize);
-        setAttribute(AMBARI_AGENTS, addChild(EntitySpec.create(DynamicCluster.class)
-                        .configure(DynamicCluster.INITIAL_SIZE, initialSize)
-                        .configure(DynamicCluster.MEMBER_SPEC, AmbariAgentImpl.createAgentSpec(this, null))
-                        .displayName("All Nodes")
-        ));
+    private void createClusterTopology() {
+        for (int i = 0; i < getAttribute(EXPECTED_AGENTS); i++) {
+            addChild(EntitySpec.create(AmbariHostGroup.class)
+                    .configure(AmbariHostGroup.INITIAL_SIZE, 1)
+                    .displayName(String.format("host-group-%d", (i + 1))));
+        }
     }
 
     private <T> T getRequiredConfig(ConfigKey<T> key) {
