@@ -24,6 +24,8 @@ import brooklyn.entity.basic.SameServerEntity;
 import brooklyn.entity.group.DynamicClusterImpl;
 import brooklyn.entity.proxying.EntitySpec;
 import com.google.common.collect.ImmutableList;
+
+import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
 import org.slf4j.Logger;
@@ -65,7 +67,7 @@ public class AmbariHostGroupImpl extends DynamicClusterImpl implements AmbariHos
     }
 
     private EntitySpec<? extends AmbariAgent> ambariAgentSpec() {
-        return AmbariAgentImpl.createAgentSpec(getParent(), config().getLocalBag());
+        return AmbariAgentImpl.createAgentSpec((AmbariCluster) getParent(), config().getLocalBag());
     }
 
     private EntitySpec agentWithSiblingsSpec(EntitySpec<?> siblingSpec) {
