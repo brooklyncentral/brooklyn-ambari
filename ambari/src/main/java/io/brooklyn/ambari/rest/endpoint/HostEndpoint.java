@@ -28,7 +28,7 @@ import retrofit.http.Path;
 public interface HostEndpoint {
 
     @POST("/api/v1/clusters/{cluster}/hosts/{host}")
-    void addHost(@Path("cluster") String cluster, @Path("host") String host);
+    Response addHost(@Path("cluster") String cluster, @Path("host") String host);
 
     @GET("/api/v1/clusters/{cluster}/hosts/{host}/host_components")
     HostComponents getHostComponents(@Path("cluster") String cluster, @Path("host") String host);
