@@ -32,7 +32,7 @@ import brooklyn.util.ssh.BashCommands;
 public class AmbariInstallCommands {
 
     private static final String CENTOS_REPO_LIST_LOCATION = "/etc/yum.repos.d/ambari.repo";
-    private static final String CENTOS_7_AMBARI_REPO_LOCATION = "http://s3.amazonaws.com/dev.hortonworks.com/ambari/centos7/2.x/BUILDS/2.1.0-1409/ambaribn.repo";
+    private static final String CENTOS_7_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos7/%s/updates/%s/ambari.repo";
     private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/%s/updates/%s/ambari.repo";
     private static final String CENTOS_5_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos5/%s/updates/%s/ambari.repo";
 
@@ -40,7 +40,9 @@ public class AmbariInstallCommands {
     private static final String SUSE_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/suse11/%s/updates/%s/ambari.repo";
 
     private static final String UBUNTU_REPO_LIST_LOCATION = "/etc/apt/sources.list.d/ambari.list";
-    private static final String UBUNTU_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu12/%s/updates/%s/ambari.list";
+    private static final String UBUNTU_14_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu14/%s/updates/%s/ambari.list";
+    private static final String UBUNTU_12_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu12/%s/updates/%s/ambari.list";
+
     private String version;
 
     public AmbariInstallCommands(String version) {
@@ -56,28 +58,40 @@ public class AmbariInstallCommands {
     }
 
     private String createCommandToAddAmbariToRepositoriesList(SshMachineLocation sshMachineLocation) {
-        return alternatives(getAptRepo(), setupCentos6Repo(sshMachineLocation), setupSuseRepo());
+        return alternatives(setupAptRepo(sshMachineLocation), setupYumRepo(sshMachineLocation), setupZypperRepo());
     }
 
-    private String getAptRepo() {
-        return ifExecutableElse1("apt-get", chainGroup(sudo(commandToDownloadUrlAs(String.format(UBUNTU_AMBARI_REPO_LOCATION, getMajorVersion(), version), UBUNTU_REPO_LIST_LOCATION)),
+    private String setupAptRepo(SshMachineLocation sshMachineLocation) {
+        final String osDetailsVersion = getOsVersion(sshMachineLocation);
+
+        String repoUrl;
+        if (osDetailsVersion.startsWith("14")) {
+            repoUrl = UBUNTU_14_AMBARI_REPO_LOCATION;
+        } else {
+            repoUrl = UBUNTU_12_AMBARI_REPO_LOCATION;
+        }
+
+        return ifExecutableElse1("apt-get", chainGroup(sudo(commandToDownloadUrlAs(String.format(repoUrl, getMajorVersion(), version), UBUNTU_REPO_LIST_LOCATION)),
                 sudo("apt-key adv --recv-keys --keyserver keyserver.ubuntu.com B9733A7A07513CAD"),
                 sudo("apt-get update")));
     }
 
-    private String setupCentos6Repo(SshMachineLocation sshMachineLocation) {
-        // Doesn't check machine name as may refer to redhat, centos, or oracle
-        String osDetailsVersion = getOsVersion(sshMachineLocation);
+    private String setupYumRepo(SshMachineLocation sshMachineLocation) {
+        final String osDetailsVersion = getOsVersion(sshMachineLocation);
+
+        String repoUrl;
         if (osDetailsVersion.startsWith("7")) {
-            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_7_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
+            repoUrl = CENTOS_7_AMBARI_REPO_LOCATION;
         } else if (osDetailsVersion.startsWith("6")) {
-            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_6_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
+            repoUrl = CENTOS_6_AMBARI_REPO_LOCATION;
         } else {
-            return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(CENTOS_5_AMBARI_REPO_LOCATION, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
+            repoUrl = CENTOS_5_AMBARI_REPO_LOCATION;
         }
+
+        return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(repoUrl, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
     }
 
-    private String setupSuseRepo() {
+    private String setupZypperRepo() {
         return ifExecutableElse1("zypper", sudo(commandToDownloadUrlAs(String.format(SUSE_AMBARI_REPO_LOCATION, getMajorVersion(), version), SUSE_REPO_LIST_LOCATION)));
     }
 
