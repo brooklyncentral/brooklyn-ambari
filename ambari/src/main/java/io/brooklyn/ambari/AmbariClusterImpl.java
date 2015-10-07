@@ -110,7 +110,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         isHostGroupsDeployment = Iterables.size(getHostGroups()) > 0;
 
         addChild(createServerSpec(getConfig(SECURITY_GROUP)));
-        if(!getConfig(SERVER_COMPONENTS).isEmpty()) {
+        if (!getConfig(SERVER_COMPONENTS).isEmpty()) {
             for (AmbariServer ambariServer : getAmbariServers()) {
                 ambariServer.config().set(SoftwareProcess.CHILDREN_STARTABLE_MODE, SoftwareProcess.ChildStartableMode.BACKGROUND_LATE);
                 EntitySpec<? extends AmbariAgent> agentSpec = AmbariAgentImpl.createAgentSpec(this, null);
@@ -140,10 +140,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         entitySpecsByNode = new MutableMap<String, List<EntitySpec<? extends ExtraService>>>();
         componentsByNode = new MutableMap<String, List<String>>();
-        EntitySpec<? extends ExtraService> entitySpec = getConfig(EXTRA_HADOOP_SERVICES);
-        // There is a bug within Brooklyn which returns EntitySpecConfig if we try to get a list of EntitySpec.
-        //for (EntitySpec<?> entitySpec : getConfig(EXTRA_HADOOP_SERVICES)) {
-        if (entitySpec != null) {
+        addDeprecatedExtraServiceToExtraServices();
+        for (EntitySpec<? extends ExtraService> entitySpec : getConfig(EXTRA_HADOOP_SERVICES)) {
             String bindTo = entitySpec.getFlags().containsKey(ExtraService.BIND_TO.getName())
                     ? String.valueOf(entitySpec.getFlags().get(ExtraService.BIND_TO.getName()))
                     : ExtraService.BIND_TO.getDefaultValue();
@@ -183,7 +181,15 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 }
             }
         }
-        //}
+    }
+
+    private void addDeprecatedExtraServiceToExtraServices() {
+        EntitySpec<? extends ExtraService> entitySpec = getConfig(EXTRA_HADOOP_SERVICE);
+        if (entitySpec != null) {
+            MutableList<EntitySpec<? extends ExtraService>> specs = MutableList.copyOf(getConfig(EXTRA_HADOOP_SERVICES));
+            specs.add(entitySpec);
+            config().set(EXTRA_HADOOP_SERVICES, specs);
+        }
     }
 
     @Override
@@ -337,7 +343,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         try {
             Task<List<?>> preDeployClusterTasks = parallelListenerTask(new PreClusterDeployFunction());
             Entities.submit(this, preDeployClusterTasks).get();
-        } catch (ExecutionException|InterruptedException ex) {
+        } catch (ExecutionException | InterruptedException ex) {
             // If something failed within an extra service, we propagate the exception for the cluster to handle it properly.
             Throwable rootCause = ExceptionUtils.getRootCause(ex);
             if (rootCause != null && rootCause instanceof ExtraServiceException) {
@@ -367,7 +373,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         try {
             Task<List<?>> postDeployClusterTasks = parallelListenerTask(new PostClusterDeployFunction());
             Entities.submit(this, postDeployClusterTasks).get();
-        } catch (ExecutionException|InterruptedException ex) {
+        } catch (ExecutionException | InterruptedException ex) {
             // If something failed within an extra service, we propagate the exception for the cluster to handle it properly.
             Throwable rootCause = ExceptionUtils.getRootCause(ex);
             if (rootCause != null && rootCause instanceof ExtraServiceException) {
@@ -410,7 +416,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         List<String> serverComponentsList = getConfig(AmbariCluster.SERVER_COMPONENTS);
         if (!serverComponentsList.isEmpty()) {
-             HostGroup.Builder hostGroupBuilder = new HostGroup.Builder()
+            HostGroup.Builder hostGroupBuilder = new HostGroup.Builder()
                     .setName("server-group")
                     .addComponents(serverComponentsList);
             if (componentsByNode.containsKey("server-group")) {
@@ -472,7 +478,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private void bindExtraServices(List<EntitySpec<? extends ExtraService>> entitySpecs, Entity entity) {
-        for (EntitySpec<? extends ExtraService> entitySpec : entitySpecs != null ? entitySpecs: ImmutableList.<EntitySpec<? extends ExtraService>>of()) {
+        for (EntitySpec<? extends ExtraService> entitySpec : entitySpecs != null ? entitySpecs : ImmutableList.<EntitySpec<? extends ExtraService>>of()) {
             ExtraService child = entity.addChild(entitySpec);
             Entities.manage(child);
             if (child.getAmbariConfig() != null) {

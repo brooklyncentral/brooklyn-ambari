@@ -31,7 +31,6 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.Cluster;
-import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.Startable;
@@ -69,21 +68,31 @@ public interface AmbariCluster extends Entity, Startable {
     ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.2");
 
     @SetFromFlag("extraServices")
-    ConfigKey<EntitySpec<? extends ExtraService>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends ExtraService>>() {})
+    ConfigKey<List<EntitySpec<? extends ExtraService>>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<List<EntitySpec<? extends ExtraService>>>() {
+    })
             .name("extraServices")
+            .description("List of extra services to deploy to Hadoop Cluster " +
+                    "NB: this configuration parameter doesn't work in yaml")
+            .defaultValue(new LinkedList<EntitySpec<? extends ExtraService>>())
+            .build();
+
+    @SetFromFlag("extraService")
+    ConfigKey<EntitySpec<? extends ExtraService>> EXTRA_HADOOP_SERVICE = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends ExtraService>>() {
+    })
+            .name("extraService")
             .description("List of extra services to deploy to Hadoop Cluster")
-            //.defaultValue(ImmutableList.<EntitySpec<? extends ExtraService>>of())
             .build();
 
     ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {
     }).name("ambaricluster.serverspec")
-      .defaultValue(EntitySpec.create(AmbariServer.class))
-      .build();
+            .defaultValue(EntitySpec.create(AmbariServer.class))
+            .build();
 
-    ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {}
+    ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {
+    }
     ).name("ambaricluster.agentspec")
-     .defaultValue(EntitySpec.create(AmbariAgent.class))
-     .build();
+            .defaultValue(EntitySpec.create(AmbariAgent.class))
+            .build();
 
     @SetFromFlag("hostAddressSensor")
     ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = AmbariConfigAndSensors.ETC_HOST_ADDRESS;
@@ -137,7 +146,7 @@ public interface AmbariCluster extends Entity, Startable {
     /**
      * Returns the first Ambari server installed on the cluster. This is fine for now as we support only one server
      * for the entire hadoop cluster and therefore, this method will always return the same result.
-     *
+     * <p/>
      * TODO: This however will need to be changed to properly handle a "cluster of server" once HA will be implemented
      *
      * @return the first Ambari server.
@@ -156,6 +165,7 @@ public interface AmbariCluster extends Entity, Startable {
 
     /**
      * Urls for extra stack definitions e.g. Kerberos
+     *
      * @return List of Strings of form http://host/def.tar.gz
      */
     List<String> getExtraStackDefinitionsUrls();

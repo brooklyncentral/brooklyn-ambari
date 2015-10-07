@@ -20,7 +20,7 @@ services:
     - MAPREDUCE2
     - YARN
     - ZOOKEEPER
-    extraServices:
+    extraService:
       $brooklyn:entitySpec:
         type: io.brooklyn.ambari.service.Ranger
         brooklyn.config:
