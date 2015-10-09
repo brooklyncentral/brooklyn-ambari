@@ -335,8 +335,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 bindExtraServices(entitySpecsByNode.get(hostGroup.getName()), ambariAgent.getParent());
             }
         }
-        if (entitySpecsByNode.containsKey("server")) {
-            bindExtraServices(entitySpecsByNode.get("server"), getMasterAmbariServer());
+        if (entitySpecsByNode.containsKey(SERVER_HOST_GROUP)) {
+            bindExtraServices(entitySpecsByNode.get(SERVER_HOST_GROUP), getMasterAmbariServer());
         }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
@@ -417,17 +417,17 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         List<String> serverComponentsList = getConfig(AmbariCluster.SERVER_COMPONENTS);
         if (!serverComponentsList.isEmpty()) {
             HostGroup.Builder hostGroupBuilder = new HostGroup.Builder()
-                    .setName("server-group")
+                    .setName(SERVER_HOST_GROUP)
                     .addComponents(serverComponentsList);
-            if (componentsByNode.containsKey("server-group")) {
-                hostGroupBuilder.addComponents(componentsByNode.get("server-group"));
+            if (componentsByNode.containsKey(SERVER_HOST_GROUP)) {
+                hostGroupBuilder.addComponents(componentsByNode.get(SERVER_HOST_GROUP));
             }
             blueprintBuilder.addHostGroup(hostGroupBuilder.build());
             Iterable<AmbariServer> ambariServers = getAmbariServers();
             Iterable<String> fqdns = Iterables.transform(ambariServers, mapAmbariServerToFQDN);
 
             bindingsBuilder.addHostGroup(new HostGroup.Builder()
-                    .setName("server-group")
+                    .setName(SERVER_HOST_GROUP)
                     .addHosts(Lists.newArrayList(fqdns))
                     .build());
         }

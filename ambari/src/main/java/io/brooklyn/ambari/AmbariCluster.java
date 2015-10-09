@@ -121,6 +121,7 @@ public interface AmbariCluster extends Entity, Startable {
     AttributeSensor<Boolean> CLUSTER_SERVICES_INSTALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInstalled");
 
     String DOMAIN_NAME = ".ambari.local";
+    String SERVER_HOST_GROUP = "server-group";
 
     /**
      * Returns all Ambari nodes, i.e {@link AmbariServer} and {@link AmbariAgent} contains within the cluster.
