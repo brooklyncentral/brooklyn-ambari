@@ -42,7 +42,7 @@ import io.brooklyn.ambari.AmbariCluster;
 public interface ExtraService extends Entity {
 
     @SetFromFlag("bindTo")
-    ConfigKey<String> BIND_TO = ConfigKeys.newStringConfigKey("bindTo", "Name of component which will be use to determine the host to install RANGER", "server");
+    ConfigKey<String> BIND_TO = ConfigKeys.newStringConfigKey("bindTo", "Name of component which will be use to determine the host to install RANGER", AmbariCluster.SERVER_HOST_GROUP);
 
     @SetFromFlag("serviceName")
     ConfigKey<String> SERVICE_NAME = ConfigKeys.newStringConfigKey("serviceName", "Name of the Hadoop service, identified by Ambari");

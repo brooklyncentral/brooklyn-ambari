@@ -25,20 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import brooklyn.entity.Entity;
-import brooklyn.entity.basic.BrooklynTaskTags;
 import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.ServiceStateLogic;
 import brooklyn.entity.effector.EffectorTasks;
 import brooklyn.entity.software.SshEffectorTasks;
 import brooklyn.management.Task;
@@ -94,33 +87,11 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
 
     }
 
-    abstract class BaseFunction<T extends Entity> implements Function<T, Void> {
+    class AmbariServerRequirementsFunction extends AbstractExtraServicesTask<AmbariServer> {
 
-        protected Void chechResult(Task<Integer> task, T node) {
-            Entities.submit(node, task);
-            task.blockUntilEnded();
-
-            Integer result = task.getUnchecked();
-            if (result != 0) {
-                final String errorKey = "ranger.mysql";
-                final String errorDescription = "Error initialising Ranger requirements";
-
-                BrooklynTaskTags.WrappedStream stream = BrooklynTaskTags.stream(task, "stderr");
-                final String errorMessage = String.format("%s: %s", errorDescription, stream != null ? stream.streamContents.get() : "Unexpected error");
-
-                ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) node, errorKey, errorMessage);
-                throw new RuntimeException(String.format("[Node %s] %s", node.getDisplayName(), errorMessage));
-            }
-
-            return null;
-        }
-    }
-
-    class AmbariServerRequirementsFunction extends BaseFunction<AmbariServer> {
-        @Nullable
         @Override
-        public Void apply(AmbariServer ambariServer) {
-            Task<Integer> sshTask = SshEffectorTasks
+        public Task<Integer> sshTaskApply(AmbariServer ambariServer) {
+            return SshEffectorTasks
                     .ssh(
                             alternatives(installExecutable("mysql-connector-java"), installExecutable("libmysql-java")),
                             sudo("ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar"))
@@ -128,31 +99,28 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
                     .machine(EffectorTasks.getSshMachine(ambariServer))
                     .newTask()
                     .asTask();
-
-            return chechResult(sshTask, ambariServer);
         }
     }
 
-    class AmbariAgentRequirementsFunction extends BaseFunction<AmbariAgent> {
-        @Nullable
+    class AmbariAgentRequirementsFunction extends AbstractExtraServicesTask<AmbariAgent> {
+
         @Override
-        public Void apply(AmbariAgent ambariAgent) {
-            Task<Integer> sshTask = SshEffectorTasks
+        public Task<Integer> sshTaskApply(AmbariAgent ambariAgent) {
+
+            return SshEffectorTasks
                     .ssh(alternatives(installExecutable("mysql-connector-java"), installExecutable("libmysql-java")))
                     .summary("Initialise Ranger requirements on " + ambariAgent.getId())
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
                     .asTask();
-
-            return chechResult(sshTask, ambariAgent);
         }
     }
 
-    class MysqlRequirementsFunction extends BaseFunction<AmbariAgent> {
-        @Nullable
+    class MysqlRequirementsFunction extends AbstractExtraServicesTask<AmbariAgent> {
         @Override
-        public Void apply(AmbariAgent ambariAgent) {
-            Task<Integer> sshTask = SshEffectorTasks
+        public Task<Integer> sshTaskApply(AmbariAgent ambariAgent) {
+
+            return SshEffectorTasks
                     .ssh(
                             installExecutable("mysql-server"),
                             alternatives(installExecutable("mysql"), installExecutable("mysql-client")),
@@ -163,16 +131,6 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
                     .asTask();
-
-            return chechResult(sshTask, ambariAgent);
-
-//            Integer result = sshTask.getUnchecked();
-//            if (result != 0) {
-//                ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) ambariAgent, "ranger.mysql", sshTask.getStatusSummary());
-//                throw new ExtraServiceException("Error initialising Ranger requirement: " + result);
-//            }
-//
-//            return null;
         }
     }
 }
