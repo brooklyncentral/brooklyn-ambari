@@ -335,9 +335,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 bindExtraServices(entitySpecsByNode.get(hostGroup.getName()), ambariAgent.getParent());
             }
         }
-        if (entitySpecsByNode.containsKey(SERVER_HOST_GROUP)) {
-            bindExtraServices(entitySpecsByNode.get(SERVER_HOST_GROUP), getMasterAmbariServer());
-        }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
         try {
