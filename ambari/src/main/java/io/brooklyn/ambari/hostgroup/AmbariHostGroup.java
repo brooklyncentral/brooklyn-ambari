@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 @ImplementedBy(AmbariHostGroupImpl.class)
-public interface AmbariHostGroup extends DynamicCluster, SoftwareProcess, UsesJava {
+public interface AmbariHostGroup extends DynamicCluster {
 
     @SetFromFlag("components")
     ConfigKey<List<String>> HADOOP_COMPONENTS = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
