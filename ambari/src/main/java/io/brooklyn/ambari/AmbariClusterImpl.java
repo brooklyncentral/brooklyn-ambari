@@ -168,7 +168,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     componentsByNode.put(bindTo, new MutableList<String>());
                 }
                 if (componentNames.size() > 0) {
-                    componentsByNode.get(bindTo).addAll(componentNames);
+                    mapComponentsToHostGroups(bindTo, componentNames);
                 }
             } else {
                 Preconditions.checkNotNull(serviceName,
@@ -179,6 +179,24 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 if (StringUtils.isNotBlank(serviceName)) {
                     services.add(serviceName);
                 }
+            }
+        }
+    }
+
+    private void mapComponentsToHostGroups(String defaultBindTo, List<String> componentNames) {
+        for (String componentName : componentNames) {
+            if(componentName.contains("|")) {
+                String[] split = componentName.split("\\|");
+                if (!componentsByNode.containsKey(split[1])) {
+                    componentsByNode.put(split[1], new MutableList<String>());
+                }
+                componentsByNode.get(split[1]).add(split[0]);
+            }
+            else {
+                if (!componentsByNode.containsKey(defaultBindTo)) {
+                    componentsByNode.put(defaultBindTo, new MutableList<String>());
+                }
+                componentsByNode.get(defaultBindTo).add(componentName);
             }
         }
     }
