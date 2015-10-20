@@ -19,8 +19,8 @@
 
 package io.brooklyn.ambari;
 
-import static brooklyn.util.text.Strings.trim;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.transform;
 
 import java.util.Collection;
 import java.util.List;
@@ -165,11 +165,12 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                         ExtraService.COMPONENT_NAMES.getName(),
                         entitySpec.getType().getName());
 
-                if (!componentsByNode.containsKey(bindTo)) {
-                    componentsByNode.put(bindTo, new MutableList<String>());
-                }
-                if (componentNames.size() > 0) {
-                    mapComponentsToHostGroups(bindTo, componentNames);
+                Iterable<ExtraServiceComponentMap> componentMaps = transform(
+                        componentNames,
+                        componentToComponentMap(bindTo));
+
+                if (componentMaps.iterator().hasNext()) {
+                    mapComponentsToHostGroups(componentMaps);
                 }
             } else {
                 Preconditions.checkNotNull(serviceName,
@@ -184,24 +185,22 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         }
     }
 
-    private void mapComponentsToHostGroups(String defaultBindTo, List<String> componentNames) {
-        for (String component : componentNames) {
-            String bindTo;
-            String componentName;
-            if(component.contains("|")) {
-                String[] split = component.split("\\|");
-                bindTo = trim(split[1]);
-                componentName = trim(split[0]);
-            }
-            else {
-                bindTo = defaultBindTo;
-                componentName = component;
-            }
-            if (!componentsByNode.containsKey(bindTo)) {
-                componentsByNode.put(bindTo, new MutableList<String>());
-            }
-            componentsByNode.get(bindTo).add(componentName);
+    private void mapComponentsToHostGroups(Iterable<ExtraServiceComponentMap> componentMaps) {
+        for (ExtraServiceComponentMap componentMap : componentMaps) {
+            String bindTo = componentMap.getBindTo();
+            putIfNotPresent(componentsByNode, bindTo, new MutableList<String>());
+            componentsByNode.get(bindTo).add(componentMap.getComponentName());
         }
+    }
+
+    private Function<String, ExtraServiceComponentMap> componentToComponentMap(final String defaultBindTo) {
+        return new Function<String, ExtraServiceComponentMap>() {
+            @Nullable
+            @Override
+            public ExtraServiceComponentMap apply(@Nullable String componentName) {
+                return new ExtraServiceComponentMap(defaultBindTo, componentName);
+            }
+        };
     }
 
     private void addDeprecatedExtraServiceToExtraServices() {
@@ -273,6 +272,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 }
             }
         }
+
     }
 
     static final class ClusterStateEventListener implements SensorEventListener<String> {
@@ -295,6 +295,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 }
             }
         }
+
     }
 
     @Override
@@ -442,7 +443,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
             blueprintBuilder.addHostGroup(hostGroupBuilder.build());
             Iterable<AmbariServer> ambariServers = getAmbariServers();
-            Iterable<String> fqdns = Iterables.transform(ambariServers, mapAmbariServerToFQDN);
+            Iterable<String> fqdns = transform(ambariServers, mapAmbariServerToFQDN);
 
             bindingsBuilder.addHostGroup(new HostGroup.Builder()
                     .setName(SERVER_HOST_GROUP)
@@ -565,5 +566,11 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     private <T> T getRequiredConfig(ConfigKey<T> key) {
         return checkNotNull(getConfig(key), "config %s", key);
+    }
+
+    private static <T, V> void putIfNotPresent(Map<T, V> map, T key, V value) {
+        if (!map.containsKey(key)) {
+            map.put(key, value);
+        }
     }
 }
