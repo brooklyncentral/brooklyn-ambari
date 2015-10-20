@@ -31,9 +31,7 @@ import com.google.common.net.HttpHeaders;
 import brooklyn.util.http.HttpTool;
 import retrofit.RequestInterceptor;
 
-@Test
 public class AmbariRequestInterceptorTest {
-
 
     UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin", "password");
 
