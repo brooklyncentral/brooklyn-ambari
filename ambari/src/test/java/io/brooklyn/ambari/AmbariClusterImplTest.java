@@ -47,11 +47,12 @@ public class AmbariClusterImplTest extends BrooklynAppUnitTestSupport {
     @Test
     public void testExtraServicesComponentMapping() {
         EntitySpec<? extends ExtraService> extraServiceEntitySpec =
-                createExtraServiceEntitySpecWithComponents("Monkey", "Ape|DataNode");
+                createExtraServiceEntitySpecWithComponents("Monkey", "Ape|DataNode", " Bonobo | DataNode");
         app.createAndManageChild(createClusterSpecWithExtraService(extraServiceEntitySpec)).deployCluster();
 
         assertHostGroupContainsComponent("NameNode", "Monkey");
         assertHostGroupContainsComponent("DataNode", "Ape");
+        assertHostGroupContainsComponent("DataNode", "Bonobo");
     }
 
     private EntitySpec<? extends ExtraService> createExtraServiceEntitySpecWithComponents(String... components) {

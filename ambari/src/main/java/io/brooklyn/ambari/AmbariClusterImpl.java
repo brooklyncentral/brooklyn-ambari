@@ -19,6 +19,7 @@
 
 package io.brooklyn.ambari;
 
+import static brooklyn.util.text.Strings.trim;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
@@ -184,20 +185,22 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private void mapComponentsToHostGroups(String defaultBindTo, List<String> componentNames) {
-        for (String componentName : componentNames) {
-            if(componentName.contains("|")) {
-                String[] split = componentName.split("\\|");
-                if (!componentsByNode.containsKey(split[1])) {
-                    componentsByNode.put(split[1], new MutableList<String>());
-                }
-                componentsByNode.get(split[1]).add(split[0]);
+        for (String component : componentNames) {
+            String bindTo;
+            String componentName;
+            if(component.contains("|")) {
+                String[] split = component.split("\\|");
+                bindTo = trim(split[1]);
+                componentName = trim(split[0]);
             }
             else {
-                if (!componentsByNode.containsKey(defaultBindTo)) {
-                    componentsByNode.put(defaultBindTo, new MutableList<String>());
-                }
-                componentsByNode.get(defaultBindTo).add(componentName);
+                bindTo = defaultBindTo;
+                componentName = component;
             }
+            if (!componentsByNode.containsKey(bindTo)) {
+                componentsByNode.put(bindTo, new MutableList<String>());
+            }
+            componentsByNode.get(bindTo).add(componentName);
         }
     }
 
