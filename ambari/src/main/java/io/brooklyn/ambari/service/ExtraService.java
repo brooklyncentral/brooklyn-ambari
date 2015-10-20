@@ -48,7 +48,14 @@ public interface ExtraService extends Entity {
     ConfigKey<String> SERVICE_NAME = ConfigKeys.newStringConfigKey("serviceName", "Name of the Hadoop service, identified by Ambari");
 
     @SetFromFlag("componentNames")
-    ConfigKey<List<String>> COMPONENT_NAMES = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {}, "componentNames", "List of component names for this Hadoop service, identified by Ambari");
+    ConfigKey<List<String>> COMPONENT_NAMES =
+            ConfigKeys.newConfigKey(
+                    new TypeToken<List<String>>() {},
+                    "componentNames",
+                    "List of component names for this Hadoop service, identified by Ambari. " +
+                    "Items should be of form <component>|<hostGroup> or simply " +
+                    "<component>.  If hostgroup is omitted it is assumed that the " +
+                    "component should be installed on the bound hostgroup.");
 
     /**
      * Returns the necessary configuration the extra services implementation need to pass to Ambari.
