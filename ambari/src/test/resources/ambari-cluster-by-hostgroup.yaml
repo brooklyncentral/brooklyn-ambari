@@ -54,7 +54,7 @@ services:
   - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
     name: DataNode
     brooklyn.config:
-      initialSize: 3
+      initialSize: 1
       components:
       - PIG
       - HBASE_REGIONSERVER

@@ -187,13 +187,13 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
                 ImmutableMap.of("timeout", Duration.minutes(60)),
                 ambariServer,
                 AmbariServer.CLUSTER_STATE,
-                Predicates.and(
-                        Predicates.equalTo("COMPLETED"),
-                        Predicates.not(Predicates.in(ImmutableList.of(
-                                "ABORTED",
-                                "FAILED",
-                                "TIMEDOUT"
-                        )))));
+                Predicates.not(Predicates.or(Predicates.equalTo("ABORTED"), Predicates.equalTo("FAILED"), Predicates.equalTo("TIMEDOUT")))
+        );
+        EntityTestUtils.assertAttributeEventually(
+                ImmutableMap.of("timeout", Duration.minutes(60)),
+                ambariServer,
+                AmbariServer.CLUSTER_STATE,
+                Predicates.equalTo("COMPLETED"));
     }
 
     private String buildLocation(String provider, String region, Map<String, String> options) {

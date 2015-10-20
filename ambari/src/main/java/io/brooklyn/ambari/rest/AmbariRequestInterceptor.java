@@ -19,9 +19,12 @@
 
 package io.brooklyn.ambari.rest;
 
-import brooklyn.util.http.HttpTool;
-import com.google.common.net.HttpHeaders;
 import org.apache.http.auth.UsernamePasswordCredentials;
+
+import com.google.common.base.Preconditions;
+import com.google.common.net.HttpHeaders;
+
+import brooklyn.util.http.HttpTool;
 import retrofit.RequestInterceptor;
 
 /**
@@ -32,6 +35,7 @@ public class AmbariRequestInterceptor implements RequestInterceptor {
     private final String basicAuth;
 
     public AmbariRequestInterceptor(UsernamePasswordCredentials usernamePasswordCredentials) {
+        Preconditions.checkNotNull(usernamePasswordCredentials, "Credentials must not be null");
         this.basicAuth = HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials);
     }
 
