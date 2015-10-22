@@ -528,7 +528,15 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private void createClusterTopology() {
-        for (int i = 0; i < getAttribute(EXPECTED_AGENTS); i++) {
+        int totalHostGroup = getAttribute(EXPECTED_AGENTS);
+        // getAttribute(EXPECTED_AGENTS) = number of agents defined + agent on server. As createClusterTopology()
+        // is called only for services based deployment, we need to remove the agent installed on the server from the
+        // total count.
+        if (getMasterAmbariServer().agentOnServer()) {
+            totalHostGroup--;
+        }
+
+        for (int i = 0; i < totalHostGroup; i++) {
             addChild(EntitySpec.create(AmbariHostGroup.class)
                     .configure(AmbariHostGroup.INITIAL_SIZE, 1)
                     .displayName(String.format("host-group-%d", (i + 1))));
