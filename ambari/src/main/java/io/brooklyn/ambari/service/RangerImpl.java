@@ -93,7 +93,7 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         public Task<Integer> sshTaskApply(AmbariServer ambariServer) {
             return SshEffectorTasks
                     .ssh(
-                            alternatives(installExecutable("mysql-connector-java"), installExecutable("libmysql-java")),
+                            installPackageOr(ImmutableMap.of(), "mysql-connector-java", installPackageOrFail(ImmutableMap.of(), "libmysql-java")),
                             sudo("ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar"))
                     .summary("Initialise Ranger requirements on " + ambariServer.getId())
                     .machine(EffectorTasks.getSshMachine(ambariServer))
@@ -108,7 +108,7 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         public Task<Integer> sshTaskApply(AmbariAgent ambariAgent) {
 
             return SshEffectorTasks
-                    .ssh(alternatives(installExecutable("mysql-connector-java"), installExecutable("libmysql-java")))
+                    .ssh(installPackageOr(ImmutableMap.of(), "mysql-connector-java", installPackageOrFail(ImmutableMap.of(), "libmysql-java")))
                     .summary("Initialise Ranger requirements on " + ambariAgent.getId())
                     .machine(EffectorTasks.getSshMachine(ambariAgent))
                     .newTask()
@@ -123,7 +123,7 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
             return SshEffectorTasks
                     .ssh(
                             installExecutable("mysql-server"),
-                            alternatives(installExecutable("mysql"), installExecutable("mysql-client")),
+                            installPackageOr(ImmutableMap.of(), "mysql", installPackageOrFail(ImmutableMap.of(), "mysql-client")),
                             alternatives(sudo("service mysqld restart"), sudo("service mysql restart")),
                             String.format("mysql -u root -e 'create user `%s`@`%s` identified by \"%s\";'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD)),
                             String.format("mysql -u root -e 'grant all privileges on *.* to `%s`@`%s` identified by \"%s\" with grant option; flush privileges;'", getConfig(DB_USER), DB_HOST, getConfig(DB_PASSWORD)))
