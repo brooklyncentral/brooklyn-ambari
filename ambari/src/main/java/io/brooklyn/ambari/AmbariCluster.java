@@ -27,13 +27,12 @@ import com.google.common.reflect.TypeToken;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
-import brooklyn.entity.Entity;
+import brooklyn.entity.basic.BasicStartable;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
-import brooklyn.entity.trait.Startable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicConfigKey;
 import brooklyn.event.basic.MapConfigKey;
@@ -47,7 +46,7 @@ import io.brooklyn.ambari.service.ExtraServiceException;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
-public interface AmbariCluster extends Entity, Startable {
+public interface AmbariCluster extends BasicStartable {
 
     @SetFromFlag("initialSize")
     ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(Cluster.INITIAL_SIZE, 0);
@@ -67,6 +66,7 @@ public interface AmbariCluster extends Entity, Startable {
     @SetFromFlag("stackVersion")
     ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.2");
 
+    @Deprecated
     @SetFromFlag("extraServices")
     ConfigKey<List<EntitySpec<? extends ExtraService>>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<List<EntitySpec<? extends ExtraService>>>() {
     })
@@ -76,6 +76,7 @@ public interface AmbariCluster extends Entity, Startable {
             .defaultValue(new LinkedList<EntitySpec<? extends ExtraService>>())
             .build();
 
+    @Deprecated
     @SetFromFlag("extraService")
     ConfigKey<EntitySpec<? extends ExtraService>> EXTRA_HADOOP_SERVICE = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends ExtraService>>() {
     })

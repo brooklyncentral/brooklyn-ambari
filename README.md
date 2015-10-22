@@ -142,21 +142,31 @@ or [Apache Spark](http://spark.apache.org/)) the new configuration key `extraSer
     ...
     services:
     - type: io.brooklyn.ambari.AmbariCluster
-      brooklyn.config:
-        ...
-        extraServices:
-          $brooklyn:entitySpec:
-            type: io.brooklyn.ambari.service.Ranger
-            brooklyn.config:
-              bindTo: NameNode
-              serviceName: RANGER
-              componentNames:
-              - RANGER_ADMIN
-              - RANGER_USERSYNC
+      brooklyn.children:
+      - type: io.brooklyn.ambari.service.Ranger
+        brooklyn.config:
+          bindTo: NameNode
+          serviceName: RANGER
+          componentNames:
+          - RANGER_ADMIN
+          - RANGER_USERSYNC
+      ...
 
-If the blueprint uses the `services` configuration key to define its topology, then the extra service has to use `serviceName`.
-Otherwise, in case of an Ambari host groups deployment, `componentNames` is the one that must to be used.
-The configuration key `bindTo` is **optional**. By default, the entity will be bind to the Ambari server node.
+An extra service has three configuration keys:
+
+- `bindTo`: use to specify where the components will be bind to by default. This is **optional** is you use the binding
+ mechanism of `componentNames` configuration key. This is **not needed** if you have a service based deployment.
+- `serviceName`: use to specify the name of the extra service to install. This is **required** if you have a services
+ based deployment.
+- `componentNames`: use to specify the names of the extra service's components. This is **required** if you have a host
+ group based deployment. Foir each entry, you can pass only the component name (as the above example) or the mapping of
+ component name <-> host group name like so: `<COMPONENT_NAME>|<HOST_GROUP_NAME>`. If there is no mapping specify, the
+ component will be bind to the host group specify by the configuration key `bindTo`.
+ 
+#### Deprecated mechanism
+
+You can still use the configuration keys `extraService` and `extraServices`. The underlying implementation will take it
+and transform it accordingly.
 
 ### Create an extra service
 

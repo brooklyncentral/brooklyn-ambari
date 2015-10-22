@@ -19,13 +19,20 @@
 
 package io.brooklyn.ambari.service;
 
+import static brooklyn.util.text.Strings.trim;
+
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import brooklyn.config.ConfigKey;
-import brooklyn.entity.Entity;
+import brooklyn.entity.basic.BasicStartable;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.util.flags.SetFromFlag;
 import io.brooklyn.ambari.AmbariCluster;
@@ -39,10 +46,49 @@ import io.brooklyn.ambari.AmbariCluster;
  *     <ol>{@link ExtraService#postClusterDeploy(AmbariCluster)} once the hadoop cluster has been deployed.</ol>
  * </ul>
  */
-public interface ExtraService extends Entity {
+public interface ExtraService extends BasicStartable {
+
+    class ComponentMapping {
+
+        private final String component;
+        private final String host;
+
+        public ComponentMapping(String mapping, String defaultHost) {
+            Preconditions.checkNotNull(mapping, "Mapping is required");
+            Preconditions.checkNotNull(defaultHost, "Default host is required");
+
+            String host = null;
+            String component = null;
+            if (mapping.contains("|")) {
+                String[] split = mapping.split("\\|");
+                host = trim(split[1]);
+                component = trim(split[0]);
+            } else {
+                host = defaultHost;
+                component = mapping;
+
+            }
+            if (StringUtils.isEmpty(host)) {
+                throw new IllegalArgumentException(String.format("Extra component \"%s\" is not bound to any host group. " +
+                        "Please use \"%s\" configuration key for global binding or specify it by add \"|<host-group-name>\" after the component name",
+                        component, COMPONENT_NAMES.getName()));
+            }
+
+            this.component = component;
+            this.host = host;
+        }
+
+        public String getComponent() {
+            return component;
+        }
+
+        public String getHost() {
+            return host;
+        }
+    }
 
     @SetFromFlag("bindTo")
-    ConfigKey<String> BIND_TO = ConfigKeys.newStringConfigKey("bindTo", "Name of component which will be use to determine the host to install RANGER", AmbariCluster.SERVER_HOST_GROUP);
+    ConfigKey<String> BIND_TO = ConfigKeys.newStringConfigKey("bindTo", "Name of component which will be use to determine the host to install RANGER");
 
     @SetFromFlag("serviceName")
     ConfigKey<String> SERVICE_NAME = ConfigKeys.newStringConfigKey("serviceName", "Name of the Hadoop service, identified by Ambari");
@@ -56,6 +102,14 @@ public interface ExtraService extends Entity {
                     "Items should be of form <component>|<hostGroup> or simply " +
                     "<component>.  If hostgroup is omitted it is assumed that the " +
                     "component should be installed on the bound hostgroup.");
+
+    /**
+     * Returns the list of mapping <component-name> <--> <host-group-name> for this extra service.
+     *
+     * @return a list of mapping.
+     */
+    @Nonnull
+    List<ComponentMapping> getComponentMappings();
 
     /**
      * Returns the necessary configuration the extra services implementation need to pass to Ambari.
