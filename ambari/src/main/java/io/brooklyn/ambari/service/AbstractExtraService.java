@@ -19,22 +19,54 @@
 
 package io.brooklyn.ambari.service;
 
-import brooklyn.entity.basic.AbstractEntity;
-import brooklyn.management.Task;
-import brooklyn.util.task.Tasks;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
+import org.apache.commons.collections.CollectionUtils;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+
+import brooklyn.entity.basic.BasicStartableImpl;
+import brooklyn.management.Task;
+import brooklyn.util.collections.MutableList;
+import brooklyn.util.task.Tasks;
 import io.brooklyn.ambari.FunctionRunningCallable;
 import io.brooklyn.ambari.agent.AmbariAgent;
-import org.apache.commons.collections.CollectionUtils;
-
-import java.util.List;
 
 /**
  * Abstract implementation of the an extra service that provides utility methods.
  */
-public abstract class AbstractExtraService extends AbstractEntity implements ExtraService {
+public abstract class AbstractExtraService extends BasicStartableImpl implements ExtraService {
+
+    private List<ComponentMapping> componentMappings;
+
+    @Override
+    public void init() {
+        super.init();
+
+        if (getConfig(SERVICE_NAME) == null && getConfig(COMPONENT_NAMES) == null) {
+            throw new IllegalArgumentException(String.format("Entity \"%s\" must have either \"%s\" or \"%s\" configuration key defined",
+                    getEntityTypeName(), SERVICE_NAME.getName(), COMPONENT_NAMES.getName()));
+        }
+    }
+
+    @Override
+    @Nonnull
+    public List<ComponentMapping> getComponentMappings() {
+        if (componentMappings == null) {
+            componentMappings = MutableList.of();
+            if (getConfig(COMPONENT_NAMES) != null) {
+                for (String mapping : getConfig(COMPONENT_NAMES)) {
+                    componentMappings.add(new ComponentMapping(mapping, getConfig(BIND_TO)));
+                }
+            }
+        }
+
+        return componentMappings;
+    }
 
     /**
      * Utility method that will execute the given function on the given nodes. The executions will be done in a parallel.

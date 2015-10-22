@@ -43,7 +43,6 @@ import com.google.common.collect.Lists;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
-import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.Entities;
@@ -94,7 +93,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     private boolean isHostGroupsDeployment;
     private List<String> services;
     private Map<String, Map> configuration;
-    private Map<String, List<EntitySpec<? extends ExtraService>>> entitySpecsByNode;
     private Map<String, List<String>> componentsByNode;
     private Function<AmbariServer, String> mapAmbariServerToFQDN = new Function<AmbariServer, String>() {
         @Nullable
@@ -139,73 +137,59 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 .from(getMasterAmbariServer())
                 .build());
 
-        entitySpecsByNode = new MutableMap<String, List<EntitySpec<? extends ExtraService>>>();
         componentsByNode = new MutableMap<String, List<String>>();
         addDeprecatedExtraServiceToExtraServices();
         for (EntitySpec<? extends ExtraService> entitySpec : getConfig(EXTRA_HADOOP_SERVICES)) {
-            String bindTo = entitySpec.getFlags().containsKey(ExtraService.BIND_TO.getName())
-                    ? String.valueOf(entitySpec.getFlags().get(ExtraService.BIND_TO.getName()))
-                    : ExtraService.BIND_TO.getDefaultValue();
-            String serviceName = entitySpec.getFlags().containsKey(ExtraService.SERVICE_NAME.getName())
-                    ? String.valueOf(entitySpec.getFlags().get(ExtraService.SERVICE_NAME.getName()))
-                    : ExtraService.SERVICE_NAME.getDefaultValue();
-            List<String> componentNames = entitySpec.getFlags().containsKey(ExtraService.COMPONENT_NAMES.getName())
-                    ? (List<String>) entitySpec.getFlags().get(ExtraService.COMPONENT_NAMES.getName())
-                    : ExtraService.COMPONENT_NAMES.getDefaultValue();
-
-
-            if (!entitySpecsByNode.containsKey(bindTo)) {
-                entitySpecsByNode.put(bindTo, new MutableList<EntitySpec<? extends ExtraService>>());
-            }
-            entitySpecsByNode.get(bindTo).add(entitySpec);
-
-            if (isHostGroupsDeployment) {
-                Preconditions.checkNotNull(componentNames,
-                        "Please specify the list of components names (%s) for \"%s\" as this is a host groups based deployment.",
-                        ExtraService.COMPONENT_NAMES.getName(),
-                        entitySpec.getType().getName());
-
-                Iterable<ExtraServiceComponentMap> componentMaps = transform(
-                        componentNames,
-                        componentToComponentMap(bindTo));
-
-                if (componentMaps.iterator().hasNext()) {
-                    mapComponentsToHostGroups(componentMaps);
-                }
-            } else {
-                Preconditions.checkNotNull(serviceName,
-                        "Please specify the service name (%s) for \"%s\" as this is a services based deployment.",
-                        ExtraService.SERVICE_NAME.getName(),
-                        entitySpec.getType().getName());
-
-                if (StringUtils.isNotBlank(serviceName)) {
-                    services.add(serviceName);
-                }
-            }
+            LOG.warn(EXTRA_HADOOP_SERVICES.getName() + " configuration key is deprecated. Extra services should now be defined through as children by using 'brooklyn.children'");
+            addChild(entitySpec);
         }
-    }
 
-    private void mapComponentsToHostGroups(Iterable<ExtraServiceComponentMap> componentMaps) {
-        for (ExtraServiceComponentMap componentMap : componentMaps) {
-            String bindTo = componentMap.getBindTo();
-            putIfNotPresent(componentsByNode, bindTo, new MutableList<String>());
-            componentsByNode.get(bindTo).add(componentMap.getComponentName());
-        }
-    }
-
-    private Function<String, ExtraServiceComponentMap> componentToComponentMap(final String defaultBindTo) {
-        return new Function<String, ExtraServiceComponentMap>() {
+        final Iterable<String> ambariHostGroupNames = transform(getHostGroups(), new Function<AmbariHostGroup, String>() {
             @Nullable
             @Override
-            public ExtraServiceComponentMap apply(@Nullable String componentName) {
-                return new ExtraServiceComponentMap(defaultBindTo, componentName);
+            public String apply(@Nullable AmbariHostGroup ambariHostGroup) {
+                return ambariHostGroup != null ? ambariHostGroup.getDisplayName() : null;
             }
-        };
+        });
+
+        for (ExtraService extraService : Entities.descendants(this, ExtraService.class)) {
+            if (isHostGroupsDeployment) {
+                Preconditions.checkNotNull(extraService.getConfig(ExtraService.COMPONENT_NAMES),
+                        "Entity \"%s\" must define a list of components names as this is a host groups based deployment. Please use the \"%s\" configuration key",
+                        extraService.getEntityType().getName(),
+                        ExtraService.COMPONENT_NAMES.getName());
+
+                for (ExtraService.ComponentMapping componentMapping : extraService.getComponentMappings()) {
+                    if (!Iterables.contains(ambariHostGroupNames, componentMapping.getHost())) {
+                        throw new IllegalStateException(String.format("Extra component \"%s\" of entity \"%s\" cannot be bound to \"%s\" host group because it does not exist. Please choose from %s",
+                                componentMapping.getComponent(), extraService.getEntityType().getName(), componentMapping.getHost(), ambariHostGroupNames));
+                    }
+                    if (!componentsByNode.containsKey(componentMapping.getHost())) {
+                        componentsByNode.put(componentMapping.getHost(), MutableList.<String>of());
+                    }
+                    componentsByNode.get(componentMapping.getHost()).add(componentMapping.getComponent());
+                }
+            } else {
+                Preconditions.checkNotNull(extraService.getConfig(ExtraService.SERVICE_NAME),
+                        "Entity \"%s\" must define a service name as this is a services based deployment. Please use the \"%s\" configuration key",
+                        extraService.getEntityType().getName(),
+                        ExtraService.SERVICE_NAME.getName());
+
+                if (StringUtils.isNotBlank(extraService.getConfig(ExtraService.SERVICE_NAME))) {
+                    services.add(extraService.getConfig(ExtraService.SERVICE_NAME));
+                }
+            }
+            if (extraService.getAmbariConfig() != null) {
+                configuration.putAll(extraService.getAmbariConfig());
+            }
+        }
+
     }
 
     private void addDeprecatedExtraServiceToExtraServices() {
         EntitySpec<? extends ExtraService> entitySpec = getConfig(EXTRA_HADOOP_SERVICE);
         if (entitySpec != null) {
+            LOG.warn(EXTRA_HADOOP_SERVICE.getName() + " configuration key is deprecated. Extra services should now be defined through as children by using 'brooklyn.children'");
             MutableList<EntitySpec<? extends ExtraService>> specs = MutableList.copyOf(getConfig(EXTRA_HADOOP_SERVICES));
             specs.add(entitySpec);
             config().set(EXTRA_HADOOP_SERVICES, specs);
@@ -353,12 +337,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     }
                 }
             }
-            if (entitySpecsByNode.containsKey(hostGroup.getName()) && ambariAgent != null) {
-                bindExtraServices(entitySpecsByNode.get(hostGroup.getName()), ambariAgent.getParent());
-            }
-        }
-        if (entitySpecsByNode.containsKey(SERVER_HOST_GROUP) && getConfig(SERVER_COMPONENTS).isEmpty()) {
-            bindExtraServices(entitySpecsByNode.get(SERVER_HOST_GROUP), getMasterAmbariServer());
         }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
@@ -499,16 +477,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         return Entities.descendants(this, ExtraService.class);
     }
 
-    private void bindExtraServices(List<EntitySpec<? extends ExtraService>> entitySpecs, Entity entity) {
-        for (EntitySpec<? extends ExtraService> entitySpec : entitySpecs != null ? entitySpecs : ImmutableList.<EntitySpec<? extends ExtraService>>of()) {
-            ExtraService child = entity.addChild(entitySpec);
-            Entities.manage(child);
-            if (child.getAmbariConfig() != null) {
-                configuration.putAll(child.getAmbariConfig());
-            }
-        }
-    }
-
     @Nullable
     private AmbariAgent getAmbariAgentByFqdn(@Nonnull String fqdn) {
         Preconditions.checkNotNull(fqdn);
@@ -569,11 +537,5 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     private <T> T getRequiredConfig(ConfigKey<T> key) {
         return checkNotNull(getConfig(key), "config %s", key);
-    }
-
-    private static <T, V> void putIfNotPresent(Map<T, V> map, T key, V value) {
-        if (!map.containsKey(key)) {
-            map.put(key, value);
-        }
     }
 }
