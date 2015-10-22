@@ -45,6 +45,7 @@ import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.BasicStartableImpl;
+import brooklyn.entity.basic.BrooklynTaskTags;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.basic.ServiceStateLogic;
@@ -341,8 +342,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
         try {
-            Task<List<?>> preDeployClusterTasks = parallelListenerTask(new PreClusterDeployFunction());
-            Entities.submit(this, preDeployClusterTasks).get();
+            Task<List<?>> preClusterDeployTasks = createParallelTask("preClusterDeploy", new PreClusterDeployFunction());
+            Entities.submit(this, preClusterDeployTasks).get();
         } catch (ExecutionException | InterruptedException ex) {
             // If something failed within an extra service, we propagate the exception for the cluster to handle it properly.
             Throwable rootCause = ExceptionUtils.getRootCause(ex);
@@ -353,7 +354,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
         }
 
-        LOG.info("{} calling cluster-deploy with services: {}", this, services);
+        LOG.info("{} calling cluster-deploy", this);
         try {
             Request request = getMasterAmbariServer().deployCluster("Cluster1", "mybp", recommendationWrapper, configuration);
         } catch (AmbariApiException ex) {
@@ -371,7 +372,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         LOG.info("{} calling post-cluster-deploy on all Ambari nodes", this);
         try {
-            Task<List<?>> postDeployClusterTasks = parallelListenerTask(new PostClusterDeployFunction());
+            Task<List<?>> postDeployClusterTasks = createParallelTask("postClusterDeploy", new PostClusterDeployFunction());
             Entities.submit(this, postDeployClusterTasks).get();
         } catch (ExecutionException | InterruptedException ex) {
             // If something failed within an extra service, we propagate the exception for the cluster to handle it properly.
@@ -454,17 +455,18 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 : null;
     }
 
-    private Task<List<?>> parallelListenerTask(final Function<ExtraService, ?> fn) {
+    private Task<List<?>> createParallelTask(String taskName, final Function<ExtraService, ?> fn) {
         List<Task<?>> tasks = Lists.newArrayList();
         for (final ExtraService extraService : getExtraServices()) {
             Task<?> t = Tasks.builder()
-                    .name(extraService.toString())
-                    .description("Invocation on " + extraService.toString())
+                    .name(extraService.getEntityType().getSimpleName())
+                    .description("pre-cluster-deploy tasks for " + extraService.getEntityType().getName() + " extra service")
                     .body(new FunctionRunningCallable<ExtraService>(extraService, fn))
+                    .tag(BrooklynTaskTags.NON_TRANSIENT_TASK_TAG)
                     .build();
             tasks.add(t);
         }
-        return Tasks.parallel("Parallel invocation of " + fn + " on extra services", tasks);
+        return Tasks.parallel(taskName, tasks);
     }
 
     @Nonnull

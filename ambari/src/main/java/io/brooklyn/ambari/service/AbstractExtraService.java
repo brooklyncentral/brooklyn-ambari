@@ -30,6 +30,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import brooklyn.entity.basic.BasicStartableImpl;
+import brooklyn.entity.basic.BrooklynTaskTags;
 import brooklyn.management.Task;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.task.Tasks;
@@ -76,6 +77,7 @@ public abstract class AbstractExtraService extends BasicStartableImpl implements
      * @param <T> the type of node.
      * @return a new pool of tasks.
      */
+    // TODO: Pass the task's name and description as parameter
     protected <T> Task<List<?>> parallelListenerTask(final Iterable<T> nodes, final Function<T, ?> fn) {
         List<Task<?>> tasks = Lists.newArrayList();
         for (final T node : nodes) {
@@ -83,6 +85,7 @@ public abstract class AbstractExtraService extends BasicStartableImpl implements
                     .name(node.toString())
                     .description("Invocation on " + node.toString())
                     .body(new FunctionRunningCallable<T>(node, fn))
+                    .tag(BrooklynTaskTags.NON_TRANSIENT_TASK_TAG)
                     .build();
             tasks.add(t);
         }
@@ -97,6 +100,7 @@ public abstract class AbstractExtraService extends BasicStartableImpl implements
      * @param components the list of components for which we want to function to be executed.
      * @return a new pool of tasks.
      */
+    // TODO: Pass the task's name and description as parameter
     protected Task<List<?>> parallelListenerTask(final Iterable<AmbariAgent> nodes, final Function<AmbariAgent, ?> fn, List<String> components) {
         Preconditions.checkNotNull(components);
 
@@ -111,6 +115,7 @@ public abstract class AbstractExtraService extends BasicStartableImpl implements
                     .name(ambariAgent.toString())
                     .description("Invocation on " + ambariAgent.toString())
                     .body(new FunctionRunningCallable<AmbariAgent>(ambariAgent, fn))
+                    .tag(BrooklynTaskTags.NON_TRANSIENT_TASK_TAG)
                     .build();
             tasks.add(t);
         }

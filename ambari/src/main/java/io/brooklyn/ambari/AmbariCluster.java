@@ -163,6 +163,7 @@ public interface AmbariCluster extends BasicStartable {
     /**
      * Call after a the hadoop cluster has been deployed
      */
+    // TODO: Rename to postClusterDeploy to be consistent
     void postDeployCluster() throws ExtraServiceException;
 
     /**
