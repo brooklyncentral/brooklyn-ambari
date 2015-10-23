@@ -161,8 +161,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                         ExtraService.COMPONENT_NAMES.getName());
 
                 for (ExtraService.ComponentMapping componentMapping : extraService.getComponentMappings()) {
-                    if (!Iterables.contains(ambariHostGroupNames, componentMapping.getHost())) {
-                        throw new IllegalStateException(String.format("Extra component \"%s\" of entity \"%s\" cannot be bound to \"%s\" host group because it does not exist. Please choose from %s",
+                    if (!componentMapping.getHost().equals(SERVER_HOST_GROUP) && !Iterables.contains(ambariHostGroupNames, componentMapping.getHost())) {
+                        throw new IllegalStateException(String.format("Extra component \"%s\" of entity \"%s\" cannot be bound to \"%s\" host group because it does not exist. Please choose from %s or " + SERVER_HOST_GROUP,
                                 componentMapping.getComponent(), extraService.getEntityType().getName(), componentMapping.getHost(), ambariHostGroupNames));
                     }
                     if (!componentsByNode.containsKey(componentMapping.getHost())) {
