@@ -93,8 +93,8 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
         ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
         if (!extraStackDefinitions.isEmpty()) {
             for (String extraStackDefinition : extraStackDefinitions) {
-                String destination = copyToTmp(extraStackDefinition);
-                builder.add(getUnpackCommand(destination));
+                String tmpLocation = copyToTmp(extraStackDefinition);
+                builder.add(getUnpackCommand(tmpLocation));
             }
 
             newScript(CUSTOMIZING)
@@ -119,15 +119,15 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
         return destination;
     }
 
-    private String getUnpackCommand(String destination) {
-        if (destination.endsWith("tar")) {
-            return sudo(format("tar xvf %s -C %s", destination, stackResourceLocation()));
-        } else if (destination.endsWith("tar.gz")) {
-            return sudo(format("tar zxvf %s -C %s", destination, stackResourceLocation()));
-        } else if (destination.endsWith("zip")) {
+    private String getUnpackCommand(String tmpLocation) {
+        if (tmpLocation.endsWith("tar")) {
+            return sudo(format("tar xvf %s -C %s", tmpLocation, stackResourceLocation()));
+        } else if (tmpLocation.endsWith("tar.gz")) {
+            return sudo(format("tar zxvf %s -C %s", tmpLocation, stackResourceLocation()));
+        } else if (tmpLocation.endsWith("zip")) {
             return BashCommands.chain(
                     BashCommands.INSTALL_UNZIP,
-                    sudo(unzip(destination, stackResourceLocation())));
+                    sudo(unzip(tmpLocation, stackResourceLocation())));
         }
 
         throw new IllegalStateException("Stack locations must be of type tar, tar.gz, zip");
