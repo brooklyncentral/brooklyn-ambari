@@ -25,6 +25,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 
 import org.testng.annotations.Test;
 
+import io.brooklyn.ambari.rest.domain.Request;
 import io.brooklyn.ambari.server.AmbariServerImpl;
 
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.List;
 import static brooklyn.test.Asserts.assertThat;
 import static brooklyn.util.collections.CollectionFunctionals.contains;
 import static brooklyn.util.collections.CollectionFunctionals.sizeEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 public class AmbariServerImplTest {
 
@@ -49,17 +51,29 @@ public class AmbariServerImplTest {
 
     @Test
     public void testOneHostReturnsSingleItemInList() {
-        assertThat(getHostsFromJson(JSON_WITH_ONE_HOST), contains("ip-10-121-18-69.eu-west-1.compute.internal"));
+        List<String> hosts = getHostsFromJson(JSON_WITH_ONE_HOST);
+
+        assertEquals(1, hosts.size());
+        assertThat(hosts, contains("ip-10-121-18-69.eu-west-1.compute.internal"));
     }
 
     @Test
     public void testFourHostsReturnsFourItemsInList() {
-        assertThat(getHostsFromJson(JSON_WITH_FOUR_HOSTS), contains("ip-10-121-18-69.eu-west-1.compute.internal"));
-        assertThat(getHostsFromJson(JSON_WITH_FOUR_HOSTS), contains("ip-10-121-20-75.eu-west-1.compute.internal"));
-        assertThat(getHostsFromJson(JSON_WITH_FOUR_HOSTS), contains("ip-10-122-4-179.eu-west-1.compute.internal"));
-        assertThat(getHostsFromJson(JSON_WITH_FOUR_HOSTS), contains("ip-10-91-154-171.eu-west-1.compute.internal"));
+        List<String> hosts = getHostsFromJson(JSON_WITH_FOUR_HOSTS);
+
+        assertEquals(4, hosts.size());
+        assertThat(hosts, contains("ip-10-121-18-69.eu-west-1.compute.internal"));
+        assertThat(hosts, contains("ip-10-121-20-75.eu-west-1.compute.internal"));
+        assertThat(hosts, contains("ip-10-122-4-179.eu-west-1.compute.internal"));
+        assertThat(hosts, contains("ip-10-91-154-171.eu-west-1.compute.internal"));
     }
 
+    @Test
+    public void testClusterStateIsreturned() {
+        String clusterState = ambariServer.getClusterState().apply(getAsJsonObject(JSON_CLUSTER_STATE));
+
+        assertEquals("IN_PROGRESS", clusterState);
+    }
 
     private List<String> getHostsFromJson(String json) {
         return ambariServer.getHosts().apply(getAsJsonObject(json));
@@ -68,6 +82,16 @@ public class AmbariServerImplTest {
     private JsonObject getAsJsonObject(String jsonWithOneHost) {
         return new JsonParser().parse(jsonWithOneHost).getAsJsonObject();
     }
+
+    private static final String JSON_CLUSTER_STATE = "{\n" +
+            "  \"href\" : \"http://ec2-54-228-116-93.eu-west-1.compute.amazonaws.com:8080/api/v1/cluster/c1/requests/1\",\n" +
+            "  \"Requests\" : {\n" +
+            "    \"cluster_name\" : \"c1\",\n" +
+            "    \"request_context\" : \"My context\",\n" +
+            "    \"request_status\" : \"IN_PROGRESS\",\n" +
+            "    \"id\" : \"123456789\"\n" +
+            "  }\n" +
+            "}";
 
     private static final String JSON_WITH_ONE_HOST = "{\n" +
             "  \"href\" : \"http://ec2-54-228-116-93.eu-west-1.compute.amazonaws.com:8080/api/v1/hosts\",\n" +
