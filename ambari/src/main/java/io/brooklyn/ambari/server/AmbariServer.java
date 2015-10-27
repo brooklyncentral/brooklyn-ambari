@@ -83,38 +83,11 @@ public interface AmbariServer extends AmbariNode {
      */
     public Request deployCluster(String clusterName, String blueprintName, RecommendationWrapper recommendationWrapper, Map config) throws AmbariApiException;
 
-    @Effector(description = "Adds a host to a cluster")
+    @Effector(description = "Adds a new host to a cluster")
     public void addHostToCluster(@EffectorParam(name = "Cluster name") String cluster,
                                  @EffectorParam(name = "Host FQDN") String hostName);
 
-    @Effector(description = "Add a service to a cluster")
-    public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster,
-                                    @EffectorParam(name = "Service name") String service);
-
-    @Effector(description = "Create component")
-    public void createComponentToCluster(@EffectorParam(name = "Cluster name") String cluster,
-                                         @EffectorParam(name = "Service name") String service,
-                                         @EffectorParam(name = "Component name") String component);
-
-    @Effector(description = "Create a new configuration for a specific component")
-    public void createComponentConfiguration(@EffectorParam(name = "Cluster name") String cluster,
-                                             @EffectorParam(name = "Configuration key") String key,
-                                             @EffectorParam(name = "Configuration") Map<Object, Object> config);
-
-    @Effector(description = "Create host component")
-    public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster,
-                                    @EffectorParam(name = "Host FQDN") String hostName,
-                                    @EffectorParam(name = "Component name") String component);
-
-    @Effector(description = "Install a service on a cluster")
-    public Request installService(@EffectorParam(name = "Cluster name") String cluster,
-                                  @EffectorParam(name = "Service name") String service);
-
-    @Effector(description = "Start a service on a cluster")
-    public Request startService(@EffectorParam(name = "Cluster name") String cluster,
-                                @EffectorParam(name = "Service name") String service);
-
-    @Effector(description = "Create, configure and install cluster based on Ambari recommendation from the given hosts and services")
+    @Effector(description = "Create, configure and install a cluster, based on Ambari recommendation from the given hosts and services")
     public void createCluster(@EffectorParam(name = "Cluster Name") String clusterName,
                               @EffectorParam(name = "Blueprint Name") String blueprintName,
                               @EffectorParam(name = "Stack Name") String stackName,
@@ -130,6 +103,20 @@ public interface AmbariServer extends AmbariNode {
                                       @EffectorParam(name = "Repository Name") String repoName,
                                       @EffectorParam(name = "Repository URL") String url);
 
+    @Effector(description = "Add, install and start a new service to an existing cluster")
+    public void addServiceToCluster(@EffectorParam(name = "cluster", description = "Cluster name") final String cluster,
+                                    @EffectorParam(name = "service", description = "Service name") final String service,
+                                    @EffectorParam(name = "mappings", description = "Mappings of component to host") Map<String, String> mappings,
+                                    @EffectorParam(name = "configuration", description = "Services Configuration", nullable = true, defaultValue = EffectorParam.MAGIC_STRING_MEANING_NULL) Map<String, Map<Object, Object>> configuration);
+
+    @Effector(description = "Create a new configuration for a specific service")
+    public void createServiceConfiguration(@EffectorParam(name = "Cluster name") String cluster,
+                                           @EffectorParam(name = "Service configuration key") String configurationKey,
+                                           @EffectorParam(name = "Service configuration") Map<Object, Object> configuration);
+
+    @Effector(description = "Start a service on a cluster")
+    public void startService(@EffectorParam(name = "Cluster name") String cluster,
+                             @EffectorParam(name = "Service name") String service);
     /**
      * Are we installing the ambari agent on the same server as the ambari server?
      * Calculated based on whether any components are configured to be installed on server.

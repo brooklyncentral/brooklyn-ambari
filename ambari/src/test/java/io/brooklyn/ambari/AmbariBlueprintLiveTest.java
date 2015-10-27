@@ -19,6 +19,9 @@
 
 package io.brooklyn.ambari;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collection;
@@ -34,20 +37,26 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 
 import brooklyn.entity.Application;
+import brooklyn.entity.Effector;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.rebind.RebindOptions;
 import brooklyn.entity.rebind.RebindTestUtils;
 import brooklyn.launcher.blueprints.AbstractBlueprintTest;
 import brooklyn.management.ManagementContext;
+import brooklyn.management.Task;
+import brooklyn.management.internal.EffectorUtils;
 import brooklyn.management.internal.LocalManagementContext;
 import brooklyn.test.EntityTestUtils;
 import brooklyn.util.ResourceUtils;
 import brooklyn.util.collections.MutableMap;
+import brooklyn.util.guava.Maybe;
+import brooklyn.util.task.Tasks;
 import brooklyn.util.time.Duration;
+import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.server.AmbariServer;
 
 @Test(singleThreaded = false, threadPoolSize = 2)
@@ -78,13 +87,19 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
         //Do nothing
     }
 
-    @Override
-    protected void runTest(Reader yaml) throws Exception {
+    protected Application runTestsAndGetApp(Reader yaml) throws Exception {
         Application app = this.launcher.launchAppYaml(yaml);
         this.assertNoFires(app);
         Application newApp = this.rebind(app, RebindOptions.create());
         this.assertNoFires(newApp);
         this.assertHadoopClusterEventuallyDeployed(newApp);
+
+        return newApp;
+    }
+
+    protected void runTestsAndEffectors(Reader yaml) throws Exception {
+        Application app = runTestsAndGetApp(yaml);
+        this.assertAddServiceToClusterEffectorWorks(app);
     }
 
     @DataProvider(name = "providerData", parallel = true)
@@ -145,7 +160,22 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
 
         String yaml = buildLocation(provider, region, options) + new ResourceUtils(this).getResourceAsString(yamlFile);
 
-        runTest(new StringReader(yaml));
+        runTestsAndGetApp(new StringReader(yaml));
+    }
+
+    @Test(groups = {"Live"})
+    public void testAddServiceToCluster() throws Exception {
+        Map<String, String> options = ImmutableMap.<String, String>builder()
+                .put("minRam", "16384")
+                .put("minCores", "4")
+                .put("osFamily", "ubuntu")
+                .put("osVersionRegex", "12.*")
+                .put("stopIptables", "true")
+                .build();
+
+        String yaml = buildLocation("softlayer", "ams01", options) + new ResourceUtils(this).getResourceAsString("ambari-cluster-small.yaml");
+
+        runTestsAndEffectors(new StringReader(yaml));
     }
 
     protected Application rebind(Application currentApp, RebindOptions options) throws Exception {
@@ -181,8 +211,8 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
         throw new IllegalStateException("Application could not be rebinded; serialization probably failed");
     }
 
-    protected void assertHadoopClusterEventuallyDeployed(Application newApp) {
-        AmbariServer ambariServer = Entities.descendants(newApp, AmbariServer.class).iterator().next();
+    protected void assertHadoopClusterEventuallyDeployed(Application app) {
+        AmbariServer ambariServer = Entities.descendants(app, AmbariServer.class).iterator().next();
         EntityTestUtils.assertAttributeEventually(
                 ImmutableMap.of("timeout", Duration.minutes(60)),
                 ambariServer,
@@ -194,6 +224,27 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
                 ambariServer,
                 AmbariServer.CLUSTER_STATE,
                 Predicates.equalTo("COMPLETED"));
+    }
+
+    protected void assertAddServiceToClusterEffectorWorks(Application app) {
+        final AmbariServer ambariServer = Entities.descendants(app, AmbariServer.class).iterator().next();
+        final AmbariAgent ambariAgent = Entities.descendants(app, AmbariAgent.class).iterator().next();
+        final Maybe<Effector<?>> effector = EffectorUtils.findEffector(ambariServer.getEntityType().getEffectors(), "addServiceToCluster");
+        if (effector.isAbsentOrNull()) {
+            throw new IllegalStateException("Cannot get the addServiceToCluster effector");
+        }
+
+        final Task<?> effectorTask = ambariServer.invoke(effector.get(), ImmutableMap.of(
+                "cluster", "Cluster1",
+                "service", "FLUME",
+                "mappings", ImmutableMap.of("FLUME_HANDLER", ambariAgent.getFqdn()),
+                "configuration", ImmutableMap.of()
+        ));
+
+        effectorTask.getUnchecked();
+        assertFalse(effectorTask.isError(), "Effector should not fail");
+        assertEquals(2, Iterables.size(Tasks.children(effectorTask)));
+        assertFalse(Tasks.failed(Tasks.children(effectorTask)).iterator().hasNext(), "All sub-task should not fail");
     }
 
     private String buildLocation(String provider, String region, Map<String, String> options) {
