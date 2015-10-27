@@ -89,6 +89,11 @@
                     <descriptors>
                         <descriptor>src/main/assembly/assembly.xml</descriptor>
                     </descriptors>
+                    <archive>
+                        <manifestFile>
+                            target/classes/META-INF/MANIFEST.MF
+                        </manifestFile>
+                    </archive>
                 </configuration>
                 <executions>
                     <execution>
