@@ -25,10 +25,12 @@ import static org.testng.Assert.assertFalse;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -42,7 +44,11 @@ import com.google.common.collect.Iterables;
 
 import brooklyn.entity.Application;
 import brooklyn.entity.Effector;
+import brooklyn.entity.Entity;
+import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.Lifecycle;
+import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.rebind.RebindOptions;
 import brooklyn.entity.rebind.RebindTestUtils;
 import brooklyn.launcher.blueprints.AbstractBlueprintTest;
@@ -50,6 +56,7 @@ import brooklyn.management.ManagementContext;
 import brooklyn.management.Task;
 import brooklyn.management.internal.EffectorUtils;
 import brooklyn.management.internal.LocalManagementContext;
+import brooklyn.test.Asserts;
 import brooklyn.test.EntityTestUtils;
 import brooklyn.util.ResourceUtils;
 import brooklyn.util.collections.MutableMap;
@@ -100,6 +107,27 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
     protected void runTestsAndEffectors(Reader yaml) throws Exception {
         Application app = runTestsAndGetApp(yaml);
         this.assertAddServiceToClusterEffectorWorks(app);
+    }
+
+    protected void assertNoFires(final Entity app) {
+        EntityTestUtils.assertAttributeEqualsEventually(app, Attributes.SERVICE_UP, Boolean.valueOf(true));
+        EntityTestUtils.assertAttributeEqualsEventually(app, Attributes.SERVICE_STATE_ACTUAL, Lifecycle.RUNNING);
+        Asserts.succeedsEventually(ImmutableMap.of("timeout", Duration.FIVE_MINUTES), new Runnable() {
+            public void run() {
+                Iterator i$ = Entities.descendants(app).iterator();
+
+                while (i$.hasNext()) {
+                    Entity entity = (Entity) i$.next();
+                    Assert.assertNotEquals(entity.getAttribute(Attributes.SERVICE_STATE_ACTUAL), Lifecycle.ON_FIRE);
+                    Assert.assertNotEquals(entity.getAttribute(Attributes.SERVICE_UP), Boolean.valueOf(false));
+                    if (entity instanceof SoftwareProcess) {
+                        EntityTestUtils.assertAttributeEquals(entity, Attributes.SERVICE_STATE_ACTUAL, Lifecycle.RUNNING);
+                        EntityTestUtils.assertAttributeEquals(entity, Attributes.SERVICE_UP, Boolean.TRUE);
+                    }
+                }
+
+            }
+        });
     }
 
     @DataProvider(name = "providerData", parallel = true)
