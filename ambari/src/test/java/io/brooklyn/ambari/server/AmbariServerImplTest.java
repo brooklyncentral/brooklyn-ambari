@@ -70,7 +70,7 @@ public class AmbariServerImplTest {
 
     @Test
     public void testClusterStateIsreturned() {
-        String clusterState = ambariServer.getClusterState().apply(getAsJsonObject(JSON_CLUSTER_STATE));
+        String clusterState = ambariServer.getRequestState().apply(getAsJsonObject(JSON_CLUSTER_STATE));
 
         assertEquals("IN_PROGRESS", clusterState);
     }

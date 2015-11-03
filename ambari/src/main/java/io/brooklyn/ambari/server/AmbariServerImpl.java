@@ -51,11 +51,15 @@ import brooklyn.event.feed.http.HttpFeed;
 import brooklyn.event.feed.http.HttpPollConfig;
 import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.location.access.BrooklynAccessUtils;
+import brooklyn.management.Task;
 import brooklyn.util.guava.Functionals;
 import brooklyn.util.http.HttpTool;
+import brooklyn.util.task.DynamicTasks;
+import brooklyn.util.task.Tasks;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.rest.AmbariRequestInterceptor;
+import io.brooklyn.ambari.rest.RequestCheckRunnable;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
 import io.brooklyn.ambari.rest.domain.Request;
@@ -140,7 +144,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                 .credentials("admin", "admin")
                 .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
                 .poll(new HttpPollConfig<String>(CLUSTER_STATE)
-                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getClusterState()))
+                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getRequestState()))
                         .onFailureOrException(Functions.<String>constant(null)))
                 .build();
     }
@@ -157,7 +161,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         return path;
     }
 
-    Function<JsonElement, String> getClusterState() {
+    Function<JsonElement, String> getRequestState() {
         Function<JsonElement, String> path = new Function<JsonElement, String>() {
             @Nullable
             @Override
@@ -224,73 +228,6 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
-    public void addServiceToCluster(@EffectorParam(name = "Cluster name") String cluster,
-                                    @EffectorParam(name = "Service") String service) {
-        waitForServiceUp();
-        restAdapter.create(ServiceEndpoint.class).addService(cluster, service);
-    }
-
-    @Override
-    public void createComponentToCluster(@EffectorParam(name = "Cluster name") String cluster,
-                                         @EffectorParam(name = "Service name") String service,
-                                         @EffectorParam(name = "Component name") String component) {
-        waitForServiceUp();
-        restAdapter.create(ServiceEndpoint.class).createComponent(cluster, service, component);
-    }
-
-    @Override
-    public void createHostComponent(@EffectorParam(name = "Cluster name") String cluster,
-                                    @EffectorParam(name = "Host FQDN") String hostName,
-                                    @EffectorParam(name = "Component name") String component) {
-        waitForServiceUp();
-        restAdapter.create(HostEndpoint.class).createHostComponent(cluster, hostName, component);
-    }
-
-    @Override
-    public void createComponentConfiguration(@EffectorParam(name = "Cluster name") String cluster,
-                                             @EffectorParam(name = "Component configuration key") String key,
-                                             @EffectorParam(name = "Component configuration") Map<Object, Object> config) {
-        waitForServiceUp();
-        restAdapter.create(ConfigurationEnpoint.class).createConfiguration(cluster, ImmutableMap.builder()
-                .put("Clusters", ImmutableMap.builder()
-                        .put("desired_configs", ImmutableMap.builder()
-                                .put("type", key)
-                                .put("tag", String.format("version%d", System.currentTimeMillis()))
-                                .put("properties", config)
-                                .build())
-                        .build())
-                .build());
-    }
-
-    @Override
-    public Request installService(@EffectorParam(name = "Cluster name") String cluster,
-                                  @EffectorParam(name = "Service name") String service) {
-        waitForServiceUp();
-        return restAdapter.create(ServiceEndpoint.class).updateService(cluster, service, ImmutableMap.builder()
-                .put("RequestInfo", ImmutableMap.builder()
-                        .put("context", String.format("Install %s service", service))
-                        .build())
-                .put("ServiceInfo", ImmutableMap.builder()
-                        .put("state", "INSTALLED")
-                        .build())
-                .build());
-    }
-
-    @Override
-    public Request startService(@EffectorParam(name = "Cluster name") String cluster,
-                                @EffectorParam(name = "Service name") String service) {
-        waitForServiceUp();
-        return restAdapter.create(ServiceEndpoint.class).updateService(cluster, service, ImmutableMap.builder()
-                .put("RequestInfo", ImmutableMap.builder()
-                        .put("context", String.format("Start %s service", service))
-                        .build())
-                .put("ServiceInfo", ImmutableMap.builder()
-                        .put("state", "STARTED")
-                        .build())
-                .build());
-    }
-
-    @Override
     public void createCluster(@EffectorParam(name = "Cluster Name") String clusterName,
                               @EffectorParam(name = "Blueprint Name") String blueprintName,
                               @EffectorParam(name = "Stack Name") String stackName,
@@ -313,6 +250,112 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                                 .put("verify_base_url", true)
                                 .build())
                         .build());
+    }
+
+    @Override
+    public void addServiceToCluster(@EffectorParam(name = "cluster", description = "Cluster name") final String cluster,
+                                    @EffectorParam(name = "service", description = "Service name") final String service,
+                                    @EffectorParam(name = "mappings", description = "Mappings of component to host") Map<String, String> mappings,
+                                    @EffectorParam(name = "configuration", description = "Services Configuration", nullable = true, defaultValue = EffectorParam.MAGIC_STRING_MEANING_NULL) Map<String, Map<Object, Object>> configuration) {
+        waitForServiceUp();
+
+        final ServiceEndpoint serviceEndpoint = restAdapter.create(ServiceEndpoint.class);
+        final HostEndpoint hostEndpoint = restAdapter.create(HostEndpoint.class);
+
+        // Step 1 - Add the service to the cluster
+        serviceEndpoint.addService(cluster, service);
+
+        // Step 2 - Add Components to the service
+        // Step 3 - Create host components
+        for (Map.Entry<String, String> mapping : mappings.entrySet()) {
+            serviceEndpoint.createComponent(cluster, service, mapping.getKey());
+            hostEndpoint.createHostComponent(cluster, mapping.getValue(), mapping.getKey());
+        }
+
+        // Step 4 - Create configuration, if needed
+        if (configuration != null) {
+            for (Map.Entry<String, Map<Object, Object>> entry : configuration.entrySet()) {
+                createServiceConfiguration(cluster, entry.getKey(), entry.getValue());
+            }
+        }
+
+        final Task installationTask = Tasks.builder()
+                .name(String.format("Install %s service", service))
+                .description(String.format("Install %s service on specified hosts through Ambari REST API", service))
+                .body(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Step 5 - Install the service
+                            final Request request = serviceEndpoint.updateService(cluster, service, ImmutableMap.builder()
+                                    .put("RequestInfo", ImmutableMap.builder()
+                                            .put("context", String.format("Install %s service", service))
+                                            .build())
+                                    .put("ServiceInfo", ImmutableMap.builder()
+                                            .put("state", "INSTALLED")
+                                            .build())
+                                    .build());
+
+                            RequestCheckRunnable.check(request)
+                                    .headers(ImmutableMap.of(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials)))
+                                    .errorMessage(String.format("Error during installation of service \"%s\". Please check the Ambari console for more details: %s", service, ambariUri))
+                                    .build()
+                                    .run();
+                        }
+                }).build();
+        final Task startTask = Tasks.builder()
+                .name(String.format("Start %s service", service))
+                .description(String.format("Start %s service on specified hosts through Ambari REST API", service))
+                .body(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Step 6 - Start the service
+                        startService(cluster, service);
+                    }
+                }).build();
+
+        // Queue the "Installation" subtask and wait for its completion. If something goes wrong during execution, an
+        // exception will be thrown which will stop the effector and prevent the "start" subtask to run.
+        DynamicTasks.queue(installationTask);
+        // Queue the "Start" subtask. At this point, everything went fine. If something goes wrong during execution, an
+        // exception will be thrown which will stop the effector.
+        DynamicTasks.queue(startTask);
+    }
+
+    @Override
+    public void createServiceConfiguration(@EffectorParam(name = "Cluster name") String cluster,
+                                           @EffectorParam(name = "Component configuration key") String configurationKey,
+                                           @EffectorParam(name = "Component configuration") Map<Object, Object> configuration) {
+        waitForServiceUp();
+        restAdapter.create(ConfigurationEnpoint.class).createConfiguration(cluster, ImmutableMap.builder()
+                .put("Clusters", ImmutableMap.builder()
+                        .put("desired_configs", ImmutableMap.builder()
+                                .put("type", configurationKey)
+                                .put("tag", String.format("version%d", System.currentTimeMillis()))
+                                .put("properties", configuration)
+                                .build())
+                        .build())
+                .build());
+    }
+
+    @Override
+    public void startService(@EffectorParam(name = "Cluster name") String cluster,
+                             @EffectorParam(name = "Service name") final String service) {
+        waitForServiceUp();
+
+        final Request request = restAdapter.create(ServiceEndpoint.class).updateService(cluster, service, ImmutableMap.builder()
+                .put("RequestInfo", ImmutableMap.builder()
+                        .put("context", String.format("Start %s service", service))
+                        .build())
+                .put("ServiceInfo", ImmutableMap.builder()
+                        .put("state", "STARTED")
+                        .build())
+                .build());
+
+        RequestCheckRunnable.check(request)
+                .headers(ImmutableMap.of(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials)))
+                .errorMessage(String.format("Error during the start of service \"%s\". Please check the Ambari console for more details: %s", service, ambariUri))
+                .build()
+                .run();
     }
 
     @Override
