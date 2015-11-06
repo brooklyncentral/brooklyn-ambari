@@ -22,15 +22,16 @@ package io.brooklyn.ambari.server;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.brooklyn.api.catalog.Catalog;
+import org.apache.brooklyn.api.entity.ImplementedBy;
+import org.apache.brooklyn.api.sensor.AttributeSensor;
+import org.apache.brooklyn.core.annotation.Effector;
+import org.apache.brooklyn.core.annotation.EffectorParam;
+import org.apache.brooklyn.core.sensor.PortAttributeSensorAndConfigKey;
+import org.apache.brooklyn.core.sensor.Sensors;
+
 import com.google.common.reflect.TypeToken;
 
-import brooklyn.catalog.Catalog;
-import brooklyn.entity.annotation.Effector;
-import brooklyn.entity.annotation.EffectorParam;
-import brooklyn.entity.proxying.ImplementedBy;
-import brooklyn.event.AttributeSensor;
-import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
-import brooklyn.event.basic.Sensors;
 import io.brooklyn.ambari.AmbariNode;
 import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;

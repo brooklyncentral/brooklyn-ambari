@@ -19,19 +19,21 @@
 
 package io.brooklyn.ambari.agent;
 
-import brooklyn.catalog.Catalog;
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.proxying.ImplementedBy;
-import brooklyn.event.AttributeSensor;
-import brooklyn.event.basic.Sensors;
-import brooklyn.util.flags.SetFromFlag;
-import brooklyn.util.javalang.JavaClassNames;
-import com.google.common.reflect.TypeToken;
-import io.brooklyn.ambari.AmbariNode;
-
-import javax.annotation.Nullable;
 import java.util.List;
+import javax.annotation.Nullable;
+
+import org.apache.brooklyn.api.catalog.Catalog;
+import org.apache.brooklyn.api.entity.ImplementedBy;
+import org.apache.brooklyn.api.sensor.AttributeSensor;
+import org.apache.brooklyn.config.ConfigKey;
+import org.apache.brooklyn.core.config.ConfigKeys;
+import org.apache.brooklyn.core.sensor.Sensors;
+import org.apache.brooklyn.util.core.flags.SetFromFlag;
+import org.apache.brooklyn.util.javalang.JavaClassNames;
+
+import com.google.common.reflect.TypeToken;
+
+import io.brooklyn.ambari.AmbariNode;
 
 @Catalog(name="Ambari Agent", description="Ambari Agent: part of an ambari cluster that runs on each node that will form part of the Hadoop cluster")
 @ImplementedBy(AmbariAgentImpl.class)

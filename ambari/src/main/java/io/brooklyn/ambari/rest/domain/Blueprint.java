@@ -19,13 +19,14 @@
 
 package io.brooklyn.ambari.rest.domain;
 
-import brooklyn.util.collections.MutableList;
-import com.google.common.base.Preconditions;
-import com.google.gson.annotations.SerializedName;
-
+import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
+
+import org.apache.brooklyn.util.collections.MutableList;
+
+import com.google.common.base.Preconditions;
+import com.google.gson.annotations.SerializedName;
 
 public class Blueprint {
 

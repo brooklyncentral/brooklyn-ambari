@@ -21,7 +21,7 @@ package ${groupId};
 
 import io.brooklyn.ambari.service.ExtraService;
 
-import brooklyn.entity.proxying.ImplementedBy;
+import org.apache.brooklyn.api.entity.ImplementedBy;
 
 @ImplementedBy(MyServiceImpl.class)
 public interface MyService extends ExtraService {

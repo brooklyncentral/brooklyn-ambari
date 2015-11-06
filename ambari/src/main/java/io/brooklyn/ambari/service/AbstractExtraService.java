@@ -20,20 +20,19 @@
 package io.brooklyn.ambari.service;
 
 import java.util.List;
-
 import javax.annotation.Nonnull;
 
+import org.apache.brooklyn.api.mgmt.Task;
+import org.apache.brooklyn.core.mgmt.BrooklynTaskTags;
+import org.apache.brooklyn.entity.stock.BasicStartableImpl;
+import org.apache.brooklyn.util.collections.MutableList;
+import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.commons.collections.CollectionUtils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
-import brooklyn.entity.basic.BasicStartableImpl;
-import brooklyn.entity.basic.BrooklynTaskTags;
-import brooklyn.management.Task;
-import brooklyn.util.collections.MutableList;
-import brooklyn.util.task.Tasks;
 import io.brooklyn.ambari.FunctionRunningCallable;
 import io.brooklyn.ambari.agent.AmbariAgent;
 

@@ -19,22 +19,22 @@
 
 package io.brooklyn.ambari.service;
 
-import static brooklyn.util.ssh.BashCommands.*;
+import static org.apache.brooklyn.util.ssh.BashCommands.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.brooklyn.api.mgmt.Task;
+import org.apache.brooklyn.core.effector.EffectorTasks;
+import org.apache.brooklyn.core.effector.ssh.SshEffectorTasks;
+import org.apache.brooklyn.core.entity.Entities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.effector.EffectorTasks;
-import brooklyn.entity.software.SshEffectorTasks;
-import brooklyn.management.Task;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.server.AmbariServer;

@@ -19,9 +19,9 @@
 
 package io.brooklyn.ambari.rest.domain;
 
-import com.google.gson.annotations.SerializedName;
-
 import javax.annotation.Nullable;
+
+import com.google.gson.annotations.SerializedName;
 
 public class Service {
 

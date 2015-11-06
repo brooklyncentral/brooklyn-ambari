@@ -18,23 +18,24 @@
  */
 package io.brooklyn.ambari.server;
 
-import static brooklyn.util.ssh.BashCommands.installPackage;
-import static brooklyn.util.ssh.BashCommands.sudo;
-import static brooklyn.util.ssh.BashCommands.unzip;
 import static java.lang.String.format;
+import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
+import static org.apache.brooklyn.util.ssh.BashCommands.installPackage;
+import static org.apache.brooklyn.util.ssh.BashCommands.unzip;
 
 import java.util.List;
+
+import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.entity.java.JavaSoftwareProcessSshDriver;
+import org.apache.brooklyn.entity.software.base.SoftwareProcess;
+import org.apache.brooklyn.location.ssh.SshMachineLocation;
+import org.apache.brooklyn.util.collections.MutableMap;
+import org.apache.brooklyn.util.ssh.BashCommands;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
-import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.collections.MutableMap;
-import brooklyn.util.ssh.BashCommands;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariInstallCommands;
 

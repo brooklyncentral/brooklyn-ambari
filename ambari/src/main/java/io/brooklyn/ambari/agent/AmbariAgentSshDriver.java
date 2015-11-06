@@ -18,21 +18,21 @@
  */
 package io.brooklyn.ambari.agent;
 
-import static brooklyn.util.ssh.BashCommands.installPackage;
-import static brooklyn.util.ssh.BashCommands.sudo;
 import static java.lang.String.format;
+import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
+import static org.apache.brooklyn.util.ssh.BashCommands.installPackage;
 
+import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.entity.java.JavaSoftwareProcessSshDriver;
+import org.apache.brooklyn.entity.software.base.SoftwareProcess;
+import org.apache.brooklyn.location.ssh.SshMachineLocation;
+import org.apache.brooklyn.util.collections.MutableMap;
+import org.apache.brooklyn.util.ssh.BashCommands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
-import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.collections.MutableMap;
-import brooklyn.util.ssh.BashCommands;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariInstallCommands;
 import io.brooklyn.ambari.server.AmbariServer;

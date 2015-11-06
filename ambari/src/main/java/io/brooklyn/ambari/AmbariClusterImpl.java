@@ -26,10 +26,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.api.entity.EntitySpec;
+import org.apache.brooklyn.api.location.Location;
+import org.apache.brooklyn.api.mgmt.Task;
+import org.apache.brooklyn.api.sensor.SensorEvent;
+import org.apache.brooklyn.api.sensor.SensorEventListener;
+import org.apache.brooklyn.config.ConfigKey;
+import org.apache.brooklyn.core.entity.Attributes;
+import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.core.entity.lifecycle.ServiceStateLogic;
+import org.apache.brooklyn.core.mgmt.BrooklynTaskTags;
+import org.apache.brooklyn.enricher.stock.Enrichers;
+import org.apache.brooklyn.entity.software.base.SoftwareProcess;
+import org.apache.brooklyn.entity.stock.BasicStartableImpl;
+import org.apache.brooklyn.util.collections.MutableList;
+import org.apache.brooklyn.util.collections.MutableMap;
+import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.LoggerFactory;
@@ -41,21 +57,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.enricher.Enrichers;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.entity.basic.BasicStartableImpl;
-import brooklyn.entity.basic.BrooklynTaskTags;
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.ServiceStateLogic;
-import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.location.Location;
-import brooklyn.management.Task;
-import brooklyn.util.collections.MutableList;
-import brooklyn.util.collections.MutableMap;
-import brooklyn.util.task.Tasks;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
 import io.brooklyn.ambari.cluster.ClusterStateEventListener;
@@ -155,7 +156,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         for (ExtraService extraService : Entities.descendants(this, ExtraService.class)) {
             if (isHostGroupsDeployment) {
-                Preconditions.checkNotNull(extraService.getConfig(ExtraService.COMPONENT_NAMES),
+                checkNotNull(extraService.getConfig(ExtraService.COMPONENT_NAMES),
                         "Entity \"%s\" must define a list of components names as this is a host groups based deployment. Please use the \"%s\" configuration key",
                         extraService.getEntityType().getName(),
                         ExtraService.COMPONENT_NAMES.getName());
@@ -171,7 +172,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     componentsByNode.get(componentMapping.getHost()).add(componentMapping.getComponent());
                 }
             } else {
-                Preconditions.checkNotNull(extraService.getConfig(ExtraService.SERVICE_NAME),
+                checkNotNull(extraService.getConfig(ExtraService.SERVICE_NAME),
                         "Entity \"%s\" must define a service name as this is a services based deployment. Please use the \"%s\" configuration key",
                         extraService.getEntityType().getName(),
                         ExtraService.SERVICE_NAME.getName());
@@ -251,10 +252,10 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             recommendationWrapper = getRecommendationWrapperFromAmbariServer();
         }
 
-        Preconditions.checkNotNull(recommendationWrapper);
-        Preconditions.checkNotNull(recommendationWrapper.getRecommendation());
-        Preconditions.checkNotNull(recommendationWrapper.getRecommendation().getBlueprint());
-        Preconditions.checkNotNull(recommendationWrapper.getRecommendation().getBindings());
+        checkNotNull(recommendationWrapper);
+        checkNotNull(recommendationWrapper.getRecommendation());
+        checkNotNull(recommendationWrapper.getRecommendation().getBlueprint());
+        checkNotNull(recommendationWrapper.getRecommendation().getBindings());
 
         for (HostGroup hostGroup : recommendationWrapper.getRecommendation().getBlueprint().getHostGroups()) {
             if (!componentsByNodeName.containsKey(hostGroup.getName())) {
@@ -429,7 +430,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     @Nullable
     private AmbariAgent getAmbariAgentByFqdn(@Nonnull String fqdn) {
-        Preconditions.checkNotNull(fqdn);
+        checkNotNull(fqdn);
 
         for (AmbariAgent ambariAgent : Entities.descendants(this, AmbariAgent.class)) {
             if (StringUtils.equals(ambariAgent.getFqdn(), fqdn)) {

@@ -28,6 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.brooklyn.util.exceptions.PropagatedRuntimeException;
+import org.apache.brooklyn.util.time.Duration;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -41,8 +43,6 @@ import org.testng.annotations.Test;
 
 import com.jayway.jsonpath.PathNotFoundException;
 
-import brooklyn.util.exceptions.PropagatedRuntimeException;
-import brooklyn.util.time.Duration;
 import io.brooklyn.ambari.rest.domain.Request;
 
 public class RequestCheckRunnableTest {

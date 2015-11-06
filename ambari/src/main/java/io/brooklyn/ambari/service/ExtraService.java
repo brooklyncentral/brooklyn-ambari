@@ -19,22 +19,21 @@
 
 package io.brooklyn.ambari.service;
 
-import static brooklyn.util.text.Strings.trim;
+import static org.apache.brooklyn.util.text.Strings.trim;
 
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nonnull;
 
+import org.apache.brooklyn.config.ConfigKey;
+import org.apache.brooklyn.core.config.ConfigKeys;
+import org.apache.brooklyn.entity.stock.BasicStartable;
+import org.apache.brooklyn.util.core.flags.SetFromFlag;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.BasicStartable;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.util.flags.SetFromFlag;
 import io.brooklyn.ambari.AmbariCluster;
 
 /**

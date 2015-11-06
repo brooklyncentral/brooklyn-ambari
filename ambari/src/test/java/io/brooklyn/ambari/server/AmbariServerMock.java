@@ -20,7 +20,8 @@ package io.brooklyn.ambari.server;
 
 import java.util.Map;
 
-import brooklyn.entity.proxying.ImplementedBy;
+import org.apache.brooklyn.api.entity.ImplementedBy;
+
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 
 @ImplementedBy(AmbariServerMockImpl.class)

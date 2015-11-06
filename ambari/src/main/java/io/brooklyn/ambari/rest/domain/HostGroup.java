@@ -19,15 +19,16 @@
 
 package io.brooklyn.ambari.rest.domain;
 
-import brooklyn.util.collections.MutableList;
-import brooklyn.util.collections.MutableMap;
-import com.google.common.base.Preconditions;
-import com.google.gson.annotations.SerializedName;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.apache.brooklyn.util.collections.MutableList;
+import org.apache.brooklyn.util.collections.MutableMap;
+
+import com.google.common.base.Preconditions;
+import com.google.gson.annotations.SerializedName;
 
 public class HostGroup {
 

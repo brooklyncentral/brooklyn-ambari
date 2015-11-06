@@ -19,22 +19,23 @@
 
 package io.brooklyn.ambari;
 
-import brooklyn.entity.Entity;
-import brooklyn.entity.basic.Attributes;
-import brooklyn.event.AttributeSensor;
-import brooklyn.location.basic.Machines;
-import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.guava.Maybe;
-import brooklyn.util.ssh.BashCommands;
-import brooklyn.util.text.Identifiers;
+import java.util.Map;
+
+import org.apache.brooklyn.api.entity.Entity;
+import org.apache.brooklyn.api.sensor.AttributeSensor;
+import org.apache.brooklyn.core.entity.Attributes;
+import org.apache.brooklyn.core.location.Machines;
+import org.apache.brooklyn.location.ssh.SshMachineLocation;
+import org.apache.brooklyn.util.guava.Maybe;
+import org.apache.brooklyn.util.ssh.BashCommands;
+import org.apache.brooklyn.util.text.Identifiers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 public class EtcHostsManager {
 

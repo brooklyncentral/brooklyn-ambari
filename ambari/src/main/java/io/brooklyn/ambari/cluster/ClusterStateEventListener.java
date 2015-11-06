@@ -18,12 +18,12 @@
  */
 package io.brooklyn.ambari.cluster;
 
+import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.api.sensor.SensorEvent;
+import org.apache.brooklyn.api.sensor.SensorEventListener;
+import org.apache.brooklyn.core.entity.lifecycle.ServiceStateLogic;
 import org.apache.commons.lang3.StringUtils;
 
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.ServiceStateLogic;
-import brooklyn.event.SensorEvent;
-import brooklyn.event.SensorEventListener;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.service.ExtraServiceException;
 

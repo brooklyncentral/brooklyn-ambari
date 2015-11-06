@@ -18,16 +18,18 @@
  */
 package io.brooklyn.ambari;
 
-import static brooklyn.util.ssh.BashCommands.alternatives;
-import static brooklyn.util.ssh.BashCommands.chainGroup;
-import static brooklyn.util.ssh.BashCommands.commandToDownloadUrlAs;
-import static brooklyn.util.ssh.BashCommands.ifExecutableElse1;
-import static brooklyn.util.ssh.BashCommands.installExecutable;
-import static brooklyn.util.ssh.BashCommands.sudo;
+import org.apache.brooklyn.location.ssh.SshMachineLocation;
 
-import brooklyn.location.OsDetails;
-import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.ssh.BashCommands;
+import static org.apache.brooklyn.util.ssh.BashCommands.alternatives;
+import static org.apache.brooklyn.util.ssh.BashCommands.chainGroup;
+import static org.apache.brooklyn.util.ssh.BashCommands.commandToDownloadUrlAs;
+import static org.apache.brooklyn.util.ssh.BashCommands.ifExecutableElse1;
+import static org.apache.brooklyn.util.ssh.BashCommands.installExecutable;
+import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
+
+import org.apache.brooklyn.api.location.OsDetails;
+import org.apache.brooklyn.util.ssh.BashCommands;
+
 
 public class AmbariInstallCommands {
 

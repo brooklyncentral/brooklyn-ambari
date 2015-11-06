@@ -19,12 +19,13 @@
 
 package io.brooklyn.ambari.rest.domain;
 
-import brooklyn.util.collections.MutableMap;
-import com.google.gson.annotations.SerializedName;
-
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Map;
+
+import org.apache.brooklyn.util.collections.MutableMap;
+
+import com.google.gson.annotations.SerializedName;
 
 public class Configuration {
 

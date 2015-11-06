@@ -18,7 +18,7 @@
  */
 package io.brooklyn.ambari.server;
 
-import brooklyn.entity.java.JavaSoftwareProcessDriver;
+import org.apache.brooklyn.entity.java.JavaSoftwareProcessDriver;
 
 public interface AmbariServerDriver extends JavaSoftwareProcessDriver {
 
