@@ -117,6 +117,14 @@ public interface AmbariCluster extends BasicStartable {
             ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
             }, "ambari.stack.urls", "stack definitions as tar.gz", new LinkedList<String>());
 
+    @SetFromFlag("pauseForDeployment")
+    ConfigKey<Boolean> PAUSE_FOR_DEPLOYMENT =
+            ConfigKeys.newBooleanConfigKey(
+                    "ambari.pause.before.deployment",
+                    "Pauses once ambari server and clusters ready to deploy.  Creates deployCluster " +
+                            "effector to continue deployment",
+                    Boolean.FALSE);
+
     AttributeSensor<Boolean> CLUSTER_SERVICES_INITIALISE_CALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInitialiseCalled");
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INSTALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInstalled");
@@ -158,6 +166,7 @@ public interface AmbariCluster extends BasicStartable {
     /**
      * Configure and deploy a new Hadoop cluster on the registered Ambari agents.
      */
+//    @Effector(description = "Deploy cluster given current settings")
     void deployCluster() throws AmbariApiException, ExtraServiceException;
 
     /**

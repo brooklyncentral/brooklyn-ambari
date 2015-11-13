@@ -43,13 +43,17 @@ import com.google.common.collect.Lists;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.enricher.Enrichers;
+import brooklyn.entity.Effector;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.BrooklynTaskTags;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.MethodEffector;
 import brooklyn.entity.basic.ServiceStateLogic;
 import brooklyn.entity.basic.SoftwareProcess;
+import brooklyn.entity.effector.EffectorBody;
+import brooklyn.entity.effector.Effectors;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
@@ -57,6 +61,7 @@ import brooklyn.location.Location;
 import brooklyn.management.Task;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.collections.MutableMap;
+import brooklyn.util.config.ConfigBag;
 import brooklyn.util.task.Tasks;
 import io.brooklyn.ambari.agent.AmbariAgent;
 import io.brooklyn.ambari.agent.AmbariAgentImpl;
@@ -200,8 +205,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     @Override
     public void start(Collection<? extends Location> locations) {
         super.start(locations);
-
-        subscribe(getMasterAmbariServer(), AmbariServer.REGISTERED_HOSTS, new RegisteredHostEventListener(this));
+        subscribe(getMasterAmbariServer(), AmbariServer.REGISTERED_HOSTS, new RegisteredHostEventListener(this, config().get(AmbariCluster.PAUSE_FOR_DEPLOYMENT)));
         subscribe(getMasterAmbariServer(), AmbariServer.CLUSTER_STATE, new ClusterStateEventListener(this));
 
         EtcHostsManager.setHostsOnMachines(getAmbariNodes(), getConfig(ETC_HOST_ADDRESS));
@@ -234,10 +238,12 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     static final class RegisteredHostEventListener implements SensorEventListener<List<String>> {
 
-        private final AmbariCluster entity;
+        private final AmbariClusterImpl entity;
+        private Boolean pauseOnDeployment;
 
-        public RegisteredHostEventListener(AmbariCluster entity) {
+        public RegisteredHostEventListener(AmbariClusterImpl entity, Boolean pauseOnDeployment) {
             this.entity = entity;
+            this.pauseOnDeployment = pauseOnDeployment;
         }
 
         @Override
@@ -247,7 +253,25 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             Boolean initialised = entity.getAttribute(CLUSTER_SERVICES_INITIALISE_CALLED);
             if (hosts != null && hosts.size() == initialClusterSize && !Boolean.TRUE.equals(initialised)) {
                 try {
-                    entity.deployCluster();
+                    if(pauseOnDeployment) {
+                        Effector<Void> deployCluster = Effectors
+                                .effector(
+                                        new MethodEffector<Void>(
+                                                AmbariCluster.class,
+                                                "deployCluster"))
+                                .impl(
+                                        new EffectorBody<Void>() {
+                                            @Override
+                                            public Void call(ConfigBag configBag) {
+                                                entity.deployCluster();
+                                                return null;
+                                            }
+                                        })
+                                .build();
+                        entity.getMutableEntityType().addEffector(deployCluster);
+                    } else {
+                        entity.deployCluster();
+                    }
                 } catch (AmbariApiException ex) {
                     ServiceStateLogic.ServiceNotUpLogic.updateNotUpIndicator((EntityLocal) entity, "ambari.api", ex.getMessage());
                     throw ex;
