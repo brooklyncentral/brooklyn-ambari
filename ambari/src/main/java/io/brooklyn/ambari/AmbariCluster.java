@@ -166,7 +166,6 @@ public interface AmbariCluster extends BasicStartable {
     /**
      * Configure and deploy a new Hadoop cluster on the registered Ambari agents.
      */
-//    @Effector(description = "Deploy cluster given current settings")
     void deployCluster() throws AmbariApiException, ExtraServiceException;
 
     /**
