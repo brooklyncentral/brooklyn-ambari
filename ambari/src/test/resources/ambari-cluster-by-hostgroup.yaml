@@ -7,6 +7,16 @@ services:
     securityGroup: test-ambari
     serverComponents:
     - HDFS_CLIENT
+    ambariConfigMap:
+      hdfs-site:
+        dfs.webhdfs.enabled: true
+        dfs.permissions.enabled: false
+      httpfs-site:
+        httpfs.proxyuser.hue: '*'
+        httpfs.proxyuser.hue.groups: '*'
+      capacity-scheduler:
+        yarn.scheduler.capacity.root.accessible-node-labels.default.capacity : '1'
+        yarn.scheduler.capacity.root.accessible-node-labels.default.maximum-capacity : '1'
   brooklyn.children:
   - type: io.brooklyn.ambari.hostgroup.AmbariHostGroup
     name: NameNode
