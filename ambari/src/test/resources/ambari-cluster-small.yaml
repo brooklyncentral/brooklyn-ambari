@@ -3,7 +3,8 @@ services:
 - type: io.brooklyn.ambari.AmbariCluster
   name: Ambari Cluster
   brooklyn.config:
-    version: 2.0.1
+    version: 2.1.2
+    stackVersion: 2.3
     securityGroup: test-ambari
     ambariConfigMap:
       hdfs-site:
@@ -12,9 +13,6 @@ services:
       httpfs-site:
         httpfs.proxyuser.hue: '*'
         httpfs.proxyuser.hue.groups: '*'
-      capacity-scheduler:
-        yarn.scheduler.capacity.root.accessible-node-labels.default.capacity : '1'
-        yarn.scheduler.capacity.root.accessible-node-labels.default.maximum-capacity : '1'
     initialSize: 3
     services:
     - GANGLIA
