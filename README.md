@@ -8,6 +8,11 @@ Ambari stacks to those servers.
 
 [![Build Status](https://api.travis-ci.org/brooklyncentral/brooklyn-ambari.svg?branch=master)](https://travis-ci.org/brooklyncentral/brooklyn-ambari)
 
+This blueprint currently uses the following dependencies:
+
+- Apache Ambari **2.1.2**
+- HDP stack definition **2.3**
+
 
 ## Sample Blueprint
 

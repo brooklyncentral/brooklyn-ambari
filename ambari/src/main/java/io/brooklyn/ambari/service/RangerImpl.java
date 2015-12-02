@@ -47,6 +47,7 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     private static final Logger LOG = LoggerFactory.getLogger(RangerImpl.class);
 
     private static final String DB_HOST = "localhost";
+    private static final String DB_NAME = "ranger";
 
     private static final List<String> REQUIRES_JDBC_DRIVER = Lists.newArrayList("NAMENODE", "HBASE_MASTER", "HBASE_REGIONSERVER");
     private static final List<String> REQUIRES_MYSQL_CLIENT = Lists.newArrayList("RANGER_ADMIN");
@@ -56,8 +57,12 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
         return ImmutableMap.<String, Map>builder()
                 .put("admin-properties", ImmutableMap.builder()
                         .put("db_host", DB_HOST)
+                        .put("db_name", DB_NAME)
                         .put("db_root_user", getConfig(DB_USER))
                         .put("db_root_password", getConfig(DB_PASSWORD))
+                        .build())
+                .put("ranger-admin-site", ImmutableMap.builder()
+                        .put("ranger.jpa.jdbc.url", String.format("jdbc:mysql://%s/%s", DB_HOST, DB_NAME))
                         .build())
                 .build();
     }

@@ -65,7 +65,7 @@ public interface AmbariCluster extends BasicStartable {
     ConfigKey<String> HADOOP_STACK_NAME = ConfigKeys.newStringConfigKey("stackName", "Hadoop stack name", "HDP");
 
     @SetFromFlag("stackVersion")
-    ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.2");
+    ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.3");
 
     @Deprecated
     @SetFromFlag("extraServices")

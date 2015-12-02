@@ -3,8 +3,6 @@ services:
 - type: io.brooklyn.ambari.AmbariCluster
   name: Ambari Cluster
   brooklyn.config:
-    version: 2.1.2
-    stackVersion: 2.3
     securityGroup: test-ambari
     ambariStackDefsUrls:
     - https://github.com/abajwa-hw/openldap-stack/archive/master.zip
