@@ -19,7 +19,7 @@
 
 package io.brooklyn.ambari.agent;
 
-import brooklyn.entity.java.JavaSoftwareProcessDriver;
+import org.apache.brooklyn.entity.java.JavaSoftwareProcessDriver;
 
-public interface AmbariAgentDriver extends JavaSoftwareProcessDriver{
+public interface AmbariAgentDriver extends JavaSoftwareProcessDriver {
 }

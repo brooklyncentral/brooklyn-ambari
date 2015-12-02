@@ -19,13 +19,14 @@
 
 package io.brooklyn.ambari;
 
-import com.google.common.base.Function;
+import static org.mockito.Mockito.verify;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.verify;
+import com.google.common.base.Function;
 
 public class FunctionRunningCallableTest {
 

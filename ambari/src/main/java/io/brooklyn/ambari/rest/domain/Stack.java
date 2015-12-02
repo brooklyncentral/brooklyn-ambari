@@ -19,11 +19,11 @@
 
 package io.brooklyn.ambari.rest.domain;
 
-import com.google.common.base.Preconditions;
-import com.google.gson.annotations.SerializedName;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import com.google.common.base.Preconditions;
+import com.google.gson.annotations.SerializedName;
 
 public class Stack {
 

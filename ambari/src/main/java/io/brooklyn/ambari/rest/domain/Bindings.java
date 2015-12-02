@@ -19,12 +19,13 @@
 
 package io.brooklyn.ambari.rest.domain;
 
-import brooklyn.util.collections.MutableList;
+import java.util.List;
+import javax.annotation.Nonnull;
+
+import org.apache.brooklyn.util.collections.MutableList;
+
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
-
-import javax.annotation.Nonnull;
-import java.util.List;
 
 public class Bindings {
 

@@ -19,12 +19,12 @@
 
 package io.brooklyn.ambari.rest;
 
+import org.apache.brooklyn.util.core.http.HttpTool;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 import com.google.common.base.Preconditions;
 import com.google.common.net.HttpHeaders;
 
-import brooklyn.util.http.HttpTool;
 import retrofit.RequestInterceptor;
 
 /**

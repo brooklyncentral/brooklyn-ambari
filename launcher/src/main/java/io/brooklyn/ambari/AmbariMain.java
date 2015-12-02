@@ -21,12 +21,12 @@ package io.brooklyn.ambari;
 
 import java.util.Arrays;
 
+import org.apache.brooklyn.cli.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects.ToStringHelper;
 
-import brooklyn.cli.Main;
 import io.airlift.command.Command;
 import io.airlift.command.Option;
 

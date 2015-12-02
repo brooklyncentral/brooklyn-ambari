@@ -19,10 +19,10 @@
 
 package io.brooklyn.ambari;
 
-import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.java.UsesJava;
-import brooklyn.event.AttributeSensor;
-import brooklyn.event.basic.Sensors;
+import org.apache.brooklyn.api.sensor.AttributeSensor;
+import org.apache.brooklyn.core.sensor.Sensors;
+import org.apache.brooklyn.entity.java.UsesJava;
+import org.apache.brooklyn.entity.software.base.SoftwareProcess;
 
 /**
  * Represent a node managed by the {@link AmbariCluster}. Typically, this will be either a

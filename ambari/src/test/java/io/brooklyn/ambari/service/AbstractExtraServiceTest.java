@@ -25,14 +25,14 @@ import static org.testng.Assert.fail;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.brooklyn.api.entity.EntitySpec;
+import org.apache.brooklyn.api.entity.ImplementedBy;
+import org.apache.brooklyn.core.test.BrooklynAppUnitTestSupport;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import brooklyn.entity.BrooklynAppUnitTestSupport;
-import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.entity.proxying.ImplementedBy;
 import io.brooklyn.ambari.AmbariCluster;
 
 public class AbstractExtraServiceTest extends BrooklynAppUnitTestSupport {

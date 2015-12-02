@@ -19,11 +19,15 @@
 
 package io.brooklyn.ambari.rest.endpoint;
 
+import java.util.Map;
+
 import io.brooklyn.ambari.rest.domain.Configurations;
 import retrofit.client.Response;
-import retrofit.http.*;
-
-import java.util.Map;
+import retrofit.http.Body;
+import retrofit.http.GET;
+import retrofit.http.PUT;
+import retrofit.http.Path;
+import retrofit.http.Query;
 
 public interface ConfigurationEnpoint {
 

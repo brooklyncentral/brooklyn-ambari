@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import org.apache.brooklyn.util.core.http.HttpTool;
+import org.apache.brooklyn.util.repeat.Repeater;
+import org.apache.brooklyn.util.time.Duration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 
@@ -32,9 +35,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.jsonpath.JsonPath;
 
-import brooklyn.util.http.HttpTool;
-import brooklyn.util.repeat.Repeater;
-import brooklyn.util.time.Duration;
 import io.brooklyn.ambari.rest.domain.Request;
 
 public class RequestCheckRunnable implements Runnable {

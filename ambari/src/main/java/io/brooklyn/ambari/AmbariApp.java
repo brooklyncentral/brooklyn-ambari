@@ -18,12 +18,12 @@
  */
 package io.brooklyn.ambari;
 
-import io.brooklyn.ambari.server.AmbariServer;
-import brooklyn.entity.basic.AbstractApplication;
-import brooklyn.entity.proxying.EntitySpec;
-
+import org.apache.brooklyn.api.entity.EntitySpec;
+import org.apache.brooklyn.core.entity.AbstractApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.brooklyn.ambari.server.AmbariServer;
 
 public class AmbariApp extends AbstractApplication {
 	

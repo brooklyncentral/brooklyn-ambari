@@ -19,17 +19,17 @@
 
 package io.brooklyn.ambari.agent;
 
-import brooklyn.entity.Entity;
-import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.basic.SoftwareProcessImpl;
-import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.util.config.ConfigBag;
-import io.brooklyn.ambari.AmbariCluster;
+import static org.apache.brooklyn.core.sensor.DependentConfiguration.attributeWhenReady;
 
-import javax.annotation.Nullable;
 import java.util.List;
+import javax.annotation.Nullable;
 
-import static brooklyn.event.basic.DependentConfiguration.attributeWhenReady;
+import org.apache.brooklyn.api.entity.EntitySpec;
+import org.apache.brooklyn.entity.software.base.SoftwareProcess;
+import org.apache.brooklyn.entity.software.base.SoftwareProcessImpl;
+import org.apache.brooklyn.util.core.config.ConfigBag;
+
+import io.brooklyn.ambari.AmbariCluster;
 
 public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent {
     @Override

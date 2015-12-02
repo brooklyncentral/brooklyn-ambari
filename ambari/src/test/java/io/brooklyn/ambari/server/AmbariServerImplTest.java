@@ -19,21 +19,17 @@
 
 package io.brooklyn.ambari.server;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.jayway.jsonpath.PathNotFoundException;
-
-import org.testng.annotations.Test;
-
-import io.brooklyn.ambari.rest.domain.Request;
-import io.brooklyn.ambari.server.AmbariServerImpl;
+import static org.apache.brooklyn.test.Asserts.assertThat;
+import static org.apache.brooklyn.util.collections.CollectionFunctionals.contains;
+import static org.apache.brooklyn.util.collections.CollectionFunctionals.sizeEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import static brooklyn.test.Asserts.assertThat;
-import static brooklyn.util.collections.CollectionFunctionals.contains;
-import static brooklyn.util.collections.CollectionFunctionals.sizeEquals;
-import static org.testng.AssertJUnit.assertEquals;
+import org.testng.annotations.Test;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class AmbariServerImplTest {
 

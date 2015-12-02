@@ -20,14 +20,14 @@ package io.brooklyn.ambari.service;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Function;
+import org.apache.brooklyn.api.entity.Entity;
+import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.api.mgmt.Task;
+import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.core.entity.lifecycle.ServiceStateLogic;
+import org.apache.brooklyn.core.mgmt.BrooklynTaskTags;
 
-import brooklyn.entity.Entity;
-import brooklyn.entity.basic.BrooklynTaskTags;
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.ServiceStateLogic;
-import brooklyn.management.Task;
+import com.google.common.base.Function;
 
 public abstract class AbstractExtraServicesTask<T extends Entity> implements Function<T, Void> {
 

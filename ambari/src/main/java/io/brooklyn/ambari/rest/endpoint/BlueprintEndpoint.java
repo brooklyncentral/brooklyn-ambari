@@ -19,6 +19,8 @@
 
 package io.brooklyn.ambari.rest.endpoint;
 
+import java.util.Map;
+
 import io.brooklyn.ambari.rest.domain.Blueprint;
 import io.brooklyn.ambari.rest.domain.Blueprints;
 import retrofit.client.Response;
@@ -26,8 +28,6 @@ import retrofit.http.Body;
 import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;
-
-import java.util.Map;
 
 public interface BlueprintEndpoint {
 

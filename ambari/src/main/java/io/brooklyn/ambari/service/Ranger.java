@@ -19,10 +19,10 @@
 
 package io.brooklyn.ambari.service;
 
-import brooklyn.config.ConfigKey;
-import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.proxying.ImplementedBy;
-import brooklyn.util.flags.SetFromFlag;
+import org.apache.brooklyn.api.entity.ImplementedBy;
+import org.apache.brooklyn.config.ConfigKey;
+import org.apache.brooklyn.core.config.ConfigKeys;
+import org.apache.brooklyn.util.core.flags.SetFromFlag;
 
 /**
  * Ranger hadoop service

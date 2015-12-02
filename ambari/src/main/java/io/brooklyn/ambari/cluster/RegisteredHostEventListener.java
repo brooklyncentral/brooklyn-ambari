@@ -20,15 +20,16 @@ package io.brooklyn.ambari.cluster;
 
 import java.util.List;
 
-import brooklyn.entity.Effector;
-import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.MethodEffector;
-import brooklyn.entity.basic.ServiceStateLogic;
-import brooklyn.entity.effector.EffectorBody;
-import brooklyn.entity.effector.Effectors;
-import brooklyn.event.SensorEvent;
-import brooklyn.event.SensorEventListener;
-import brooklyn.util.config.ConfigBag;
+import org.apache.brooklyn.api.effector.Effector;
+import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.api.sensor.SensorEvent;
+import org.apache.brooklyn.api.sensor.SensorEventListener;
+import org.apache.brooklyn.core.effector.EffectorBody;
+import org.apache.brooklyn.core.effector.Effectors;
+import org.apache.brooklyn.core.effector.MethodEffector;
+import org.apache.brooklyn.core.entity.lifecycle.ServiceStateLogic;
+import org.apache.brooklyn.util.core.config.ConfigBag;
+
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariClusterImpl;
 import io.brooklyn.ambari.rest.AmbariApiException;

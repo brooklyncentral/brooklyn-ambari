@@ -21,20 +21,19 @@ package io.brooklyn.ambari.hostgroup;
 
 import java.util.Collection;
 import java.util.List;
-
 import javax.annotation.Nullable;
 
+import org.apache.brooklyn.api.entity.Entity;
+import org.apache.brooklyn.api.entity.EntitySpec;
+import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.entity.group.DynamicClusterImpl;
+import org.apache.brooklyn.entity.software.base.SameServerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-import brooklyn.entity.Entity;
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.SameServerEntity;
-import brooklyn.entity.group.DynamicClusterImpl;
-import brooklyn.entity.proxying.EntitySpec;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.EtcHostsManager;
 import io.brooklyn.ambari.agent.AmbariAgent;

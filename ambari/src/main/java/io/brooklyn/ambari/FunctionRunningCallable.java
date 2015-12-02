@@ -19,10 +19,10 @@
 
 package io.brooklyn.ambari;
 
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-
-import javax.annotation.Nonnull;
 
 /**
  * Basic object that bind a {@link Function} to a listener.
