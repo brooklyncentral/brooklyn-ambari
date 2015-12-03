@@ -266,7 +266,12 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
                 "cluster", "Cluster1",
                 "service", "FLUME",
                 "mappings", ImmutableMap.of("FLUME_HANDLER", ambariAgent.getFqdn()),
-                "configuration", ImmutableMap.of()
+                "configuration", ImmutableMap.of(
+                        "flume-env", ImmutableMap.of(
+                                "flume_conf_dir", "/etc/flume/conf",
+                                "flume_log_dir", "/var/log/flume",
+                                "flume_run_dir", "/var/run/flume",
+                                "flume_user", "flume"))
         ));
 
         effectorTask.getUnchecked();
