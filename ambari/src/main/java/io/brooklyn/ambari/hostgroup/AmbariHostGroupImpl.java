@@ -21,6 +21,7 @@ package io.brooklyn.ambari.hostgroup;
 
 import java.util.Collection;
 import java.util.List;
+
 import javax.annotation.Nullable;
 
 import org.apache.brooklyn.api.entity.Entity;
@@ -75,8 +76,12 @@ public class AmbariHostGroupImpl extends DynamicClusterImpl implements AmbariHos
     public Collection<Entity> resizeByDelta(int delta) {
         Collection<Entity> entities = super.resizeByDelta(delta);
 
-        if (delta != 0) {
+        if (delta > 0) {
             EtcHostsManager.setHostsOnMachines(getAmbariCluster().getAmbariNodes(), getConfig(AmbariCluster.ETC_HOST_ADDRESS));
+            if (getAmbariCluster().isClusterComplete()) {
+                final List<AmbariAgent> ambariAgents = ImmutableList.copyOf(Iterables.filter(entities, AmbariAgent.class));
+                getAmbariCluster().addHostsToHostGroup(getDisplayName(), ambariAgents);
+            }
         }
 
         return entities;
