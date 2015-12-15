@@ -48,7 +48,7 @@ public class AbstractExtraServiceTest extends BrooklynAppUnitTestSupport {
         }
 
         @Override
-        public Map<String, Map> getAmbariConfig() {
+        public Map<String, Map> getAmbariConfig(AmbariCluster ambariCluster) {
             return null;
         }
 

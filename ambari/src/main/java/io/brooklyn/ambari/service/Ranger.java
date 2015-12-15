@@ -35,4 +35,7 @@ public interface Ranger extends ExtraService {
 
     @SetFromFlag("dbPassword")
     ConfigKey<String> DB_PASSWORD = ConfigKeys.newStringConfigKey("db.password", "MySQL user password", "rangerpassword");
+
+    @SetFromFlag("rangerPassword")
+    ConfigKey<String> RANGER_PASSWORD = ConfigKeys.newStringConfigKey("ranger.password", "Ranger user password", "rangerpassword");
 }
