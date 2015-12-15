@@ -19,19 +19,27 @@
 
 package io.brooklyn.ambari.service;
 
-import static org.apache.brooklyn.util.ssh.BashCommands.*;
+import static org.apache.brooklyn.util.ssh.BashCommands.alternatives;
+import static org.apache.brooklyn.util.ssh.BashCommands.installExecutable;
+import static org.apache.brooklyn.util.ssh.BashCommands.installPackageOr;
+import static org.apache.brooklyn.util.ssh.BashCommands.installPackageOrFail;
+import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import javax.annotation.Nullable;
+
 import org.apache.brooklyn.api.mgmt.Task;
 import org.apache.brooklyn.core.effector.EffectorTasks;
 import org.apache.brooklyn.core.effector.ssh.SshEffectorTasks;
 import org.apache.brooklyn.core.entity.Entities;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -53,16 +61,26 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     private static final List<String> REQUIRES_MYSQL_CLIENT = Lists.newArrayList("RANGER_ADMIN");
 
     @Override
-    public Map<String, Map> getAmbariConfig() {
+    public Map<String, Map> getAmbariConfig(AmbariCluster ambariCluster) {
+        String rangerFqdn = getFqdnFor(ambariCluster, "RANGER_ADMIN");
+
+        if (StringUtils.isEmpty(rangerFqdn)) {
+            rangerFqdn = DB_HOST;
+        }
+
         return ImmutableMap.<String, Map>builder()
                 .put("admin-properties", ImmutableMap.builder()
                         .put("db_host", DB_HOST)
                         .put("db_name", DB_NAME)
                         .put("db_root_user", getConfig(DB_USER))
                         .put("db_root_password", getConfig(DB_PASSWORD))
+                        .put("policymgr_external_url", String.format("http://%s:%d", rangerFqdn, 6080))
                         .build())
                 .put("ranger-admin-site", ImmutableMap.builder()
                         .put("ranger.jpa.jdbc.url", String.format("jdbc:mysql://%s/%s", DB_HOST, DB_NAME))
+                        .build())
+                .put("ranger-env", ImmutableMap.builder()
+                        .put("ranger_admin_password", getConfig(RANGER_PASSWORD))
                         .build())
                 .build();
     }
@@ -90,6 +108,18 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     @Override
     public void postClusterDeploy(AmbariCluster ambariCluster) throws ExtraServiceException {
 
+    }
+
+    @Nullable
+    private String getFqdnFor(AmbariCluster ambariCluster, String component) {
+        for (AmbariAgent ambariAgent : ambariCluster.getAmbariAgents()) {
+            Preconditions.checkNotNull(ambariAgent.getAttribute(AmbariAgent.COMPONENTS));
+            if (!ambariAgent.getAttribute(AmbariAgent.COMPONENTS).contains(component)) {
+                continue;
+            }
+            return ambariAgent.getFqdn();
+        }
+        return null;
     }
 
     class AmbariServerRequirementsFunction extends AbstractExtraServicesTask<AmbariServer> {

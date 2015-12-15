@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -33,8 +34,6 @@ import org.apache.brooklyn.api.entity.EntityLocal;
 import org.apache.brooklyn.api.entity.EntitySpec;
 import org.apache.brooklyn.api.location.Location;
 import org.apache.brooklyn.api.mgmt.Task;
-import org.apache.brooklyn.api.sensor.SensorEvent;
-import org.apache.brooklyn.api.sensor.SensorEventListener;
 import org.apache.brooklyn.config.ConfigKey;
 import org.apache.brooklyn.core.entity.Attributes;
 import org.apache.brooklyn.core.entity.Entities;
@@ -51,7 +50,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -181,9 +179,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     services.add(extraService.getConfig(ExtraService.SERVICE_NAME));
                 }
             }
-            if (extraService.getAmbariConfig() != null) {
-                configuration.putAll(extraService.getAmbariConfig());
-            }
         }
 
     }
@@ -286,6 +281,13 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                         ambariAgent.setComponents(components);
                     }
                 }
+            }
+        }
+
+        for (ExtraService extraService : getExtraServices()) {
+            final Map<String, Map> ambariConfig = extraService.getAmbariConfig(this);
+            if (ambariConfig != null) {
+                configuration.putAll(ambariConfig);
             }
         }
 

@@ -23,6 +23,7 @@ import static org.apache.brooklyn.util.text.Strings.trim;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nonnull;
 
 import org.apache.brooklyn.config.ConfigKey;
@@ -112,10 +113,22 @@ public interface ExtraService extends BasicStartable {
 
     /**
      * Returns the necessary configuration the extra services implementation need to pass to Ambari.
+     * Deprecated, please use {@link ExtraService#getAmbariConfig(AmbariCluster)} instead.
+     *
+     * Note that the default implementation will still call this method.
      *
      * @return a map of configuration.
      */
+    @Deprecated
     Map<String, Map> getAmbariConfig();
+
+    /**
+     * Returns the necessary configuration the extra services implementation need to pass to Ambari.
+     *
+     * @param ambariCluster the current Ambari cluster entity.
+     * @return a map of configuration.
+     */
+    Map<String, Map> getAmbariConfig(AmbariCluster ambariCluster);
 
     /**
      * Called just before the hadoop cluster will be deployed. If an error occurred during this phase, the subclasses

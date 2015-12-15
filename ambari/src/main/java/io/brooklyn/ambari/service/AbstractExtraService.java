@@ -20,6 +20,8 @@
 package io.brooklyn.ambari.service;
 
 import java.util.List;
+import java.util.Map;
+
 import javax.annotation.Nonnull;
 
 import org.apache.brooklyn.api.mgmt.Task;
@@ -33,6 +35,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
+import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.FunctionRunningCallable;
 import io.brooklyn.ambari.agent.AmbariAgent;
 
@@ -42,6 +45,17 @@ import io.brooklyn.ambari.agent.AmbariAgent;
 public abstract class AbstractExtraService extends BasicStartableImpl implements ExtraService {
 
     private List<ComponentMapping> componentMappings;
+
+    @Override
+    @Deprecated
+    public Map<String, Map> getAmbariConfig() {
+        return null;
+    }
+
+    @Override
+    public Map<String, Map> getAmbariConfig(AmbariCluster ambariCluster) {
+        return getAmbariConfig();
+    }
 
     @Override
     public void init() {
