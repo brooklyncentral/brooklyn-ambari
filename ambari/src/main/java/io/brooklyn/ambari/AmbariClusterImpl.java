@@ -164,8 +164,8 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                         ExtraService.COMPONENT_NAMES.getName());
 
                 for (ExtraService.ComponentMapping componentMapping : extraService.getComponentMappings()) {
-                    if (!componentMapping.getHost().equals(SERVER_HOST_GROUP) && !Iterables.contains(ambariHostGroupNames, componentMapping.getHost())) {
-                        throw new IllegalStateException(String.format("Extra component \"%s\" of entity \"%s\" cannot be bound to \"%s\" host group because it does not exist. Please choose from %s or " + SERVER_HOST_GROUP,
+                    if (!componentMapping.getHost().equals(getConfig(SERVER_HOST_GROUP)) && !Iterables.contains(ambariHostGroupNames, componentMapping.getHost())) {
+                        throw new IllegalStateException(String.format("Extra component \"%s\" of entity \"%s\" cannot be bound to \"%s\" host group because it does not exist. Please choose from %s or " + getConfig(SERVER_HOST_GROUP),
                                 componentMapping.getComponent(), extraService.getEntityType().getName(), componentMapping.getHost(), ambariHostGroupNames));
                     }
                     if (!componentsByNode.containsKey(componentMapping.getHost())) {
@@ -373,17 +373,17 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         List<String> serverComponentsList = getConfig(AmbariCluster.SERVER_COMPONENTS);
         if (!serverComponentsList.isEmpty()) {
             HostGroup.Builder hostGroupBuilder = new HostGroup.Builder()
-                    .setName(SERVER_HOST_GROUP)
+                    .setName(getConfig(SERVER_HOST_GROUP))
                     .addComponents(serverComponentsList);
-            if (componentsByNode.containsKey(SERVER_HOST_GROUP)) {
-                hostGroupBuilder.addComponents(componentsByNode.get(SERVER_HOST_GROUP));
+            if (componentsByNode.containsKey(getConfig(SERVER_HOST_GROUP))) {
+                hostGroupBuilder.addComponents(componentsByNode.get(getConfig(SERVER_HOST_GROUP)));
             }
             blueprintBuilder.addHostGroup(hostGroupBuilder.build());
             Iterable<AmbariServer> ambariServers = getAmbariServers();
             Iterable<String> fqdns = transform(ambariServers, mapAmbariServerToFQDN);
 
             bindingsBuilder.addHostGroup(new HostGroup.Builder()
-                    .setName(SERVER_HOST_GROUP)
+                    .setName(getConfig(SERVER_HOST_GROUP))
                     .addHosts(Lists.newArrayList(fqdns))
                     .build());
         }
