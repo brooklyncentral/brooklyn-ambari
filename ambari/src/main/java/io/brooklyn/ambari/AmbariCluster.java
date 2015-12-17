@@ -126,12 +126,15 @@ public interface AmbariCluster extends BasicStartable {
                             "effector to continue deployment",
                     Boolean.FALSE);
 
+    @SetFromFlag("domainName")
+    ConfigKey<String> DOMAIN_NAME = ConfigKeys.newStringConfigKey("ambari.domain.name", "Domain name to use for all hosts FQDNs", "ambari.local");
+
+    @SetFromFlag("serverHostGroup")
+    ConfigKey<String> SERVER_HOST_GROUP = ConfigKeys.newStringConfigKey("ambari.server.hostgroup.name", "Host group name for the agent on the Ambari server", "server-group");
+
     AttributeSensor<Boolean> CLUSTER_SERVICES_INITIALISE_CALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInitialiseCalled");
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INSTALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInstalled");
-
-    String DOMAIN_NAME = ".ambari.local";
-    String SERVER_HOST_GROUP = "server-group";
 
     /**
      * Returns all Ambari nodes, i.e {@link AmbariServer} and {@link AmbariAgent} contains within the cluster.

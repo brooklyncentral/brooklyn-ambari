@@ -19,8 +19,8 @@
 package io.brooklyn.ambari.agent;
 
 import static java.lang.String.format;
-import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
 import static org.apache.brooklyn.util.ssh.BashCommands.installPackage;
+import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
 
 import org.apache.brooklyn.api.entity.EntityLocal;
 import org.apache.brooklyn.entity.java.JavaSoftwareProcessSshDriver;
@@ -71,9 +71,10 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
         entity.getParent() instanceof AmbariServer
                 ? ((AmbariServer) entity.getParent()).getFqdn()
                 : "";
+
         String fqdn =
                 parentFQDN.isEmpty()
-                ? entity.getId().toLowerCase() + AmbariCluster.DOMAIN_NAME
+                ? String.format("%s.%s.%s", entity.getParent().getDisplayName(), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME))
                 : parentFQDN;
 
         getEntity().setFqdn(fqdn);
