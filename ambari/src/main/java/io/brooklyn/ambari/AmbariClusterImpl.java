@@ -153,6 +153,10 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         });
 
         for (ExtraService extraService : Entities.descendants(this, ExtraService.class)) {
+            if (extraService.getConfig(ExtraService.SERVICE_NAME) == null && extraService.getConfig(ExtraService.COMPONENT_NAMES) == null) {
+                continue;
+            }
+
             if (isHostGroupsDeployment) {
                 checkNotNull(extraService.getConfig(ExtraService.COMPONENT_NAMES),
                         "Entity \"%s\" must define a list of components names as this is a host groups based deployment. Please use the \"%s\" configuration key",
