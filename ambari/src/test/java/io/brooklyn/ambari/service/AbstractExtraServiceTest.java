@@ -64,19 +64,6 @@ public class AbstractExtraServiceTest extends BrooklynAppUnitTestSupport {
     }
 
     @Test
-    public void initThrowsExIfServiceAndComponentsNamesAreMissing() {
-        try {
-            app.createAndManageChild(createDummyExtraServiceSpec(null, null, null));
-            fail();
-        } catch (Throwable throwable) {
-            Throwable rootCause = ExceptionUtils.getRootCause(throwable);
-
-            assertEquals(IllegalArgumentException.class, rootCause.getClass());
-            assertEquals("Entity \"io.brooklyn.ambari.service.AbstractExtraServiceTest.DummyExtraService\" must have either \"serviceName\" or \"componentNames\" configuration key defined", rootCause.getMessage());
-        }
-    }
-
-    @Test
     public void getComponentMappingsThrowExIfNoHost() {
         try {
             app.createAndManageChild(createDummyExtraServiceSpec(null, null, ImmutableList.of("MY_COMPONENT"))).getComponentMappings();

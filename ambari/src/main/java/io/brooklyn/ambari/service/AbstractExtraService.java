@@ -58,16 +58,6 @@ public abstract class AbstractExtraService extends BasicStartableImpl implements
     }
 
     @Override
-    public void init() {
-        super.init();
-
-        if (getConfig(SERVICE_NAME) == null && getConfig(COMPONENT_NAMES) == null) {
-            throw new IllegalArgumentException(String.format("Entity \"%s\" must have either \"%s\" or \"%s\" configuration key defined",
-                    getEntityTypeName(), SERVICE_NAME.getName(), COMPONENT_NAMES.getName()));
-        }
-    }
-
-    @Override
     @Nonnull
     public List<ComponentMapping> getComponentMappings() {
         if (componentMappings == null) {
