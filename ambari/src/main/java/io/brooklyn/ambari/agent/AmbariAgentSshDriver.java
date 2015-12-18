@@ -74,7 +74,7 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
 
         String fqdn =
                 parentFQDN.isEmpty()
-                ? String.format("%s.%s.%s", entity.getParent().getDisplayName(), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME))
+                ? String.format("%s-%s.%s", entity.getParent().getDisplayName(), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME))
                 : parentFQDN;
 
         getEntity().setFqdn(fqdn);
