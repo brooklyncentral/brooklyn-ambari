@@ -72,7 +72,7 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
 
     @Override
     public void install() {
-        String fqdn = String.format("%s-%s.%s", entity.getConfig(AmbariCluster.SERVER_HOST_GROUP), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME));
+        String fqdn = String.format("%s-%s.%s", entity.getConfig(AmbariCluster.SERVER_HOST_GROUP).toLowerCase(), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME));
         getEntity().setFqdn(fqdn);
         ImmutableList<String> commands =
                 ImmutableList.<String>builder()
