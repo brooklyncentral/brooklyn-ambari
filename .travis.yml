@@ -1,5 +1,14 @@
 language: java
 
 notifications:
-  email: false
+  email:
+    on_success: change
+    on_failure: always
 
+env:
+  global:
+  - secure: HSS23xlZGWl74Csyzd8lV6VeTHIJIOz4L0efkWO+ZlR3W8YPGNcGl4OQjzEVrZhFCEGGaTn+xN5aU5cjKtrcMSng9m9ILTxiL4LKaxWwD8sLG5XGfQ2U5e2GPTdC5RKK01k/RsR9vvMAmMVxJqWOlVzTlGhOCF7FPK0eavSj/pM=
+  - secure: eBKkrVORMX3Asd4350xb+xE2n6+Pygqls/4+HQ3OwXiN1lgFvpeoBdHPXqiUTszH/3MlZmnxkUgp3T7/AAxXtdrgC373rRh7Y+PDw+kYFF12ogzoQpsT/ekcxstIQsOnymQ6z14KmPHCxoWYZMZ5OvULIWV7eqWCgGRmObLtMAQ=
+
+after_success:
+- '[[ $TRAVIS_BRANCH == "master" ]] && mvn deploy -DskipTests --settings .settings.xml'
