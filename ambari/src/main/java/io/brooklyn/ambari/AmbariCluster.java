@@ -184,4 +184,16 @@ public interface AmbariCluster extends BasicStartable {
      * @return List of Strings of form http://host/def.tar.gz
      */
     List<String> getExtraStackDefinitionsUrls();
+
+    /**
+     * Add hosts to hostgroup.  Instructs ambari to install services as required by current blueprint.
+     * @param displayName the name of the hostgroup that nodes should be added to
+     * @param hosts The list of new ambari agent entities
+     */
+    void addHostsToHostGroup(String displayName, List<AmbariAgent> hosts);
+
+    /**
+     * @return true once all ambari services are installed and running
+     */
+    boolean isClusterComplete();
 }

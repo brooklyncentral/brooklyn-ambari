@@ -19,6 +19,8 @@
 
 package io.brooklyn.ambari;
 
+import static org.apache.brooklyn.util.ssh.BashCommands.*;
+
 import java.util.Map;
 
 import org.apache.brooklyn.api.entity.Entity;
@@ -41,7 +43,8 @@ public class EtcHostsManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(EtcHostsManager.class);
 
-    private EtcHostsManager() {}
+    private EtcHostsManager() {
+    }
 
     /**
      * For each machine, set its own hostname correctly, and add the other entity's details to /etc/hosts
@@ -89,21 +92,22 @@ public class EtcHostsManager {
                 boolean isMyOwnEntry = entry.getKey().equals(key);
                 String fqdn = entry.getValue();
                 if (fqdn.endsWith("."))
-                    fqdn = fqdn.substring(0, fqdn.length()-1);
+                    fqdn = fqdn.substring(0, fqdn.length() - 1);
                 int dotAt = fqdn.indexOf('.');
                 String[] values = dotAt > 0
-                        ? new String[] { fqdn, fqdn.substring(0, dotAt) }
-                        : new String[] { fqdn };
+                        ? new String[]{fqdn, fqdn.substring(0, dotAt)}
+                        : new String[]{fqdn};
 
                 if (isMyOwnEntry)
-                    commands.add(BashCommands.prependToEtcHosts(ip.get(), values));
+                    commands.add(prependToEtcHosts(ip.get(), values));
                 else
-                    commands.add(BashCommands.appendToEtcHosts(entry.getKey(), values));
+                    commands.add(appendToEtcHosts(entry.getKey(), values));
             }
 
             // Ensure that 127.0.0.1 maps to localhost, and nothing else
-            String tempFileId = "bak" + Identifiers.makeRandomId(4);
-            commands.add(BashCommands.sudo("sed -i." + tempFileId + " -e \'s/127.0.0.1\\s.*/127.0.0.1 localhost/\' /etc/hosts"));
+            String bakFileExtension = "bak" + Identifiers.makeRandomId(4);
+            commands.add(
+                    sudo("sed -i." + bakFileExtension + " -e \'s/127.0.0.1\\s.*/127.0.0.1 localhost/\' /etc/hosts"));
 
             loc.execCommands("set hostname and fill /etc/hosts", commands.build());
         }
