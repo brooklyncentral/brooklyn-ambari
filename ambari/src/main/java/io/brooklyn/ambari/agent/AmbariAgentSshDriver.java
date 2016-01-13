@@ -22,7 +22,9 @@ import static java.lang.String.format;
 import static org.apache.brooklyn.util.ssh.BashCommands.installPackage;
 import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
 
+import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.core.entity.Entities;
 import org.apache.brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import org.apache.brooklyn.entity.software.base.SoftwareProcess;
 import org.apache.brooklyn.location.ssh.SshMachineLocation;
@@ -32,9 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariInstallCommands;
+import io.brooklyn.ambari.hostgroup.AmbariHostGroup;
 import io.brooklyn.ambari.server.AmbariServer;
 
 public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implements AmbariAgentDriver {
@@ -72,9 +76,14 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
                 ? ((AmbariServer) entity.getParent()).getFqdn()
                 : "";
 
+        Entity parentHostGroup =
+                Iterables.getFirst(
+                        Iterables.filter(Entities.ancestors(entity), AmbariHostGroup.class),
+                        entity);
+
         String fqdn =
                 parentFQDN.isEmpty()
-                ? String.format("%s-%s.%s", entity.getParent().getDisplayName().toLowerCase(), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME))
+                ? String.format("%s-%s.%s", parentHostGroup.getDisplayName().toLowerCase(), entity.getId().toLowerCase(), entity.getConfig(AmbariCluster.DOMAIN_NAME))
                 : parentFQDN;
 
         getEntity().setFqdn(fqdn);
