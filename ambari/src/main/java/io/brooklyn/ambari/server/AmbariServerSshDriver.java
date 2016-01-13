@@ -79,7 +79,6 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
                         .add(ambariInstallHelper.installAmbariRequirements(getMachine()))
                         .addAll(BashCommands.setHostname(fqdn))
                         .add(installPackage("ambari-server"))
-                        .add(sudo("ambari-server setup -s"))
                         .build();
 
         newScript(INSTALLING).body
@@ -92,17 +91,20 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
     public void customize() {
         List<String> extraStackDefinitions = getExtraStackDefinitionUrls();
         ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
+
         if (!extraStackDefinitions.isEmpty()) {
             for (String extraStackDefinition : extraStackDefinitions) {
                 String tmpLocation = copyToTmp(extraStackDefinition);
                 builder.add(getUnpackCommand(tmpLocation));
             }
-
-            newScript(CUSTOMIZING)
-                    .body.append(builder.build())
-                    .failOnNonZeroResultCode()
-                    .execute();
         }
+
+        builder.add(sudo("ambari-server setup -s"));
+
+        newScript(CUSTOMIZING)
+                .body.append(builder.build())
+                .failOnNonZeroResultCode()
+                .execute();
     }
 
     @Override
