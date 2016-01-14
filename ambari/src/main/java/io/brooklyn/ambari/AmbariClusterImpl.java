@@ -88,16 +88,18 @@ import io.brooklyn.ambari.service.ExtraServiceException;
  */
 public class AmbariClusterImpl extends BasicStartableImpl implements AmbariCluster {
 
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(BasicStartableImpl.class);
+
     public static final ImmutableList<String> DEFAULT_SERVICES = ImmutableList.<String>of("ZOOKEEPER");
     public static final ImmutableMap<String, Map> DEFAULT_CONFIG_MAP = ImmutableMap.<String, Map>of();
     public static final String BLUEPRINT_NAME = "mybp";
     public static final String CLUSTER_NAME = "Cluster1";
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(BasicStartableImpl.class);
-    //TODO is there an issue with rebind here?  On rebind should be populated from somewhere else?
+
+    //TODO there an issue with rebind here?  On rebind should be populated from somewhere else?
     private boolean isHostGroupsDeployment;
     private List<String> services;
-    private Map<String, Map> configuration;
     private Map<String, List<String>> componentsByNode;
+
     private Function<AmbariNode, String> mapAmbariNodeToFQDN = new Function<AmbariNode, String>() {
         @Nullable
         @Override
@@ -121,7 +123,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
         }
 
-        configuration = MutableMap.copyOf(getConfig(AMBARI_CONFIGURATIONS));
         services = MutableList.copyOf(getConfig(HADOOP_SERVICES));
 
         calculateTotalAgents();
@@ -132,9 +133,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
         }
 
-        if (configuration.size() == 0) {
-            configuration.putAll(DEFAULT_CONFIG_MAP);
-        }
 
         addEnricher(Enrichers.builder()
                 .propagating(Attributes.MAIN_URI)
@@ -304,6 +302,12 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                     }
                 }
             }
+        }
+
+        Map<String, Map> configuration = MutableMap.copyOf(getConfig(AMBARI_CONFIGURATIONS));
+
+        if (configuration.size() == 0) {
+            configuration.putAll(DEFAULT_CONFIG_MAP);
         }
 
         for (ExtraService extraService : getExtraServices()) {
