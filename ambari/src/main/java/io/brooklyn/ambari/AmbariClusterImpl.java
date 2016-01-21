@@ -311,10 +311,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         }
 
         for (ExtraService extraService : getExtraServices()) {
-            final Map<String, Map> ambariConfig = extraService.getAmbariConfig(this);
-            if (ambariConfig != null) {
-                configuration.putAll(ambariConfig);
-            }
+            configuration = mergeMaps(configuration, extraService.getAmbariConfig(this));
         }
 
         LOG.info("{} calling pre-cluster-deploy on all Ambari nodes", this);
@@ -420,6 +417,24 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                         .setBindings(bindingsBuilder.build())
                         .build())
                 .build();
+    }
+
+    private Map<String, Map> mergeMaps(Map<String, Map> configuration, Map<String, Map> sercicesConfig) {
+        if (sercicesConfig == null) {
+            return configuration;
+        }
+
+        MutableMap<String, Map> newConfigurationMap = MutableMap.copyOf(configuration);
+        for (Map.Entry<String, Map> stringMapEntry : sercicesConfig.entrySet()) {
+            if(!configuration.containsKey(stringMapEntry.getKey())) {
+                configuration.put(stringMapEntry.getKey(), stringMapEntry.getValue());
+            } else {
+                if(stringMapEntry.getValue() != null) {
+                    configuration.get(stringMapEntry.getKey()).putAll(stringMapEntry.getValue());
+                }
+            }
+        }
+        return newConfigurationMap;
     }
 
     private RecommendationWrapper getRecommendationWrapperFromAmbariServer() {
