@@ -527,7 +527,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     @Override
     public boolean isClusterComplete() {
-        return getMasterAmbariServer().getAttribute(AmbariServer.CLUSTER_STATE).equals("COMPLETED");
+        return "COMPLETED".equals(getMasterAmbariServer().getAttribute(AmbariServer.CLUSTER_STATE));
     }
 
     private class PreClusterDeployFunction implements Function<ExtraService, Void> {
