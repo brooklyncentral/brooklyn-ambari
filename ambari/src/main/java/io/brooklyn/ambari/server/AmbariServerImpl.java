@@ -20,12 +20,14 @@
 package io.brooklyn.ambari.server;
 
 import java.net.URI;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import io.brooklyn.ambari.rest.domain.HostGroup;
 import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.mgmt.Task;
 import org.apache.brooklyn.core.annotation.EffectorParam;
@@ -210,10 +212,19 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                     .put("Blueprints", recommendationWrapper.getStack())
                     .build());
 
+            List<HostGroup> confHostGroupsList = recommendationWrapper.getRecommendation().getBindings().getHostGroups();
+            List<HostGroup> nonZeroHostGroupList = new LinkedList<>();
+
+            for(HostGroup hostGroupN:confHostGroupsList) {
+                if (hostGroupN.getHosts().size() > 0) {
+                    nonZeroHostGroupList.add(hostGroupN);
+                }
+            }
+
             return restAdapter.create(ClusterEndpoint.class).createCluster(clusterName, ImmutableMap.builder()
                     .put("blueprint", blueprintName)
                     .put("default_password", "admin")
-                    .put("host_groups", recommendationWrapper.getRecommendation().getBindings().getHostGroups())
+                    .put("host_groups", nonZeroHostGroupList)
                     .build());
         } catch (RetrofitError retrofitError) {
             throw new AmbariApiException(retrofitError);
