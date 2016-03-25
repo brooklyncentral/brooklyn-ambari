@@ -79,12 +79,26 @@ public class AmbariHostGroupImpl extends DynamicClusterImpl implements AmbariHos
         if (delta > 0) {
             EtcHostsManager.setHostsOnMachines(getAmbariCluster().getAmbariNodes(), getConfig(AmbariCluster.ETC_HOST_ADDRESS));
             if (getAmbariCluster().isClusterComplete()) {
-                final List<AmbariAgent> ambariAgents = ImmutableList.copyOf(Iterables.filter(entities, AmbariAgent.class));
+                final List<AmbariAgent> ambariAgents = getAmbariAgents(entities);
                 getAmbariCluster().addHostsToHostGroup(getDisplayName(), ambariAgents);
             }
         }
 
         return entities;
+    }
+
+    private List<AmbariAgent> getAmbariAgents(Collection<Entity> entities) {
+        ImmutableList.Builder<AmbariAgent> builder = ImmutableList.<AmbariAgent>builder();
+        for (Entity entity : entities) {
+            if(entity instanceof AmbariAgent) {
+                builder.add((AmbariAgent) entity);
+            }
+            else {
+                builder.addAll(Entities.descendants(entity, AmbariAgent.class));
+            }
+        }
+
+        return builder.build();
     }
 
     private EntitySpec<? extends AmbariAgent> ambariAgentSpec() {
