@@ -54,6 +54,12 @@ public interface AmbariCluster extends BasicStartable {
 
     AttributeSensor<Integer> EXPECTED_AGENTS = Sensors.newIntegerSensor("ambaricluster.expectedservers", "Number of ambari agents expected to register with cluster");
 
+    @SetFromFlag("blueprint.name")
+    ConfigKey<String> BLUEPRINT_NAME = ConfigKeys.newStringConfigKey("blueprint.name", "Ambari Blueprint name", "mybp");
+
+    @SetFromFlag("cluster.name")
+    ConfigKey<String> CLUSTER_NAME = ConfigKeys.newStringConfigKey("cluster.name", "Ambari Cluster name", "Cluster1");
+
     @SetFromFlag("securityGroup")
     ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server");
 

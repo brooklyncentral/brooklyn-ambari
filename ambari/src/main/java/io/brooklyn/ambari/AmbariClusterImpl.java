@@ -92,8 +92,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
     public static final ImmutableList<String> DEFAULT_SERVICES = ImmutableList.<String>of("ZOOKEEPER");
     public static final ImmutableMap<String, Map> DEFAULT_CONFIG_MAP = ImmutableMap.<String, Map>of();
-    public static final String BLUEPRINT_NAME = "mybp";
-    public static final String CLUSTER_NAME = "Cluster1";
 
     //TODO there an issue with rebind here?  On rebind should be populated from somewhere else?
     private boolean isHostGroupsDeployment;
@@ -240,10 +238,10 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             throw new IllegalStateException("Cannot get the addHostsToHostGroup effector");
         }
         getMasterAmbariServer().invoke(effector.get(), ImmutableMap.of(
-                "Blueprint Name", BLUEPRINT_NAME,
+                "Blueprint Name", getConfig(AmbariCluster.BLUEPRINT_NAME),
                 "Hostgroup Name", hostgroupName,
                 "Hosts", Lists.transform(hosts, mapAmbariNodeToFQDN),
-                "Cluster Name", CLUSTER_NAME
+                "Cluster Name", getConfig(AmbariCluster.CLUSTER_NAME)
         ));
     }
 
@@ -330,7 +328,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
 
         LOG.info("{} calling cluster-deploy", this);
         try {
-            Request request = getMasterAmbariServer().deployCluster(CLUSTER_NAME, BLUEPRINT_NAME, recommendationWrapper, configuration);
+            Request request = getMasterAmbariServer().deployCluster(getConfig(AmbariCluster.CLUSTER_NAME), getConfig(AmbariCluster.BLUEPRINT_NAME), recommendationWrapper, configuration);
         } catch (AmbariApiException ex) {
             // If the cluster failed to deploy, we first put the server "ON FIRE" and throw again the exception for the
             // cluster to handle it properly.

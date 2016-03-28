@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
-import io.brooklyn.ambari.rest.domain.HostGroup;
 import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.mgmt.Task;
 import org.apache.brooklyn.core.annotation.EffectorParam;
@@ -43,6 +42,8 @@ import org.apache.brooklyn.util.http.HttpTool;
 import org.apache.brooklyn.util.core.task.DynamicTasks;
 import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.brooklyn.util.guava.Functionals;
+import org.apache.brooklyn.util.text.Identifiers;
+import org.apache.brooklyn.util.text.Strings;
 import org.apache.brooklyn.util.time.Duration;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.slf4j.Logger;
@@ -67,12 +68,14 @@ import io.brooklyn.ambari.rest.RequestCheckRunnable;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
 import io.brooklyn.ambari.rest.domain.Request;
+import io.brooklyn.ambari.rest.domain.HostGroup;
 import io.brooklyn.ambari.rest.endpoint.BlueprintEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ClusterEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ConfigurationEnpoint;
 import io.brooklyn.ambari.rest.endpoint.HostEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ServiceEndpoint;
 import io.brooklyn.ambari.rest.endpoint.StackEndpoint;
+import io.brooklyn.ambari.rest.endpoint.UsersEndpoint;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 
@@ -89,10 +92,27 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     private RestAdapter restAdapter;
 
     //TODO clearly needs changed
-    private UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials("admin", "admin");
+    private UsernamePasswordCredentials usernamePasswordCredentials = getUsernamePasswordCredentials();
+
+    private static final String USERNAME = "admin";
+    private static final String DEFAULT_PASSWORD = "admin";
+
     @Override
     public Class<AmbariServerDriver> getDriverInterface() {
         return AmbariServerDriver.class;
+    }
+
+    protected UsernamePasswordCredentials getUsernamePasswordCredentials() {
+
+        sensors().set(AmbariServer.USERNAME, USERNAME);
+
+        String password = getAttribute(AmbariServer.PASSWORD);
+        if (Strings.isBlank(password)) {
+            password = Identifiers.makeRandomId(10);
+            sensors().set(AmbariServer.PASSWORD, password);
+        }
+
+        return new UsernamePasswordCredentials(USERNAME, password);
     }
 
     @Override
@@ -105,6 +125,20 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         ambariUri = String.format("http://%s:%d", hp.getHostText(), hp.getPort());
 
         setAttribute(Attributes.MAIN_URI, URI.create(ambariUri));
+
+        restAdapter = new RestAdapter.Builder()
+                .setEndpoint(ambariUri)
+                .setRequestInterceptor(new AmbariRequestInterceptor(new UsernamePasswordCredentials(USERNAME, DEFAULT_PASSWORD)))
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .build();
+
+        ImmutableMap<String, ImmutableMap<String, String>> userRequest = ImmutableMap.of("Users", ImmutableMap.of(
+                "user_name", USERNAME,
+                "old_password", DEFAULT_PASSWORD,
+                "password", usernamePasswordCredentials.getPassword()
+        ));
+
+        restAdapter.create(UsersEndpoint.class).updateUser(userRequest);
 
         restAdapter = new RestAdapter.Builder()
                 .setEndpoint(ambariUri)
@@ -130,7 +164,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                 .entity(this)
                 .period(1000, TimeUnit.MILLISECONDS)
                 .baseUri(String.format("%s/api/v1/hosts", ambariUri))
-                .credentials("admin", "admin")
+                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
                 .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
                 .poll(new HttpPollConfig<List<String>>(REGISTERED_HOSTS)
                         .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getHosts()))
@@ -144,7 +178,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                         ambariUri,
                         "Cluster1",
                         1))
-                .credentials("admin", "admin")
+                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
                 .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
                 .poll(new HttpPollConfig<String>(CLUSTER_STATE)
                         .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getRequestState()))
@@ -223,7 +257,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
             return restAdapter.create(ClusterEndpoint.class).createCluster(clusterName, ImmutableMap.builder()
                     .put("blueprint", blueprintName)
-                    .put("default_password", "admin")
+                    .put("default_password", usernamePasswordCredentials.getPassword())
                     .put("host_groups", nonZeroHostGroupList)
                     .build());
         } catch (RetrofitError retrofitError) {
