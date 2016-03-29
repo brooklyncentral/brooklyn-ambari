@@ -27,6 +27,7 @@ import org.apache.brooklyn.api.entity.ImplementedBy;
 import org.apache.brooklyn.api.sensor.AttributeSensor;
 import org.apache.brooklyn.core.annotation.Effector;
 import org.apache.brooklyn.core.annotation.EffectorParam;
+import org.apache.brooklyn.core.sensor.BasicAttributeSensorAndConfigKey;
 import org.apache.brooklyn.core.sensor.PortAttributeSensorAndConfigKey;
 import org.apache.brooklyn.core.sensor.Sensors;
 
@@ -55,6 +56,12 @@ public interface AmbariServer extends AmbariNode {
     AttributeSensor<Boolean> URL_REACHABLE = Sensors.newBooleanSensor("ambari.server.urlReachable");
 
     AttributeSensor<String> CLUSTER_STATE = Sensors.newStringSensor("ambari.server.clusterState");
+
+    BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey USERNAME =
+            new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey("ambari.server.http.user", "Ambari Server's http username", "admin");
+
+    BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey PASSWORD =
+            new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey("ambari.server.http.password", "Ambari Server's http password");
 
     /**
      * @throws IllegalStateException if times out.
