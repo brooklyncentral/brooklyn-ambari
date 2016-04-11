@@ -276,12 +276,6 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
             final List<HostComponent> hostComponents = MutableList.copyOf(hostGroup.getComponents());
             for (HostComponent component : hostComponents) {
-                // We need to filter out the ZKFC component otherwise installation fails. This will remove ZKFC component
-                // from the recommendations (as we use it afterward) and the list of components we created.
-                if (StringUtils.equals(component.getName(), "ZKFC")) {
-                    hostGroup.getComponents().remove(component);
-                    continue;
-                }
                 componentsByNodeName.get(hostGroup.getName()).add(component.getName());
             }
         }
