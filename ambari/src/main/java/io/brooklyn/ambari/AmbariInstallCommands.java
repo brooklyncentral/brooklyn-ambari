@@ -18,37 +18,33 @@
  */
 package io.brooklyn.ambari;
 
-import org.apache.brooklyn.location.ssh.SshMachineLocation;
-
-import static org.apache.brooklyn.util.ssh.BashCommands.alternatives;
-import static org.apache.brooklyn.util.ssh.BashCommands.chainGroup;
-import static org.apache.brooklyn.util.ssh.BashCommands.commandToDownloadUrlAs;
-import static org.apache.brooklyn.util.ssh.BashCommands.ifExecutableElse1;
-import static org.apache.brooklyn.util.ssh.BashCommands.installExecutable;
-import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
+import static org.apache.brooklyn.util.ssh.BashCommands.*;
 
 import org.apache.brooklyn.api.location.OsDetails;
+import org.apache.brooklyn.location.ssh.SshMachineLocation;
 import org.apache.brooklyn.util.ssh.BashCommands;
 
 
 public class AmbariInstallCommands {
 
     private static final String CENTOS_REPO_LIST_LOCATION = "/etc/yum.repos.d/ambari.repo";
-    private static final String CENTOS_7_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos7/%s/updates/%s/ambari.repo";
-    private static final String CENTOS_6_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos6/%s/updates/%s/ambari.repo";
-    private static final String CENTOS_5_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/centos5/%s/updates/%s/ambari.repo";
+    private static final String CENTOS_7_AMBARI_REPO_LOCATION = "%s/ambari/centos7/%s/updates/%s/ambari.repo";
+    private static final String CENTOS_6_AMBARI_REPO_LOCATION = "%s/ambari/centos6/%s/updates/%s/ambari.repo";
+    private static final String CENTOS_5_AMBARI_REPO_LOCATION = "%s/ambari/centos5/%s/updates/%s/ambari.repo";
 
     private static final String SUSE_REPO_LIST_LOCATION = "/etc/zypp/repos.d/ambari.repo";
-    private static final String SUSE_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/suse11/%s/updates/%s/ambari.repo";
+    private static final String SUSE_AMBARI_REPO_LOCATION = "%s/ambari/suse11/%s/updates/%s/ambari.repo";
 
     private static final String UBUNTU_REPO_LIST_LOCATION = "/etc/apt/sources.list.d/ambari.list";
-    private static final String UBUNTU_14_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu14/%s/updates/%s/ambari.list";
-    private static final String UBUNTU_12_AMBARI_REPO_LOCATION = "http://public-repo-1.hortonworks.com/ambari/ubuntu12/%s/updates/%s/ambari.list";
+    private static final String UBUNTU_14_AMBARI_REPO_LOCATION = "%s/ambari/ubuntu14/%s/updates/%s/ambari.list";
+    private static final String UBUNTU_12_AMBARI_REPO_LOCATION = "%s/ambari/ubuntu12/%s/updates/%s/ambari.list";
 
+    private String repoBaseUrl;
     private String version;
 
-    public AmbariInstallCommands(String version) {
+    public AmbariInstallCommands(String version, String repoBaseUrl) {
         this.version = version;
+        this.repoBaseUrl = repoBaseUrl;
     }
 
     public String installAmbariRequirements(SshMachineLocation machine) {
@@ -73,7 +69,7 @@ public class AmbariInstallCommands {
             repoUrl = UBUNTU_12_AMBARI_REPO_LOCATION;
         }
 
-        return ifExecutableElse1("apt-get", chainGroup(sudo(commandToDownloadUrlAs(String.format(repoUrl, getMajorVersion(), version), UBUNTU_REPO_LIST_LOCATION)),
+        return ifExecutableElse1("apt-get", chainGroup(sudo(commandToDownloadUrlAs(String.format(repoUrl, repoBaseUrl, getMajorVersion(), version), UBUNTU_REPO_LIST_LOCATION)),
                 sudo("apt-key adv --recv-keys --keyserver keyserver.ubuntu.com B9733A7A07513CAD"),
                 sudo("apt-get update")));
     }
@@ -90,11 +86,11 @@ public class AmbariInstallCommands {
             repoUrl = CENTOS_5_AMBARI_REPO_LOCATION;
         }
 
-        return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(repoUrl, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
+        return ifExecutableElse1("yum", sudo(commandToDownloadUrlAs(String.format(repoUrl, repoBaseUrl, getMajorVersion(), version), CENTOS_REPO_LIST_LOCATION)));
     }
 
     private String setupZypperRepo() {
-        return ifExecutableElse1("zypper", sudo(commandToDownloadUrlAs(String.format(SUSE_AMBARI_REPO_LOCATION, getMajorVersion(), version), SUSE_REPO_LIST_LOCATION)));
+        return ifExecutableElse1("zypper", sudo(commandToDownloadUrlAs(String.format(SUSE_AMBARI_REPO_LOCATION, repoBaseUrl, getMajorVersion(), version), SUSE_REPO_LIST_LOCATION)));
     }
 
     private String getOsVersion(SshMachineLocation sshMachineLocation) {

@@ -73,6 +73,9 @@ public interface AmbariCluster extends BasicStartable {
     @SetFromFlag("stackVersion")
     ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.3");
 
+    @SetFromFlag("repoBaseUrl")
+    ConfigKey<? extends String> REPO_BASE_URL = ConfigKeys.newStringConfigKey("repository.base.url", "The base url of the ambari repo", "http://public-repo-1.hortonworks.com");
+
     @Deprecated
     @SetFromFlag("extraServices")
     ConfigKey<List<EntitySpec<? extends ExtraService>>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<List<EntitySpec<? extends ExtraService>>>() {
