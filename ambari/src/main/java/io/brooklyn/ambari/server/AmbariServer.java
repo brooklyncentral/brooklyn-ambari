@@ -127,6 +127,37 @@ public interface AmbariServer extends AmbariNode {
                                     @EffectorParam(name = "Hosts") List<String> hosts,
                                     @EffectorParam(name = "Cluster Name") String cluster);
 
+    @Effector(description = "Add alert notification")
+    public void addAlertNotification(@EffectorParam(name = "Notification Name") String name,
+                                     @EffectorParam(name = "Description") String description,
+                                     @EffectorParam(name = "Global", defaultValue="true") Boolean global,
+                                     @EffectorParam(name = "Notification Type", defaultValue="EMAIL") String notificationType,
+                                     @EffectorParam(name = "Alert States", defaultValue="OK, WARNING, CRITICAL, UNKNOWN") List<String> alertStates,
+                                     @EffectorParam(name = "Ambari Dispatch Recipients") List<String> ambariDispatchRecipients,
+                                     @EffectorParam(name = "SMTP Host", defaultValue="default") String mailSmtpHost,
+                                     @EffectorParam(name = "SMTP Port", defaultValue="587") Integer mailSmtpPort,
+                                     @EffectorParam(name = "SMTP From", defaultValue="default") String mailSmtpFrom,
+                                     @EffectorParam(name = "SMTP Auth", defaultValue="false") Boolean mailSmtpAuth);
+
+    @Effector(description = "Edit alert notification")
+    public void editAlertNotification(@EffectorParam(name = "Notification Name") String name,
+                                      @EffectorParam(name = "Description") String description,
+                                      @EffectorParam(name = "Global", defaultValue="true") Boolean global,
+                                      @EffectorParam(name = "Notification Type", defaultValue="EMAIL") String notificationType,
+                                      @EffectorParam(name = "Alert States", defaultValue="OK, WARNING, CRITICAL, UNKNOWN") List<String> alertStates,
+                                      @EffectorParam(name = "Ambari Dispatch Recipients") List<String> ambariDispatchRecipients,
+                                      @EffectorParam(name = "SMTP Host", defaultValue="default") String mailSmtpHost,
+                                      @EffectorParam(name = "SMTP Port", defaultValue="587") Integer mailSmtpPort,
+                                      @EffectorParam(name = "SMTP From", defaultValue="default") String mailSmtpFrom,
+                                      @EffectorParam(name = "SMTP Auth", defaultValue="false") Boolean mailSmtpAuth);
+
+    @Effector(description = "Delete alert notification")
+    public void deleteAlertNotification(@EffectorParam(name = "Notification Name") String name);
+
+    @Effector(description = "Add alert group")
+    public void addAlertGroup(@EffectorParam(name = "Name") String name,
+                              @EffectorParam(name = "Definitions") List<Integer> definitions);
+
     @Effector(description = "Start a service on a cluster")
     public void startService(@EffectorParam(name = "Cluster name") String cluster,
                              @EffectorParam(name = "Service name") String service);
