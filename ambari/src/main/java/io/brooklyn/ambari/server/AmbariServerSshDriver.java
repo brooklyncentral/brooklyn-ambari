@@ -42,7 +42,10 @@ import io.brooklyn.ambari.AmbariInstallCommands;
 public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implements AmbariServerDriver {
 
     public static final String RESOURCE_STACK_LOCATION = "/var/lib/ambari-server/resources/stacks/%s/%s/services/";
-    private final AmbariInstallCommands ambariInstallHelper = new AmbariInstallCommands(entity.getConfig(SoftwareProcess.SUGGESTED_VERSION));
+    private final AmbariInstallCommands ambariInstallHelper =
+            new AmbariInstallCommands(
+                    entity.getConfig(SoftwareProcess.SUGGESTED_VERSION),
+                    entity.getConfig(AmbariCluster.REPO_BASE_URL));
 
     public AmbariServerSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
