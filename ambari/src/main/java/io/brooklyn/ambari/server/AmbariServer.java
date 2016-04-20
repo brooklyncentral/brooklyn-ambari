@@ -57,8 +57,7 @@ public interface AmbariServer extends AmbariNode {
 
     AttributeSensor<String> CLUSTER_STATE = Sensors.newStringSensor("ambari.server.clusterState");
 
-    BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey USERNAME =
-            new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey("ambari.server.http.user", "Ambari Server's http username", "admin");
+    AttributeSensor<String> USERNAME = Sensors.newStringSensor("ambari.server.http.user", "Ambari Server's http username.");
 
     BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey PASSWORD =
             new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey("ambari.server.http.password", "Ambari Server's http password");

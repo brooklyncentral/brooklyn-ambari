@@ -91,28 +91,14 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
     private RestAdapter restAdapter;
 
-    //TODO clearly needs changed
-    private UsernamePasswordCredentials usernamePasswordCredentials = getUsernamePasswordCredentials();
+    private UsernamePasswordCredentials usernamePasswordCredentials;
 
     private static final String USERNAME = "admin";
-    private static final String DEFAULT_PASSWORD = "admin";
+    private static final String INITIAL_PASSWORD = "admin";
 
     @Override
     public Class<AmbariServerDriver> getDriverInterface() {
         return AmbariServerDriver.class;
-    }
-
-    protected UsernamePasswordCredentials getUsernamePasswordCredentials() {
-
-        sensors().set(AmbariServer.USERNAME, USERNAME);
-
-        String password = getAttribute(AmbariServer.PASSWORD);
-        if (Strings.isBlank(password)) {
-            password = Identifiers.makeRandomId(10);
-            sensors().set(AmbariServer.PASSWORD, password);
-        }
-
-        return new UsernamePasswordCredentials(USERNAME, password);
     }
 
     @Override
@@ -126,19 +112,10 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         setAttribute(Attributes.MAIN_URI, URI.create(ambariUri));
 
-        restAdapter = new RestAdapter.Builder()
-                .setEndpoint(ambariUri)
-                .setRequestInterceptor(new AmbariRequestInterceptor(new UsernamePasswordCredentials(USERNAME, DEFAULT_PASSWORD)))
-                .setLogLevel(RestAdapter.LogLevel.FULL)
-                .build();
-
-        ImmutableMap<String, ImmutableMap<String, String>> userRequest = ImmutableMap.of("Users", ImmutableMap.of(
-                "user_name", USERNAME,
-                "old_password", DEFAULT_PASSWORD,
-                "password", usernamePasswordCredentials.getPassword()
-        ));
-
-        restAdapter.create(UsersEndpoint.class).updateUser(userRequest);
+        sensors().set(AmbariServer.USERNAME, USERNAME);
+        usernamePasswordCredentials = new UsernamePasswordCredentials(
+                USERNAME,
+                getAttribute(AmbariServer.PASSWORD) == null ? INITIAL_PASSWORD : getAttribute(AmbariServer.PASSWORD));
 
         restAdapter = new RestAdapter.Builder()
                 .setEndpoint(ambariUri)
@@ -155,7 +132,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                         .onFailureOrException(Functions.constant(false)))
                 .build();
 
-        addEnricher(Enrichers.builder().updatingMap(Attributes.SERVICE_NOT_UP_INDICATORS)
+        enrichers().add(Enrichers.builder().updatingMap(Attributes.SERVICE_NOT_UP_INDICATORS)
                 .from(URL_REACHABLE)
                 .computing(Functionals.ifNotEquals(true).value("URL not reachable"))
                 .build());
@@ -470,5 +447,41 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
     public void setRestAdapter(RestAdapter restAdapter) {
         this.restAdapter = restAdapter;
+    }
+
+    @Override
+    public void postStart() {
+        super.postStart();
+        generatePassword();
+    }
+
+    /**
+     * Need to wait server to start before resetting the password.
+     */
+    protected void generatePassword() {
+        String password = getAttribute(AmbariServer.PASSWORD);
+        if (password == null) {
+            password = getConfig(AmbariServer.PASSWORD);
+            if (password == null) {
+                password = Identifiers.makeRandomId(10);
+            }
+            usernamePasswordCredentials = new UsernamePasswordCredentials(USERNAME, password);
+
+            restAdapter = new RestAdapter.Builder()
+                    .setEndpoint(ambariUri)
+                    .setRequestInterceptor(new AmbariRequestInterceptor(new UsernamePasswordCredentials(USERNAME, INITIAL_PASSWORD)))
+                    .setLogLevel(RestAdapter.LogLevel.FULL)
+                    .build();
+
+            ImmutableMap<String, ImmutableMap<String, String>> userRequest = ImmutableMap.of("Users", ImmutableMap.of(
+                    "user_name", USERNAME,
+                    "old_password", INITIAL_PASSWORD,
+                    "password", usernamePasswordCredentials.getPassword()
+            ));
+
+            restAdapter.create(UsersEndpoint.class).updateUser(userRequest);
+
+            sensors().set(AmbariServer.PASSWORD, password);
+        }
     }
 }
