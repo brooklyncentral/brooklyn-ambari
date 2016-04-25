@@ -43,7 +43,6 @@ import org.apache.brooklyn.util.core.task.DynamicTasks;
 import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.brooklyn.util.guava.Functionals;
 import org.apache.brooklyn.util.text.Identifiers;
-import org.apache.brooklyn.util.text.Strings;
 import org.apache.brooklyn.util.time.Duration;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.slf4j.Logger;
@@ -137,30 +136,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                 .computing(Functionals.ifNotEquals(true).value("URL not reachable"))
                 .build());
 
-        hostsHttpFeed = HttpFeed.builder()
-                .entity(this)
-                .period(1000, TimeUnit.MILLISECONDS)
-                .baseUri(String.format("%s/api/v1/hosts", ambariUri))
-                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
-                .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
-                .poll(new HttpPollConfig<List<String>>(REGISTERED_HOSTS)
-                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getHosts()))
-                        .onFailureOrException(Functions.<List<String>>constant(ImmutableList.<String>of())))
-                .build();
-
-        clusterHttpFeed = HttpFeed.builder()
-                .entity(this)
-                .period(1000, TimeUnit.MILLISECONDS)
-                .baseUri(String.format("%s/api/v1/clusters/%s/requests/%d",
-                        ambariUri,
-                        "Cluster1",
-                        1))
-                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
-                .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
-                .poll(new HttpPollConfig<String>(CLUSTER_STATE)
-                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getRequestState()))
-                        .onFailureOrException(Functions.<String>constant(null)))
-                .build();
+        connectAuthenticatedSensors();
     }
 
     Function<JsonElement, List<String>> getHosts() {
@@ -193,8 +169,8 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         disconnectServiceUpIsRunning();
 
         if (serviceUpHttpFeed != null) serviceUpHttpFeed.stop();
-        if (hostsHttpFeed != null) hostsHttpFeed.stop();
-        if (clusterHttpFeed != null) clusterHttpFeed.stop();
+
+        disconnectAuthenticatedSensors();
     }
 
     @Override
@@ -452,13 +428,13 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     @Override
     public void postStart() {
         super.postStart();
-        generatePassword();
+        generateAndUpdatePassword();
     }
 
     /**
      * Need to wait server to start before resetting the password.
      */
-    protected void generatePassword() {
+    protected void generateAndUpdatePassword() {
         String password = getAttribute(AmbariServer.PASSWORD);
         if (password == null) {
             password = getConfig(AmbariServer.PASSWORD);
@@ -466,12 +442,6 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                 password = Identifiers.makeRandomId(10);
             }
             usernamePasswordCredentials = new UsernamePasswordCredentials(USERNAME, password);
-
-            restAdapter = new RestAdapter.Builder()
-                    .setEndpoint(ambariUri)
-                    .setRequestInterceptor(new AmbariRequestInterceptor(new UsernamePasswordCredentials(USERNAME, INITIAL_PASSWORD)))
-                    .setLogLevel(RestAdapter.LogLevel.FULL)
-                    .build();
 
             ImmutableMap<String, ImmutableMap<String, String>> userRequest = ImmutableMap.of("Users", ImmutableMap.of(
                     "user_name", USERNAME,
@@ -481,7 +451,48 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
             restAdapter.create(UsersEndpoint.class).updateUser(userRequest);
 
+            restAdapter = new RestAdapter.Builder()
+                    .setEndpoint(ambariUri)
+                    .setRequestInterceptor(new AmbariRequestInterceptor(usernamePasswordCredentials))
+                    .setLogLevel(RestAdapter.LogLevel.FULL)
+                    .build();
+
+            disconnectAuthenticatedSensors();
+            connectAuthenticatedSensors();
+
             sensors().set(AmbariServer.PASSWORD, password);
         }
+    }
+
+    private void connectAuthenticatedSensors() {
+        hostsHttpFeed = HttpFeed.builder()
+                .entity(this)
+                .period(1000, TimeUnit.MILLISECONDS)
+                .baseUri(String.format("%s/api/v1/hosts", ambariUri))
+                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
+                .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
+                .poll(new HttpPollConfig<List<String>>(REGISTERED_HOSTS)
+                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getHosts()))
+                        .onFailureOrException(Functions.<List<String>>constant(ImmutableList.<String>of())))
+                .build();
+
+        clusterHttpFeed = HttpFeed.builder()
+                .entity(this)
+                .period(1000, TimeUnit.MILLISECONDS)
+                .baseUri(String.format("%s/api/v1/clusters/%s/requests/%d",
+                        ambariUri,
+                        getConfig(AmbariCluster.CLUSTER_NAME),
+                        1))
+                .credentials(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
+                .header(HttpHeaders.AUTHORIZATION, HttpTool.toBasicAuthorizationValue(usernamePasswordCredentials))
+                .poll(new HttpPollConfig<String>(CLUSTER_STATE)
+                        .onSuccess(Functionals.chain(HttpValueFunctions.jsonContents(), getRequestState()))
+                        .onFailureOrException(Functions.<String>constant(null)))
+                .build();
+    }
+
+    private void disconnectAuthenticatedSensors() {
+        if (hostsHttpFeed != null) hostsHttpFeed.stop();
+        if (clusterHttpFeed != null) clusterHttpFeed.stop();
     }
 }
