@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.brooklyn.api.catalog.Catalog;
 import org.apache.brooklyn.api.entity.EntitySpec;
 import org.apache.brooklyn.api.entity.ImplementedBy;
@@ -44,6 +45,7 @@ import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.server.AmbariServer;
 import io.brooklyn.ambari.service.ExtraService;
 import io.brooklyn.ambari.service.ExtraServiceException;
+import org.apache.brooklyn.util.text.Strings;
 
 @Catalog(name = "Ambari Cluster", description = "Ambari Cluster: Made up of one or more Ambari Server and One or more Ambari Agents")
 @ImplementedBy(AmbariClusterImpl.class)
@@ -145,6 +147,21 @@ public interface AmbariCluster extends BasicStartable {
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INSTALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInstalled");
 
+
+    String AMBARI_ALERTS_CONFIG_PREFIX = "ambari.alerts.notification.";
+
+    String AMBARI_ALERTS_NOTIFICATION_PROPERTIES_PREFIX = "properties.";
+
+    @SetFromFlag("ambariAlertNotifications")
+    ConfigKey<Map<String, Object>> AMBARI_ALERT_NOTIFICATIONS =
+            new MapConfigKey(Map.class, Strings.removeFromEnd(AMBARI_ALERTS_CONFIG_PREFIX, "."),
+                    "Map compatible with Ambari requirements for creating/editing alert notification request");
+
+
+    List<String> AMBARI_ALERTS_NOTIFICATION_LIST_KEYS = ImmutableList.of(
+            "alert_states",
+            AMBARI_ALERTS_NOTIFICATION_PROPERTIES_PREFIX + "ambari.dispatch.recipients");
+
     /**
      * Returns all Ambari nodes, i.e {@link AmbariServer} and {@link AmbariAgent} contains within the cluster.
      *
@@ -200,6 +217,53 @@ public interface AmbariCluster extends BasicStartable {
      * @param hosts The list of new ambari agent entities
      */
     void addHostsToHostGroup(String displayName, List<AmbariAgent> hosts);
+
+    /**
+     * Add alert notification
+     * @param name Notification name
+     * @param description Notification description
+     * @param global Is notification global for all groups
+     * @param notificationType EMAIL or SNMP
+     * @param alertStates Alert status changes for which a notification will be send - OK, WARNING, CRITICAL, UNKNOWN
+     * @param ambariDispatchRecipients List of recipients
+     * @param mailSmtpHost SMTP Host
+     * @param mailSmtpPort SMTP Port
+     * @param mailSmtpFrom SMTP From
+     * @param mailSmtpAuth Is authentication required
+     */
+    void addAlertNotification(String name, String description, Boolean global, String notificationType,
+                              List<String> alertStates, List<String> ambariDispatchRecipients, String mailSmtpHost,
+                              Integer mailSmtpPort, String mailSmtpFrom, Boolean mailSmtpAuth);
+
+    /**
+     * Add alert notification
+     * @param name Notification name
+     * @param description Notification description
+     * @param global Is notification global for all groups
+     * @param notificationType EMAIL or SNMP
+     * @param alertStates Alert status changes for which a notification will be send - OK, WARNING, CRITICAL, UNKNOWN
+     * @param ambariDispatchRecipients List of recipients
+     * @param mailSmtpHost SMTP Host
+     * @param mailSmtpPort SMTP Port
+     * @param mailSmtpFrom SMTP From
+     * @param mailSmtpAuth Is authentication required
+     */
+    void editAlertNotification(String name, String description, Boolean global, String notificationType,
+                               List<String> alertStates, List<String> ambariDispatchRecipients,
+                               String mailSmtpHost, Integer mailSmtpPort, String mailSmtpFrom, Boolean mailSmtpAuth);
+
+    /**
+     * Add alert notification
+     * @param name Notification name
+     */
+    public void deleteAlertNotification(String name);
+
+    /**
+     * Add alert notification
+     * @param name Group name
+     * @param definitions List of notification definitions
+     */
+    void addAlertGroup(String name, List<Integer> definitions);
 
     /**
      * @return true once all ambari services are installed and running

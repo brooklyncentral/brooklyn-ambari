@@ -1,0 +1,31 @@
+name: Ambari driven cloud - Small
+services:
+- type: io.brooklyn.ambari.AmbariCluster
+  name: Ambari Cluster
+  brooklyn.config:
+    securityGroup: test-ambari
+    ambariAlertNotifications:
+      name: BDaAP alerts #Notification Name
+      description: Ambari Alerts Notification for customer #Notification Description - OPTIONAL
+      notification_type: EMAIL #Notification type - OPTIONAL. If missing will use the default configured in brooklyn.properties
+      alert_states: [OK, WARNING, CRITICAL, UNKNOWN] #Alert states - OPTIONAL. If missing will use the default configured in brooklyn.properties
+      properties:
+        ambari.dispatch.recipients: email.to@example.com, email2@example.com #Notification Recipients
+        mail.smtp.from: email.from@example.com #Mail from - OPTIONAL. If missing will use the default configured in brooklyn.properties
+        mail.smtp.host: localhost #Mail Host - OPTIONAL. If missing will use the default configured in brooklyn.properties
+        mail.smtp.port: 587 #Mail Port - OPTIONAL. If missing will use the default configured in brooklyn.properties
+    ambariConfigMap:
+      hdfs-site:
+        dfs.webhdfs.enabled: true
+        dfs.permissions.enabled: false
+      httpfs-site:
+        httpfs.proxyuser.hue: '*'
+        httpfs.proxyuser.hue.groups: '*'
+    initialSize: 3
+    services:
+    - GANGLIA
+    - HBASE
+    - HDFS
+    - MAPREDUCE2
+    - YARN
+    - ZOOKEEPER

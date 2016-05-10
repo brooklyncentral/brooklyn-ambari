@@ -179,6 +179,7 @@
                         <exclude>**/*.log</exclude>
                         <exclude>**/brooklyn*.log.*</exclude>
                         <exclude>**/target/**</exclude>
+                        <exclude>docs/**/*.md</exclude>
                         <!-- files not requiring licence -->
                         <exclude>README.md</exclude>
                         <exclude>LICENSE.md</exclude>

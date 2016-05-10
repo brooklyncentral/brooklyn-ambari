@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.google.common.base.Predicate;
 import org.apache.brooklyn.api.effector.Effector;
 import org.apache.brooklyn.api.entity.EntityLocal;
 import org.apache.brooklyn.api.entity.EntitySpec;
@@ -246,6 +247,81 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     @Override
+    public void addAlertNotification(String name, String description, Boolean global, String notificationType,
+                                     List<String> alertStates, List<String> ambariDispatchRecipients,
+                                     String mailSmtpHost, Integer mailSmtpPort, String mailSmtpFrom, Boolean mailSmtpAuth) {
+
+        final Maybe<Effector<?>> effector = EffectorUtils.findEffector(getMasterAmbariServer().getEntityType().getEffectors(), "addAlertNotification");
+        if (effector.isAbsentOrNull()) {
+            throw new IllegalStateException("Cannot get the addAlertNotification effector");
+        }
+
+        getMasterAmbariServer().invoke(effector.get(), ImmutableMap.<String, Object>builder()
+                .put("Notification Name", name)
+                .put("Description", description)
+                .put("Global", global)
+                .put("Notification Type", notificationType)
+                .put("Alert States", alertStates)
+                .put("Ambari Dispatch Recipients", ambariDispatchRecipients)
+                .put("SMTP Host", mailSmtpHost)
+                .put("SMTP Port", mailSmtpPort)
+                .put("SMTP From", mailSmtpFrom)
+                .put("SMTP Auth", mailSmtpAuth)
+                .build());
+
+    }
+
+    @Override
+    public void editAlertNotification(String name, String description, Boolean global, String notificationType,
+                                      List<String> alertStates, List<String> ambariDispatchRecipients,
+                                      String mailSmtpHost, Integer mailSmtpPort, String mailSmtpFrom, Boolean mailSmtpAuth) {
+
+        final Maybe<Effector<?>> effector = EffectorUtils.findEffector(getMasterAmbariServer().getEntityType().getEffectors(), "editAlertNotification");
+        if (effector.isAbsentOrNull()) {
+            throw new IllegalStateException("Cannot get the editAlertNotification effector");
+        }
+
+        getMasterAmbariServer().invoke(effector.get(), ImmutableMap.<String, Object>builder()
+                .put("Notification Name", name)
+                .put("Description", description)
+                .put("Global", global)
+                .put("Notification Type", notificationType)
+                .put("Alert States", alertStates)
+                .put("Ambari Dispatch Recipients", ambariDispatchRecipients)
+                .put("SMTP Host", mailSmtpHost)
+                .put("SMTP Port", mailSmtpPort)
+                .put("SMTP From", mailSmtpFrom)
+                .put("SMTP Auth", mailSmtpAuth)
+                .build());
+    }
+
+    public void deleteAlertNotification(String name) {
+        final Maybe<Effector<?>> effector = EffectorUtils.findEffector(getMasterAmbariServer().getEntityType().getEffectors(), "editAlertNotification");
+        if (effector.isAbsentOrNull()) {
+            throw new IllegalStateException("Cannot get the editAlertNotification effector");
+        }
+
+        getMasterAmbariServer().invoke(effector.get(), ImmutableMap.<String, Object>builder()
+                .put("Notification Name", name)
+                .build());
+    }
+
+
+    @Override
+    public void addAlertGroup(String name,List<Integer> definitions) {
+
+        final Maybe<Effector<?>> effector = EffectorUtils.findEffector(getMasterAmbariServer().getEntityType().getEffectors(), "addAlertGroup");
+        if (effector.isAbsentOrNull()) {
+            throw new IllegalStateException("Cannot get the addAlertGroup effector");
+        }
+
+        getMasterAmbariServer().invoke(effector.get(), ImmutableMap.of(
+                "name", name,
+                "definitions", definitions
+                ));
+    }
+
+    @Override
     public void deployCluster() throws AmbariApiException, ExtraServiceException {
         // Set the flag to true so the deployment won't happen multiple times
         setAttribute(CLUSTER_SERVICES_INITIALISE_CALLED, true);
@@ -352,8 +428,19 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
     }
 
     private EntitySpec<? extends AmbariServer> createServerSpec(Object securityGroup) {
+        Iterable<Map.Entry<ConfigKey<?>, Object>> ambariConfigFromPropertiesIterator = Iterables.filter(getManagementContext().getConfig().getAllConfig().entrySet(), new Predicate<Object>() {
+            @Override
+            public boolean apply(@Nullable Object input) {
+                return ((ConfigKey<?>) ((Map.Entry) input).getKey()).getName().contains(AMBARI_ALERTS_CONFIG_PREFIX);
+            }
+        });
+        Map<String, Object> ambariConfigFromProperties = MutableMap.of();
+        for (Map.Entry entry: ambariConfigFromPropertiesIterator) {
+            ambariConfigFromProperties.put(((ConfigKey<?>) entry.getKey()).getName(), entry.getValue());
+        }
         EntitySpec<? extends AmbariServer> serverSpec = EntitySpec.create(getConfig(SERVER_SPEC))
                 .configure(SoftwareProcess.SUGGESTED_VERSION, getConfig(AmbariCluster.SUGGESTED_VERSION))
+                .configure(ambariConfigFromProperties)
                 .configure(config().getBag().getAllConfig())
                 .displayName("Ambari Server");
         if (securityGroup != null) {

@@ -38,11 +38,13 @@ import org.apache.brooklyn.entity.software.base.SoftwareProcessImpl;
 import org.apache.brooklyn.feed.http.HttpFeed;
 import org.apache.brooklyn.feed.http.HttpPollConfig;
 import org.apache.brooklyn.feed.http.HttpValueFunctions;
+import org.apache.brooklyn.util.collections.MutableMap;
 import org.apache.brooklyn.util.http.HttpTool;
 import org.apache.brooklyn.util.core.task.DynamicTasks;
 import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.brooklyn.util.guava.Functionals;
 import org.apache.brooklyn.util.text.Identifiers;
+import org.apache.brooklyn.util.text.Strings;
 import org.apache.brooklyn.util.time.Duration;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.slf4j.Logger;
@@ -68,6 +70,7 @@ import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
 import io.brooklyn.ambari.rest.domain.Request;
 import io.brooklyn.ambari.rest.domain.HostGroup;
+import io.brooklyn.ambari.rest.domain.AlertTargets;
 import io.brooklyn.ambari.rest.endpoint.BlueprintEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ClusterEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ConfigurationEnpoint;
@@ -75,6 +78,8 @@ import io.brooklyn.ambari.rest.endpoint.HostEndpoint;
 import io.brooklyn.ambari.rest.endpoint.ServiceEndpoint;
 import io.brooklyn.ambari.rest.endpoint.StackEndpoint;
 import io.brooklyn.ambari.rest.endpoint.UsersEndpoint;
+import io.brooklyn.ambari.rest.endpoint.AlertTargetEndpoint;
+import io.brooklyn.ambari.rest.endpoint.AlertGroupEndpoint;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 
@@ -94,6 +99,8 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
     private static final String USERNAME = "admin";
     private static final String INITIAL_PASSWORD = "admin";
+
+    private Map<String, Integer> registeredAlertNotifications;
 
     @Override
     public Class<AmbariServerDriver> getDriverInterface() {
@@ -367,6 +374,131 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     }
 
     @Override
+    public void addAlertNotification(String name, String description, Boolean global, String notificationType,
+                                     List<String> alertStates, List<String> ambariDispatchRecipients,
+                                     String mailSmtpHost, Integer mailSmtpPort, String mailSmtpFrom, Boolean mailSmtpAuth) {
+
+        mailSmtpHost = mailSmtpHost.equals("default") ? (String) ((Map) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties")).get("mail.smtp.host") : mailSmtpHost;
+        mailSmtpPort = mailSmtpPort.equals("587") ? (Integer) ((Map) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties")).get("mail.smtp.port") : mailSmtpPort;
+        mailSmtpFrom = mailSmtpFrom.equals("default") ? (String) ((Map) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties")).get("mail.smtp.from") : mailSmtpFrom;
+
+        Map<String, Object> ambariAlertNotifications = ImmutableMap.<String, Object>builder()
+                .put("name", name)
+                .put("description", description)
+                .put("global", global)
+                .put("notification_type", notificationType)
+                .put("alert_states", alertStates)
+                .put("properties", ImmutableMap.of(
+                        "ambari.dispatch.recipients", ambariDispatchRecipients,
+                        "mail.smtp.host", mailSmtpHost,
+                        "mail.smtp.port", mailSmtpPort,
+                        "mail.smtp.from", mailSmtpFrom,
+                        "mail.smtp.auth", mailSmtpAuth
+                ))
+                .build();
+
+        createAlertNotification(ambariAlertNotifications);
+    }
+
+    protected void createAlertNotification(){
+        Map<String, Object> ambariAlertNotifications = MutableMap.of();
+
+        for (Map.Entry config: getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).entrySet()) {
+            Object value = (config.getValue() instanceof Map && !((String) config.getKey()).contains("properties")) ?
+                    ((Map) config.getValue()).keySet().toArray()[0] : config.getValue();
+            ambariAlertNotifications.put((String) config.getKey(), value);
+        }
+
+        Map<String, Object> mergedPropertiesConfig = MutableMap.of();
+        mergedPropertiesConfig.putAll((Map<String, Object>) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties"));
+        mergedPropertiesConfig.putAll((Map<String, Object>) ambariAlertNotifications.get("properties"));
+        ambariAlertNotifications.put("properties", mergedPropertiesConfig);
+        ambariAlertNotifications.remove("default_properties");
+
+        createAlertNotification(ambariAlertNotifications);
+    }
+
+    protected void createAlertNotification(Map<String, Object> ambariAlertNotifications) {
+        ImmutableMap<String, Map<String, Object>> alertTargetRequest = ImmutableMap.of("AlertTarget", ambariAlertNotifications);
+
+        restAdapter.create(AlertTargetEndpoint.class).createAlertNotification(alertTargetRequest);
+
+        registeredAlertNotifications = listAlertTargets();
+    }
+
+    @Override
+    public void editAlertNotification(String name, String description, Boolean global, String notificationType,
+                                      List<String> alertStates, List<String> ambariDispatchRecipients,
+                                      String mailSmtpHost, Integer mailSmtpPort, String mailSmtpFrom, Boolean mailSmtpAuth) {
+
+        registeredAlertNotifications = listAlertTargets();
+
+        mailSmtpHost = mailSmtpHost.equals("default") ? (String) ((Map) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties")).get("mail.smtp.host") : mailSmtpHost;
+        mailSmtpPort = mailSmtpPort.equals("587") ? (Integer) ((Map) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties")).get("mail.smtp.port") : mailSmtpPort;
+        mailSmtpFrom = mailSmtpFrom.equals("default") ? (String) ((Map) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties")).get("mail.smtp.from") : mailSmtpFrom;
+
+        ImmutableMap<String, Object> alertTargetRequest = ImmutableMap.<String, Object>builder()
+                .put("name", name)
+                .put("description", description)
+                .put("global", global)
+                .put("notification_type", notificationType)
+                .put("alert_states", alertStates)
+                .put("properties", ImmutableMap.of(
+                        "ambari.dispatch.recipients", ambariDispatchRecipients,
+                        "mail.smtp.host", mailSmtpHost,
+                        "mail.smtp.port", mailSmtpPort,
+                        "mail.smtp.from", mailSmtpFrom,
+                        "mail.smtp.auth", mailSmtpAuth
+                ))
+                .build();
+
+        if (!registeredAlertNotifications.containsKey(name)) {
+            throw new UnsupportedOperationException(String.valueOf(Strings.format("Alert with name %s doesn't exist and cannot be updated.", name)));
+        }
+        updateAlertTarget(registeredAlertNotifications.get(name), alertTargetRequest);
+    }
+
+    protected Map<String, Integer> listAlertTargets() {
+        AlertTargets alertTargets = restAdapter.create(AlertTargetEndpoint.class).listAlertNotifications();
+
+        Map<String, Integer> result = MutableMap.of();
+        for (Map<String, Object> item: alertTargets.getItems()) {
+            result.put((String) ((Map) item.get("AlertTarget")).get("name"), ((Double) ((Map) item.get("AlertTarget")).get("id")).intValue());
+        }
+
+        return result;
+    }
+
+    protected void updateAlertTarget(Integer targetId, Map<String, Object> ambariAlertNotifications) {
+        ImmutableMap<String, Map<String, Object>> alertTargetRequest = ImmutableMap.of("AlertTarget", ambariAlertNotifications);
+
+        restAdapter.create(AlertTargetEndpoint.class).editAlertNotification(targetId, alertTargetRequest);
+    }
+
+    @Override
+    public void deleteAlertNotification(String name) {
+        if (registeredAlertNotifications == null) {
+            registeredAlertNotifications = listAlertTargets();
+        }
+        if (!registeredAlertNotifications.containsKey(name)) {
+            throw new UnsupportedOperationException(String.valueOf(Strings.format("Alert with name %s doesn't exist and cannot be deleted.", name)));
+        }
+        restAdapter.create(AlertTargetEndpoint.class).deleteAlertNotification(registeredAlertNotifications.get(name));
+    }
+
+    @Override
+    public void addAlertGroup(@EffectorParam(name = "Name") String name,
+                              @EffectorParam(name = "Definitions") List<Integer> definitions) {
+
+        ImmutableMap<String, ImmutableMap<Object, Object>> alertGroupRequest = ImmutableMap.of("AlertGroup", ImmutableMap.builder()
+                .put("name", name)
+                .put("definitions", definitions)
+                .build());
+
+        restAdapter.create(AlertGroupEndpoint.class).createAlertGroup(getConfig(AmbariCluster.CLUSTER_NAME), alertGroupRequest);
+    }
+
+    @Override
     public void startService(@EffectorParam(name = "Cluster name") String cluster,
                              @EffectorParam(name = "Service name") final String service) {
         waitForServiceUp();
@@ -429,6 +561,11 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     public void postStart() {
         super.postStart();
         generateAndUpdatePassword();
+
+        if (!getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).isEmpty()) {
+            createAlertNotification();
+        }
+        registeredAlertNotifications = listAlertTargets();
     }
 
     /**
