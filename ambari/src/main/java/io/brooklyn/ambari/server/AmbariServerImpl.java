@@ -411,7 +411,9 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         Map<String, Object> mergedPropertiesConfig = MutableMap.of();
         mergedPropertiesConfig.putAll((Map<String, Object>) getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).get("default_properties"));
-        mergedPropertiesConfig.putAll((Map<String, Object>) ambariAlertNotifications.get("properties"));
+        if (ambariAlertNotifications.containsKey("properties")) {
+            mergedPropertiesConfig.putAll((Map<String, Object>) ambariAlertNotifications.get("properties"));
+        }
         ambariAlertNotifications.put("properties", mergedPropertiesConfig);
         ambariAlertNotifications.remove("default_properties");
 
@@ -562,7 +564,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         super.postStart();
         generateAndUpdatePassword();
 
-        if (!getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).isEmpty()) {
+        if (getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS)!= null && !getConfig(AmbariCluster.AMBARI_ALERT_NOTIFICATIONS).isEmpty()) {
             createAlertNotification();
         }
         registeredAlertNotifications = listAlertTargets();
