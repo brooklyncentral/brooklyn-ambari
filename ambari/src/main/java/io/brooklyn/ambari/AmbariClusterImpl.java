@@ -498,7 +498,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 .build();
     }
 
-    private Map<String, Map> mergeMaps(Map<String, Map> configuration, Map<String, Map> servicesConfig) {
+    protected Map<String, Map> mergeMaps(Map<String, Map> configuration, Map<String, Map> servicesConfig) {
         if (servicesConfig == null) {
             return configuration;
         }
@@ -509,7 +509,11 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 newConfigurationMap.put(stringMapEntry.getKey(), stringMapEntry.getValue());
             } else {
                 if(stringMapEntry.getValue() != null) {
-                    newConfigurationMap.get(stringMapEntry.getKey()).putAll(stringMapEntry.getValue());
+                    // Ensuring that the configuration passed via yaml gets precedence over the one provided by the external service
+                    MutableMap<String, Map> tmpMap = MutableMap.copyOf(stringMapEntry.getValue());
+                    tmpMap.putAll(newConfigurationMap.get(stringMapEntry.getKey()));
+
+                    newConfigurationMap.put(stringMapEntry.getKey(), ImmutableMap.copyOf(tmpMap));
                 }
             }
         }
