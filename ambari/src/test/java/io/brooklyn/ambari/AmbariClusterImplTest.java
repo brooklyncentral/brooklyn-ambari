@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package io.brooklyn.ambari;
 
 import static org.apache.brooklyn.test.Asserts.assertThat;
@@ -10,17 +28,22 @@ import java.util.Set;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMap;
+import io.brooklyn.ambari.AmbariClusterImpl;
 
 public class AmbariClusterImplTest {
     private AmbariClusterImpl ambariCluster = new AmbariClusterImpl();
 
     private Map<String, Map> testMap;
     private Set<String> keys;
+    
+    private ImmutableMap<String, Map> newRootMap;
+    ImmutableMap<String, Map> origMap;
+    ImmutableMap<String, Map> newMap;
 
     @SuppressWarnings("unchecked")
     @BeforeClass(alwaysRun = true)
     public void setUpClass() throws Exception {
-        ImmutableMap<String, Map> origMap = ImmutableMap.<String, Map>builder()
+        origMap = ImmutableMap.<String, Map>builder()
                 .put("oozie-site", ImmutableMap.builder()
                         .put("oozie.service.ProxyUserService.proxyuser.falcon.groups", "*")
                         .put("oozie.service.ProxyUserService.proxyuser.falcon.hosts", "*")
@@ -29,11 +52,19 @@ public class AmbariClusterImplTest {
                         .build())
                 .build();
 
-        ImmutableMap<String, Map> newMap = ImmutableMap.<String, Map>builder()
+        newMap = ImmutableMap.<String, Map>builder()
                 .put("oozie-site",  ImmutableMap.builder()
                         .put("oozie.db.schema.name", "oozie")
                         .put("oozie.service.JPAService.jdbc.driver", "org.postgresql.Driver")
                         .put("oozie.service.ProxyUserService.proxyuser.hue.hosts", "localhost")
+                        .build())
+                .build();
+
+        newRootMap = ImmutableMap.<String, Map>builder()
+                .put("hdfs-site", ImmutableMap.builder()
+                        .put("dfs.webhdfs.enabled", "true")
+                        .put("dfs.permissions.enabled", "false")
+                        .put("dfs.namenode.acls.enabled", "true")
                         .build())
                 .build();
 
@@ -62,7 +93,29 @@ public class AmbariClusterImplTest {
     }
 
     @Test
-    public void testNewMergedValue() {
-        assertEquals(testMap.get("oozie-site").get("oozie.service.ProxyUserService.proxyuser.hue.hosts"), "localhost");
+    public void testOriginalValueHasPrecedence() {
+        assertEquals(testMap.get("oozie-site").get("oozie.service.ProxyUserService.proxyuser.hue.hosts"), "*");
+    }
+
+    @Test
+    public void testAddingNewRootMap() {
+        Map<String, Map> rootMap = ambariCluster.mergeMaps(testMap, newRootMap);
+        
+        assertEquals(rootMap.get("oozie-site").get("oozie.service.ProxyUserService.proxyuser.hue.hosts"), "*");
+        assertEquals(rootMap.get("hdfs-site").get("dfs.webhdfs.enabled"), "true");
+    }
+
+    @Test
+    public void testAddingNullNewMap() {
+        Map<String, Map> tmpMap = ambariCluster.mergeMaps(origMap, null);
+        
+        assertEquals(tmpMap.get("oozie-site").get("oozie.service.ProxyUserService.proxyuser.hue.hosts"), "*");
+    }
+
+    @Test
+    public void testAddingNullOrigMap() {
+        Map<String, Map> tmpMap = ambariCluster.mergeMaps(null, newMap);
+        
+        assertEquals(tmpMap.get("oozie-site").get("oozie.service.ProxyUserService.proxyuser.hue.hosts"), "localhost");
     }
 }
