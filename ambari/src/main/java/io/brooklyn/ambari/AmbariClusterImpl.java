@@ -498,7 +498,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 .build();
     }
 
-    private Map<String, Map> mergeMaps(Map<String, Map> configuration, Map<String, Map> servicesConfig) {
+    protected Map<String, Map> mergeMaps(Map<String, Map> configuration, Map<String, Map> servicesConfig) {
         if (servicesConfig == null) {
             return configuration;
         }
@@ -509,7 +509,9 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
                 newConfigurationMap.put(stringMapEntry.getKey(), stringMapEntry.getValue());
             } else {
                 if(stringMapEntry.getValue() != null) {
-                    newConfigurationMap.get(stringMapEntry.getKey()).putAll(stringMapEntry.getValue());
+                    MutableMap<String, Map> tmpMap = MutableMap.copyOf(newConfigurationMap.get(stringMapEntry.getKey()));
+                    tmpMap.putAll(stringMapEntry.getValue());
+                    newConfigurationMap.put(stringMapEntry.getKey(), ImmutableMap.copyOf(tmpMap));
                 }
             }
         }
