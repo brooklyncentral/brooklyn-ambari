@@ -352,6 +352,12 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             }
             final List<HostComponent> hostComponents = MutableList.copyOf(hostGroup.getComponents());
             for (HostComponent component : hostComponents) {
+                // ZKFC (ZooKeeper Failover Controller) is disabled if HA setup is not present
+                // ZKFC requires at least 2 NameNodes in a HA setup to operate and/or install correctly
+                if (StringUtils.equals(component.getName(), "ZKFC") && !isHaEnabled(getConfig(AMBARI_CONFIGURATIONS))) {
+                    hostGroup.getComponents().remove(component);
+                    continue;
+                }
                 componentsByNodeName.get(hostGroup.getName()).add(component.getName());
             }
         }
@@ -627,5 +633,16 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
             extraService.postClusterDeploy(getAmbariCluster());
             return null;
         }
+    }
+
+    private boolean isHaEnabled(Map<String, Map> configuration) {
+        String HDFS_SITE = "hdfs-site";
+        String HA_ENABLE = "dfs.ha.automatic-failover.enabled";
+
+        if (configuration.get(HDFS_SITE).get(HA_ENABLE) != null) {
+            return configuration.get(HDFS_SITE).get(HA_ENABLE).equals("true");
+        }
+
+        return false;
     }
 }
