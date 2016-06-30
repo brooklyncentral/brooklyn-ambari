@@ -47,6 +47,7 @@ import org.apache.brooklyn.entity.software.base.SoftwareProcess;
 import org.apache.brooklyn.entity.stock.BasicStartableImpl;
 import org.apache.brooklyn.util.collections.MutableList;
 import org.apache.brooklyn.util.collections.MutableMap;
+import org.apache.brooklyn.util.core.flags.TypeCoercions;
 import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.brooklyn.util.guava.Maybe;
 import org.apache.commons.lang3.StringUtils;
@@ -640,7 +641,7 @@ public class AmbariClusterImpl extends BasicStartableImpl implements AmbariClust
         String HA_ENABLE = "dfs.ha.automatic-failover.enabled";
 
         if (configuration.get(HDFS_SITE).get(HA_ENABLE) != null) {
-            return configuration.get(HDFS_SITE).get(HA_ENABLE).equals("true");
+            return Boolean.TRUE.equals(TypeCoercions.coerce(configuration.get(HDFS_SITE).get(HA_ENABLE), Boolean.class));
         }
 
         return false;
