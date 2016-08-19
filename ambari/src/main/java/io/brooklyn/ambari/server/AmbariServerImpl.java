@@ -20,6 +20,7 @@
 package io.brooklyn.ambari.server;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +29,14 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.apache.brooklyn.api.entity.Entity;
+import org.apache.brooklyn.api.location.Location;
+import org.apache.brooklyn.api.location.MachineLocation;
 import org.apache.brooklyn.api.mgmt.Task;
 import org.apache.brooklyn.core.annotation.EffectorParam;
 import org.apache.brooklyn.core.entity.Attributes;
 import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.core.location.Locations;
+import org.apache.brooklyn.core.location.Machines;
 import org.apache.brooklyn.core.location.access.BrooklynAccessUtils;
 import org.apache.brooklyn.enricher.stock.Enrichers;
 import org.apache.brooklyn.entity.software.base.SoftwareProcessImpl;
@@ -42,7 +47,9 @@ import org.apache.brooklyn.util.collections.MutableMap;
 import org.apache.brooklyn.util.http.HttpTool;
 import org.apache.brooklyn.util.core.task.DynamicTasks;
 import org.apache.brooklyn.util.core.task.Tasks;
+import org.apache.brooklyn.util.executor.HttpExecutorFactory;
 import org.apache.brooklyn.util.guava.Functionals;
+import org.apache.brooklyn.util.guava.Maybe;
 import org.apache.brooklyn.util.text.Identifiers;
 import org.apache.brooklyn.util.text.Strings;
 import org.apache.brooklyn.util.time.Duration;
@@ -65,6 +72,7 @@ import com.jayway.jsonpath.JsonPath;
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.rest.AmbariApiException;
 import io.brooklyn.ambari.rest.AmbariRequestInterceptor;
+import io.brooklyn.ambari.rest.AmbariRestClient;
 import io.brooklyn.ambari.rest.RequestCheckRunnable;
 import io.brooklyn.ambari.rest.domain.RecommendationWrapper;
 import io.brooklyn.ambari.rest.domain.RecommendationWrappers;
@@ -82,6 +90,7 @@ import io.brooklyn.ambari.rest.endpoint.AlertTargetEndpoint;
 import io.brooklyn.ambari.rest.endpoint.AlertGroupEndpoint;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
+import retrofit.client.Client;
 
 public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServer {
 
@@ -94,6 +103,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
     private String ambariUri;
 
     private RestAdapter restAdapter;
+    private Client ambariRestClient;
 
     private UsernamePasswordCredentials usernamePasswordCredentials;
 
@@ -112,6 +122,18 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
         super.connectSensors();
         connectServiceUpIsRunning();
 
+        Collection<? extends Location> locations = Locations.getLocationsCheckingAncestors(getLocations(), this);
+        Maybe<MachineLocation> location =  Machines.findUniqueElement(locations, MachineLocation.class);
+        if (location.isPresent() && location.get().hasExtension(HttpExecutorFactory.class)) {
+            ambariRestClient = AmbariRestClient.builder()
+                    .httpExecutorFactory(location.get().getExtension(HttpExecutorFactory.class))
+                    .httpExecutorProps(location.get().getAllConfig(true))
+                    .build();
+        } else {
+            ambariRestClient = new AmbariRestClient();
+        }
+
+
         HostAndPort hp = BrooklynAccessUtils.getBrooklynAccessibleAddress(this, getAttribute(HTTP_PORT));
 
         ambariUri = String.format("http://%s:%d", hp.getHostText(), hp.getPort());
@@ -125,6 +147,7 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
 
         restAdapter = new RestAdapter.Builder()
                 .setEndpoint(ambariUri)
+                .setClient(ambariRestClient)
                 .setRequestInterceptor(new AmbariRequestInterceptor(usernamePasswordCredentials))
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .build();
@@ -588,10 +611,13 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
                     "password", usernamePasswordCredentials.getPassword()
             ));
 
+            waitForServiceUp();
+
             restAdapter.create(UsersEndpoint.class).updateUser(userRequest);
 
             restAdapter = new RestAdapter.Builder()
                     .setEndpoint(ambariUri)
+                    .setClient(ambariRestClient)
                     .setRequestInterceptor(new AmbariRequestInterceptor(usernamePasswordCredentials))
                     .setLogLevel(RestAdapter.LogLevel.FULL)
                     .build();

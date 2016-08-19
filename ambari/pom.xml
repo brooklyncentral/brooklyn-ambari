@@ -79,6 +79,13 @@
             <version>1.10.8</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.mockwebserver</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>20121111</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
