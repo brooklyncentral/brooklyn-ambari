@@ -5,6 +5,9 @@ notifications:
     on_success: change
     on_failure: always
 
+before_install:
+  - sed -i.bak -e 's|https://nexus.codehaus.org/snapshots/|https://oss.sonatype.org/content/repositories/codehaus-snapshots/|g' ~/.m2/settings.xml
+
 env:
   global:
   - secure: HSS23xlZGWl74Csyzd8lV6VeTHIJIOz4L0efkWO+ZlR3W8YPGNcGl4OQjzEVrZhFCEGGaTn+xN5aU5cjKtrcMSng9m9ILTxiL4LKaxWwD8sLG5XGfQ2U5e2GPTdC5RKK01k/RsR9vvMAmMVxJqWOlVzTlGhOCF7FPK0eavSj/pM=
