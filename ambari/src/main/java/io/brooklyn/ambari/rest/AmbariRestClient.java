@@ -46,7 +46,7 @@ import retrofit.mime.TypedInput;
 import retrofit.mime.TypedOutput;
 
 /**
- * Represent a REST client which provides the ability to use different HttpExecetor implementations as defined by
+ * Represent a REST client which provides the ability to use different HttpExecutor implementations as defined by
  * {@link org.apache.brooklyn.util.http.executor.HttpExecutor} or produced by {@link org.apache.brooklyn.util.executor.HttpExecutorFactory}.
  *
  * It uses the Retrofit library default client, if factory is not set.
@@ -108,8 +108,6 @@ public class AmbariRestClient implements Client {
                     try {
                         body.writeTo(baos);
                         content = baos.toByteArray();
-                    } catch (IOException e) {
-                        throw e;
                     } finally {
                         Streams.closeQuietly(baos);
                     }
