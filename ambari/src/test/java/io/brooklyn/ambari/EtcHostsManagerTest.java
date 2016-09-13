@@ -19,21 +19,23 @@
 
 package io.brooklyn.ambari;
 
-import static org.mockito.Mockito.anyList;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.brooklyn.api.entity.Entity;
-import org.apache.brooklyn.api.entity.EntityLocal;
 import org.apache.brooklyn.api.entity.EntitySpec;
 import org.apache.brooklyn.api.location.Location;
+import org.apache.brooklyn.api.objs.BrooklynObject.TagSupport;
 import org.apache.brooklyn.core.entity.Attributes;
 import org.apache.brooklyn.core.test.BrooklynAppUnitTestSupport;
 import org.apache.brooklyn.core.test.entity.TestApplication;
@@ -65,6 +67,8 @@ public class EtcHostsManagerTest extends BrooklynAppUnitTestSupport {
     public void testSetHostsOnMachinesDoesNothingIPIsNull() {
         TestApplication app = TestApplication.Factory.newManagedInstanceForTests();
         SshMachineLocation location = mock(SshMachineLocation.class);
+        TagSupport tagSupport = mock(TestTagSupport.class);
+        when(location.tags()).thenReturn(tagSupport);
 
         List<Entity> entities = Lists.newArrayList(
                 entityWithCustomLocation(app, "a.example.com", null, location));
@@ -79,6 +83,9 @@ public class EtcHostsManagerTest extends BrooklynAppUnitTestSupport {
         TestApplication app = TestApplication.Factory.newManagedInstanceForTests();
         SshMachineLocation location1 = mock(SshMachineLocation.class);
         SshMachineLocation location2 = mock(SshMachineLocation.class);
+        TagSupport tagSupport = mock(TestTagSupport.class);
+        when(location1.tags()).thenReturn(tagSupport);
+        when(location2.tags()).thenReturn(tagSupport);
 
         List<Entity> entities = Lists.newArrayList(
                 entityWithCustomLocation(app, "a.example.com", "1.2.3.4", location1),
@@ -100,15 +107,42 @@ public class EtcHostsManagerTest extends BrooklynAppUnitTestSupport {
 
     private Entity entityWithHostnameAndAddress(TestApplication app, String hostname, String address) {
         BasicEntity entity = app.createAndManageChild(EntitySpec.create(BasicEntity.class));
-        ((EntityLocal) entity).setAttribute(Attributes.HOSTNAME, hostname);
-        ((EntityLocal) entity).setAttribute(Attributes.ADDRESS, address);
+        entity.sensors().set(Attributes.HOSTNAME, hostname);
+        entity.sensors().set(Attributes.ADDRESS, address);
         return entity;
     }
 
     private Entity entityWithCustomLocation(TestApplication app, String hostname, String address, Location location) {
         BasicEntity entity = app.createAndManageChild(EntitySpec.create(BasicEntity.class).location(location));
-        ((EntityLocal) entity).setAttribute(Attributes.HOSTNAME, hostname);
-        ((EntityLocal) entity).setAttribute(Attributes.ADDRESS, address);
+        entity.sensors().set(Attributes.HOSTNAME, hostname);
+        entity.sensors().set(Attributes.ADDRESS, address);
         return entity;
+    }
+
+    private class TestTagSupport implements TagSupport {
+        @Override
+        public Set<Object> getTags() {
+            return null;
+        }
+
+        @Override
+        public boolean containsTag(Object tag) {
+            return false;
+        }
+
+        @Override
+        public boolean addTag(Object tag) {
+            return false;
+        }
+
+        @Override
+        public boolean addTags(Iterable<?> tags) {
+            return false;
+        }
+
+        @Override
+        public boolean removeTag(Object tag) {
+            return false;
+        }
     }
 }
