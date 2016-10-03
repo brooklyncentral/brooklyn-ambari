@@ -23,7 +23,7 @@
 
     <groupId>io.brooklyn.ambari</groupId>
     <artifactId>brooklyn-ambari-parent</artifactId>
-    <version>0.6.0-20160908.1322-v1-SNAPSHOT</version>
+    <version>0.6.0-20160908.1322-v1</version>
     <packaging>pom</packaging>
 
     <name>Brooklyn Ambari parent project</name>
