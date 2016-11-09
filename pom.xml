@@ -42,7 +42,6 @@
         <module>ambari</module>
         <module>launcher</module>
         <module>service</module>
-        <module>karaf</module>
     </modules>
 
     <properties>

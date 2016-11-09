@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>brooklyn-ambari</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <name>Brooklyn Ambari entities</name>
     <description>
@@ -115,25 +115,20 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.5.3</version>
+                <version>3.2.0</version>
                 <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <supportedProjectTypes>
-                        <supportedProjectType>jar</supportedProjectType>
+                        <supportedProjectType>bundle</supportedProjectType>
                     </supportedProjectTypes>
                     <instructions>
-                        <!-- OSGi specific instruction -->
-                        <Import-Package>*</Import-Package>
+                        <Import-Package>!Acme.Serve,!org.junit,!android.os,!android.util,!android.net.http,!com.google.appengine.api.urlfetch,!rx,!rx.subscriptions,*</Import-Package>
                         <Brooklyn-Feature-Name>${project.name}</Brooklyn-Feature-Name>
+                        <Implementation-SHA-1>${buildNumber}</Implementation-SHA-1>
+                        <Implementation-Branch>${scmBranch}</Implementation-Branch>
+                        <!-- Embed-Transitive>true</Embed-Transitive -->
+                        <Embed-Dependency>*;scope=compile|runtime;groupId=!org.apache.brooklyn</Embed-Dependency>
+                        <Export-Package></Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
