@@ -122,7 +122,7 @@
                         <supportedProjectType>bundle</supportedProjectType>
                     </supportedProjectTypes>
                     <instructions>
-                        <Import-Package>!Acme.Serve,!org.junit,!android.os,!android.util,!android.net.http,!com.google.appengine.api.urlfetch,!rx,!rx.subscriptions,*</Import-Package>
+                        <Import-Package>!Acme.Serve,!org.junit,!android.os,!android.util,!android.net.http,!com.google.appengine.api.urlfetch,!rx,!rx.subscriptions,com.jayway.jsonpath.internal.*,*</Import-Package>
                         <Brooklyn-Feature-Name>${project.name}</Brooklyn-Feature-Name>
                         <Implementation-SHA-1>${buildNumber}</Implementation-SHA-1>
                         <Implementation-Branch>${scmBranch}</Implementation-Branch>
