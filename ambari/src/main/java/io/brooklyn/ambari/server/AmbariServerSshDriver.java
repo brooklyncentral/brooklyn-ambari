@@ -25,6 +25,7 @@ import static org.apache.brooklyn.util.ssh.BashCommands.unzip;
 
 import java.util.List;
 
+import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.entity.EntityLocal;
 import org.apache.brooklyn.core.entity.Entities;
 import org.apache.brooklyn.entity.java.JavaSoftwareProcessSshDriver;
@@ -33,11 +34,13 @@ import org.apache.brooklyn.location.ssh.SshMachineLocation;
 import org.apache.brooklyn.util.collections.MutableMap;
 import org.apache.brooklyn.util.ssh.BashCommands;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariInstallCommands;
+import io.brooklyn.ambari.service.CustomService;
 
 public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implements AmbariServerDriver {
 
@@ -99,6 +102,13 @@ public class AmbariServerSshDriver extends JavaSoftwareProcessSshDriver implemen
             for (String extraStackDefinition : extraStackDefinitions) {
                 String tmpLocation = copyToTmp(extraStackDefinition);
                 builder.add(getUnpackCommand(tmpLocation));
+            }
+        }
+
+        AmbariCluster ambariCluster = getParentAmbariCluster();
+        for (Entity customService: Entities.descendants(ambariCluster, Predicates.instanceOf(CustomService.class), false)) {
+            if (Entities.isManaged(customService)) {
+                ((CustomService)customService).customizeService();
             }
         }
 
