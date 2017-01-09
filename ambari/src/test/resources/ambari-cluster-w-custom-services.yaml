@@ -5,9 +5,7 @@ services:
   brooklyn.config:
     version: 2.2.2.0
     stackVersion: 2.4
-    provisioning.properties:
-      templateOptions:
-        securityGroupIds: test-ambari
+    securityGroup: test-ambari
     ambariConfigMap:
       hdfs-site:
         dfs.webhdfs.enabled: true

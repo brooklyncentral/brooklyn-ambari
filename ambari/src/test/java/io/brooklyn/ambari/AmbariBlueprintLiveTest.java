@@ -76,47 +76,44 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
 
         return new Object[][]{
                 new Object[]{
-                        "ambari-cluster.yaml", "softlayer", "ams01", "UbuntuOnSoftlayer", MutableMap.<String, String>builder()
-                        .put("minRam", "16384")
-                        .put("minCores", "4")
-                        .put("osFamily", "ubuntu")
-                        .put("osVersionRegex", "12.*")
+                        "ambari-cluster.yaml", "aws-ec2", "eu-central-1", "UbuntuOnAWS", MutableMap.<String, String>builder()
+                        .put("hardwareId", "m4.large")
+                        .put("imageId", "eu-central-1/ami-142ded7b")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster.yaml", "softlayer", "ams03", "CentOSOnSoftlayer", MutableMap.<String, String>builder()
-                        .put("minRam", "16384")
-                        .put("minCores", "4")
-                        .put("osFamily", "centos")
-                        .put("osVersionRegex", "6.*")
+                        "ambari-cluster.yaml", "aws-ec2", "eu-central-1", "CentOSOnAWS", MutableMap.<String, String>builder()
+                        .put("hardwareId", "m4.large")
+                        .put("imageId", "eu-central-1/ami-14211709")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster.yaml", "softlayer", "lon02", "RHEDOnSoftlayer", MutableMap.<String, String>builder()
-                        .put("minRam", "16384")
-                        .put("minCores", "4")
-                        .put("osFamily", "rhel")
-                        .put("osVersionRegex", "6.*")
+                        "ambari-cluster.yaml", "aws-ec2", "eu-central-1", "RHELOnAWS", MutableMap.<String, String>builder()
+                        .put("hardwareId", "m4.large")
+                        .put("imageId", "eu-central-1/ami-cd362ca1")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster-by-hostgroup.yaml", "softlayer", "sea01", "UbuntuOnSoftlayer", MutableMap.<String, String>builder()
-                        .put("minRam", "16384")
-                        .put("minCores", "4")
-                        .put("osFamily", "ubuntu")
-                        .put("osVersionRegex", "12.*")
+                        "ambari-cluster-by-hostgroup.yaml", "aws-ec2", "eu-central-1", "UbuntuOnAWS", MutableMap.<String, String>builder()
+                        .put("hardwareId", "m4.large")
+                        .put("imageId", "eu-central-1/ami-142ded7b")
                         .put("stopIptables", "true")
                         .build()
                 },
                 new Object[]{
-                        "ambari-cluster-w-extra-services.yaml", "softlayer", "dal05", "CentOSOnSoftlayer", MutableMap.<String, String>builder()
-                        .put("minRam", "16384")
-                        .put("minCores", "4")
-                        .put("osFamily", "centos")
-                        .put("osVersionRegex", "6.*")
+                        "ambari-cluster-w-extra-services.yaml", "aws-ec2", "eu-central-1", "CentOSOnAWS", MutableMap.<String, String>builder()
+                        .put("hardwareId", "m4.large")
+                        .put("imageId", "eu-central-1/ami-14211709")
+                        .put("stopIptables", "true")
+                        .build()
+                },
+                new Object[]{
+                        "ambari-cluster-w-custom-services.yaml", "aws-ec2", "eu-central-1", "CentOSOnAWS", MutableMap.<String, String>builder()
+                        .put("hardwareId", "m4.large")
+                        .put("imageId", "eu-central-1/ami-14211709")
                         .put("stopIptables", "true")
                         .build()
                 }
@@ -135,8 +132,8 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
     @Test(groups = {"Live"})
     public void testAddServiceToCluster() throws Exception {
         String yamlFile = "ambari-cluster-small.yaml";
-        String provider = "softlayer";
-        String region = "ams01";
+        String provider = "aws-ec2";
+        String region = "eu-central-1";
         Map<String, String> options = ImmutableMap.<String, String>builder()
                 .put("minRam", "16384")
                 .put("minCores", "4")
@@ -144,7 +141,7 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
                 .put("osVersionRegex", "12.*")
                 .put("stopIptables", "true")
                 .build();
-        LOG.info("Testing {} on {}:{} using {} ({})", new Object[]{yamlFile, provider, region, "Small cluster on Softlayer adding FLUME", options});
+        LOG.info("Testing {} on {}:{} using {} ({})", new Object[]{yamlFile, provider, region, "Small cluster on AWS adding FLUME", options});
 
         String yaml = blueprintTestHelper.getYamlFileContents(yamlFile, provider, region, options, this);
 
@@ -155,8 +152,8 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
     @Test(groups = {"Live"})
     public void testExpandCluster() throws Exception {
         String yamlFile = "ambari-cluster-by-hostgroup.yaml";
-        String provider = "softlayer";
-        String region = "ams01";
+        String provider = "aws-ec2";
+        String region = "eu-central-1";
         Map<String, String> options = ImmutableMap.<String, String>builder()
                 .put("minRam", "16384")
                 .put("minCores", "4")
@@ -165,7 +162,7 @@ public class AmbariBlueprintLiveTest extends AbstractBlueprintTest {
                 .put("stopIptables", "true")
                 .build();
 
-        LOG.info("Testing {} on {}:{} using {} ({})", new Object[]{yamlFile, provider, region, "Cluster by HostGroup on Softlayer scaling DataNodes", options});
+        LOG.info("Testing {} on {}:{} using {} ({})", new Object[]{yamlFile, provider, region, "Cluster by HostGroup on AWS scaling DataNodes", options});
         String yaml =
                 blueprintTestHelper.getYamlFileContents(
                         yamlFile,
