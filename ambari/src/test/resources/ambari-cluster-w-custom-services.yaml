@@ -1,0 +1,30 @@
+name: Ambari 2.4
+services:
+- type: io.brooklyn.ambari.AmbariCluster
+  name: Ambari Cluster
+  brooklyn.config:
+    version: 2.2.2.0
+    stackVersion: 2.4
+    securityGroup: test-ambari
+    ambariConfigMap:
+      hdfs-site:
+        dfs.webhdfs.enabled: true
+        dfs.permissions.enabled: false
+    initialSize: 3
+    services:
+    - GANGLIA
+    - HBASE
+    - HDFS
+    - MAPREDUCE2
+    - YARN
+    - ZOOKEEPER
+  brooklyn.children:
+  - type: io.brooklyn.ambari.service.CustomService
+    brooklyn.config:
+      custom.service.name: CUSTOMSRV1
+      custom.component.name: CUSTOMCOMPONENT1
+      custom.service.config:
+        httpfs-site:
+          httpfs.proxyuser.hue: '*'
+          httpfs.proxyuser.hue.groups: '*'
+
