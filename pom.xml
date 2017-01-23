@@ -185,6 +185,7 @@
                         <exclude>docs/**/*.md</exclude>
                         <!-- files not requiring licence -->
                         <exclude>README.md</exclude>
+                        <exclude>**/*.bom</exclude>
                         <exclude>LICENSE.md</exclude>
                         <exclude>.travis.yml</exclude>
                         <exclude>**/*.yaml</exclude>
