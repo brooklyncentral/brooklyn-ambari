@@ -1,7 +1,7 @@
 Brooklyn Ambari
 ===
 
-This project contains [Apache Brooklyn](https://brooklyn.incubator.apache.org/)
+This project contains [Apache Brooklyn](https://brooklyn.apache.org/)
 blueprints for [Apache Ambari](https://ambari.apache.org) servers and for deploying
 Ambari stacks to those servers.
 
@@ -10,7 +10,7 @@ Ambari stacks to those servers.
 
 This blueprint currently uses the following dependencies:
 
-- Apache Ambari **2.1.2**
+- Apache Ambari **2.2.0.0**
 - HDP stack definition **2.3**
 
 
@@ -51,13 +51,20 @@ to AWS, adding the list of services shown:
         - ZOOKEEPER
 
 To use the blueprint unchanged first create an AWS security group called "test-ambari" with
-an inbound TCP rule for port 8080.
+an inbound TCP rule for port 8080 and allowing all traffic within the security group.
 
 
 ## Building and Running
 
 There are several options available for building and running.
 
+### Karaf
+
+If you are using Apache Brooklyn in karaf mode then you can simply use the cli with the following command:
+
+    br add-catalog catalog.bom
+
+This will add brooklyn-ambari and a simple big data blueprint (ambari-cluster-application) to your Apache Brooklyn instance.
 
 ### Building a standlone distro
 
