@@ -41,8 +41,7 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
     protected void connectSensors() {
         super.connectSensors();
 
-        //TODO - Need to wire isrunning to service up (I think)
-        setAttribute(SERVICE_UP, true);
+        connectServiceUpIsRunning();
     }
 
     @Override
