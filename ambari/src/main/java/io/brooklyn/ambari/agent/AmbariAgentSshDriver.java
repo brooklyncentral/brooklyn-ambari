@@ -24,6 +24,7 @@ import static org.apache.brooklyn.util.ssh.BashCommands.sudo;
 
 import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.entity.EntityLocal;
+import org.apache.brooklyn.core.entity.Attributes;
 import org.apache.brooklyn.core.entity.Entities;
 import org.apache.brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import org.apache.brooklyn.entity.software.base.SoftwareProcess;
@@ -95,6 +96,9 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
                         .add(defaultAmbariInstallHelper.installAmbariRequirements(getMachine()))
                         .addAll(BashCommands.setHostname(fqdn))
                         .add(installPackage("ambari-agent"))
+                        .add(BashCommands.appendToEtcHosts(
+                                getParentAmbariCluster().getMasterAmbariServer().sensors().get(Attributes.SUBNET_ADDRESS),
+                                getEntity().getAmbariServerFQDN()))
                         .build();
 
         newScript(INSTALLING).body
@@ -126,4 +130,9 @@ public class AmbariAgentSshDriver extends JavaSoftwareProcessSshDriver implement
         return entity.getConfig(AmbariAgent.TEMPLATE_CONFIGURATION_URL);
     }
 
+    protected AmbariCluster getParentAmbariCluster() {
+        Iterable<AmbariCluster> ancestors = Iterables.filter(
+                Entities.ancestors(entity), AmbariCluster.class);
+        return Iterables.getFirst(ancestors, null);
+    }
 }
