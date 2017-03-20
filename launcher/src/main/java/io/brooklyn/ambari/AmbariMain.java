@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects.ToStringHelper;
 
-import io.airlift.command.Command;
-import io.airlift.command.Option;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 
 /**
  * This class provides a static main entry point for launching a custom Brooklyn-based app.
