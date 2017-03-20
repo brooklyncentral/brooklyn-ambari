@@ -53,7 +53,7 @@ import retrofit.mime.TypedOutput;
  */
 public class AmbariRestClient implements Client {
 
-    private static Client client;
+    private Client client;
 
     public AmbariRestClient() {
         client = new UrlConnectionClient(); //Default Retrofit client
