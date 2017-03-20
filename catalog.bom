@@ -1,14 +1,14 @@
 brooklyn.catalog:
-  version: 0.6.0
+  version: 0.6.1-SNAPSHOT
 
   libraries:
-  - "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=io.brooklyn.ambari&a=brooklyn-ambari&v=0.6.0&e=jar"
+  - "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=io.brooklyn.ambari&a=brooklyn-ambari&v=0.6.1-SNAPSHOT&e=jar"
 
   publish:
     description: |
       Entities for running the Apache Ambari project in Apache Brooklyn.
     license_code: Apache-2.0
-    icon_url: http://hortonworks.com/wp-content/uploads/2016/03/apache-ambari-project.png
+    icon_url: http://hortonworks.com/wp-content/uploads/20.6.1-SNAPSHOT3/apache-ambari-project.png
 
   items:
 
