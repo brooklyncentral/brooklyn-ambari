@@ -32,7 +32,7 @@
     <parent>
         <groupId>io.brooklyn.ambari</groupId>
         <artifactId>brooklyn-ambari-parent</artifactId>
-        <version>0.7.0-20170316.1432-v4-SNAPSHOT</version>
+        <version>0.7.0-20170316.1432-v4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -128,7 +128,7 @@
                         <Implementation-Branch>${scmBranch}</Implementation-Branch>
                         <!-- Embed-Transitive>true</Embed-Transitive -->
                         <Embed-Dependency>*;scope=compile|runtime;groupId=!org.apache.brooklyn</Embed-Dependency>
-                        <Export-Package></Export-Package>
+                        <Export-Package>io.brooklyn.ambari.*</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
