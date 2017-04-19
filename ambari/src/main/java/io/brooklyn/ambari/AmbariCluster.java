@@ -54,34 +54,56 @@ public interface AmbariCluster extends BasicStartable {
     @SetFromFlag("initialSize")
     ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(Cluster.INITIAL_SIZE, 0);
 
-    AttributeSensor<Integer> EXPECTED_AGENTS = Sensors.newIntegerSensor("ambaricluster.expectedservers", "Number of ambari agents expected to register with cluster");
+    AttributeSensor<Integer> EXPECTED_AGENTS = Sensors.newIntegerSensor(
+            "ambaricluster.expectedservers", 
+            "Number of ambari agents expected to register with cluster");
 
     @SetFromFlag("blueprint.name")
-    ConfigKey<String> BLUEPRINT_NAME = ConfigKeys.newStringConfigKey("blueprint.name", "Ambari Blueprint name", "mybp");
+    ConfigKey<String> BLUEPRINT_NAME = ConfigKeys.newStringConfigKey(
+            "blueprint.name", 
+            "Ambari Blueprint name", 
+            "mybp");
 
     @SetFromFlag("cluster.name")
-    ConfigKey<String> CLUSTER_NAME = ConfigKeys.newStringConfigKey("cluster.name", "Ambari Cluster name", "Cluster1");
+    ConfigKey<String> CLUSTER_NAME = ConfigKeys.newStringConfigKey(
+            "cluster.name", 
+            "Ambari Cluster name", 
+            "Cluster1");
 
     @SetFromFlag("securityGroup")
-    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("securityGroup", "Security group to be shared by agents and server");
+    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey(
+            "securityGroup", 
+            "Security group to be shared by agents and server");
 
     @SetFromFlag("services")
-    ConfigKey<List<String>> HADOOP_SERVICES = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
-    }, "services", "List of services to deploy to Hadoop Cluster");
+    @SuppressWarnings("serial")
+    ConfigKey<List<String>> HADOOP_SERVICES = ConfigKeys.newConfigKey(
+            new TypeToken<List<String>>() {}, 
+            "services", 
+            "List of services to deploy to Hadoop Cluster");
 
     @SetFromFlag("stackName")
-    ConfigKey<String> HADOOP_STACK_NAME = ConfigKeys.newStringConfigKey("stackName", "Hadoop stack name", "HDP");
+    ConfigKey<String> HADOOP_STACK_NAME = ConfigKeys.newStringConfigKey(
+            "stackName", 
+            "Hadoop stack name", 
+            "HDP");
 
     @SetFromFlag("stackVersion")
-    ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey("stackVersion", "Hadoop stack version", "2.3");
+    ConfigKey<String> HADOOP_STACK_VERSION = ConfigKeys.newStringConfigKey(
+            "stackVersion", 
+            "Hadoop stack version", 
+            "2.3");
 
     @SetFromFlag("repoBaseUrl")
-    ConfigKey<? extends String> REPO_BASE_URL = ConfigKeys.newStringConfigKey("repository.base.url", "The base url of the ambari repo", "http://public-repo-1.hortonworks.com");
+    ConfigKey<? extends String> REPO_BASE_URL = ConfigKeys.newStringConfigKey(
+            "repository.base.url", 
+            "The base url of the ambari repo", 
+            "http://public-repo-1.hortonworks.com");
 
     @Deprecated
     @SetFromFlag("extraServices")
-    ConfigKey<List<EntitySpec<? extends ExtraService>>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<List<EntitySpec<? extends ExtraService>>>() {
-    })
+    @SuppressWarnings("serial")
+    ConfigKey<List<EntitySpec<? extends ExtraService>>> EXTRA_HADOOP_SERVICES = BasicConfigKey.builder(new TypeToken<List<EntitySpec<? extends ExtraService>>>() {})
             .name("extraServices")
             .description("List of extra services to deploy to Hadoop Cluster " +
                     "NB: this configuration parameter doesn't work in yaml")
@@ -90,20 +112,18 @@ public interface AmbariCluster extends BasicStartable {
 
     @Deprecated
     @SetFromFlag("extraService")
-    ConfigKey<EntitySpec<? extends ExtraService>> EXTRA_HADOOP_SERVICE = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends ExtraService>>() {
-    })
+    ConfigKey<EntitySpec<? extends ExtraService>> EXTRA_HADOOP_SERVICE = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends ExtraService>>() {})
             .name("extraService")
             .description("List of extra services to deploy to Hadoop Cluster")
             .build();
 
-    ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {
-    }).name("ambaricluster.serverspec")
+    ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {})
+            .name("ambaricluster.serverspec")
             .defaultValue(EntitySpec.create(AmbariServer.class))
             .build();
 
-    ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {
-    }
-    ).name("ambaricluster.agentspec")
+    ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {})
+            .name("ambaricluster.agentspec")
             .defaultValue(EntitySpec.create(AmbariAgent.class))
             .build();
 
@@ -114,34 +134,44 @@ public interface AmbariCluster extends BasicStartable {
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION, "2.2.0.0");
 
     @SetFromFlag("serverComponents")
-    ConfigKey<List<String>> SERVER_COMPONENTS =
-            ConfigKeys.newConfigKey(
-                    new TypeToken<List<String>>() {
-                    }, "ambari.server.components", "List of components to install on Ambari Server.  " +
-                            "If non-empty then ambari agent will be added to server", new LinkedList<String>());
+    ConfigKey<List<String>> SERVER_COMPONENTS = ConfigKeys.newConfigKey(
+            new TypeToken<List<String>>() {}, 
+            "ambari.server.components", 
+            "List of components to install on Ambari Server.  "
+                    + "If non-empty then ambari agent will be added to server", 
+            new LinkedList<String>());
 
     @SetFromFlag("ambariConfigMap")
-    ConfigKey<Map<String, Map>> AMBARI_CONFIGURATIONS =
-            new MapConfigKey<Map>(Map.class, "ambari.configurations", "Map of maps");
+    ConfigKey<Map<String, Map>> AMBARI_CONFIGURATIONS = new MapConfigKey<Map>(
+            Map.class, 
+            "ambari.configurations", ""
+                    + "Map of maps");
 
     @SetFromFlag("ambariStackDefsUrls")
-    ConfigKey<List<String>> STACK_DEFINITION_URLS =
-            ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
-            }, "ambari.stack.urls", "stack definitions as tar.gz", new LinkedList<String>());
+    ConfigKey<List<String>> STACK_DEFINITION_URLS = ConfigKeys.newConfigKey(
+            new TypeToken<List<String>>() {}, 
+            "ambari.stack.urls", 
+            "stack definitions as tar.gz", 
+            new LinkedList<String>());
 
     @SetFromFlag("pauseForDeployment")
-    ConfigKey<Boolean> PAUSE_FOR_DEPLOYMENT =
-            ConfigKeys.newBooleanConfigKey(
-                    "ambari.pause.before.deployment",
-                    "Pauses once ambari server and clusters ready to deploy.  Creates deployCluster " +
-                            "effector to continue deployment",
-                    Boolean.FALSE);
+    ConfigKey<Boolean> PAUSE_FOR_DEPLOYMENT = ConfigKeys.newBooleanConfigKey(
+            "ambari.pause.before.deployment",
+            "Pauses once ambari server and clusters ready to deploy.  Creates deployCluster "
+                    + "effector to continue deployment",
+            Boolean.FALSE);
 
     @SetFromFlag("domainName")
-    ConfigKey<String> DOMAIN_NAME = ConfigKeys.newStringConfigKey("ambari.domain.name", "Domain name to use for all hosts FQDNs", "ambari.local");
+    ConfigKey<String> DOMAIN_NAME = ConfigKeys.newStringConfigKey(
+            "ambari.domain.name", 
+            "Domain name to use for all hosts FQDNs", 
+            "ambari.local");
 
     @SetFromFlag("serverHostGroup")
-    ConfigKey<String> SERVER_HOST_GROUP = ConfigKeys.newStringConfigKey("ambari.server.hostgroup.name", "Host group name for the agent on the Ambari server", "server-group");
+    ConfigKey<String> SERVER_HOST_GROUP = ConfigKeys.newStringConfigKey(
+            "ambari.server.hostgroup.name", 
+            "Host group name for the agent on the Ambari server", 
+            "server-group");
 
     AttributeSensor<Boolean> CLUSTER_SERVICES_INITIALISE_CALLED = Sensors.newBooleanSensor("ambari.cluster.servicesInitialiseCalled");
 
@@ -153,9 +183,10 @@ public interface AmbariCluster extends BasicStartable {
     String AMBARI_ALERTS_NOTIFICATION_PROPERTIES_PREFIX = "properties.";
 
     @SetFromFlag("ambariAlertNotifications")
-    ConfigKey<Map<String, Object>> AMBARI_ALERT_NOTIFICATIONS =
-            new MapConfigKey(Map.class, Strings.removeFromEnd(AMBARI_ALERTS_CONFIG_PREFIX, "."),
-                    "Map compatible with Ambari requirements for creating/editing alert notification request");
+    ConfigKey<Map<String, Object>> AMBARI_ALERT_NOTIFICATIONS = new MapConfigKey(
+            Map.class, 
+            Strings.removeFromEnd(AMBARI_ALERTS_CONFIG_PREFIX, "."),
+            "Map compatible with Ambari requirements for creating/editing alert notification request");
 
 
     List<String> AMBARI_ALERTS_NOTIFICATION_LIST_KEYS = ImmutableList.of(
