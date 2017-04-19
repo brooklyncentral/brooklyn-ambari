@@ -19,7 +19,6 @@
 
 package io.brooklyn.ambari;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -107,7 +106,7 @@ public interface AmbariCluster extends BasicStartable {
             .name("extraServices")
             .description("List of extra services to deploy to Hadoop Cluster " +
                     "NB: this configuration parameter doesn't work in yaml")
-            .defaultValue(new LinkedList<EntitySpec<? extends ExtraService>>())
+            .defaultValue(ImmutableList.<EntitySpec<? extends ExtraService>>of())
             .build();
 
     @Deprecated
@@ -119,12 +118,12 @@ public interface AmbariCluster extends BasicStartable {
 
     ConfigKey<EntitySpec<? extends AmbariServer>> SERVER_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariServer>>() {})
             .name("ambaricluster.serverspec")
-            .defaultValue(EntitySpec.create(AmbariServer.class))
+            .defaultValue(EntitySpec.create(AmbariServer.class).immutable())
             .build();
 
     ConfigKey<EntitySpec<? extends AmbariAgent>> AGENT_SPEC = BasicConfigKey.builder(new TypeToken<EntitySpec<? extends AmbariAgent>>() {})
             .name("ambaricluster.agentspec")
-            .defaultValue(EntitySpec.create(AmbariAgent.class))
+            .defaultValue(EntitySpec.create(AmbariAgent.class).immutable())
             .build();
 
     @SetFromFlag("hostAddressSensor")
@@ -139,7 +138,7 @@ public interface AmbariCluster extends BasicStartable {
             "ambari.server.components", 
             "List of components to install on Ambari Server.  "
                     + "If non-empty then ambari agent will be added to server", 
-            new LinkedList<String>());
+            ImmutableList.<String>of());
 
     @SetFromFlag("ambariConfigMap")
     ConfigKey<Map<String, Map>> AMBARI_CONFIGURATIONS = new MapConfigKey<Map>(
@@ -152,7 +151,7 @@ public interface AmbariCluster extends BasicStartable {
             new TypeToken<List<String>>() {}, 
             "ambari.stack.urls", 
             "stack definitions as tar.gz", 
-            new LinkedList<String>());
+            ImmutableList.<String>of());
 
     @SetFromFlag("pauseForDeployment")
     ConfigKey<Boolean> PAUSE_FOR_DEPLOYMENT = ConfigKeys.newBooleanConfigKey(
