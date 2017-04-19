@@ -31,11 +31,20 @@ import org.apache.brooklyn.util.core.flags.SetFromFlag;
 public interface Ranger extends ExtraService {
 
     @SetFromFlag("dbUser")
-    ConfigKey<String> DB_USER = ConfigKeys.newStringConfigKey("db.user", "MySQL user", "ranger");
+    ConfigKey<String> DB_USER = ConfigKeys.newStringConfigKey(
+            "db.user", 
+            "MySQL user", 
+            "ranger");
 
     @SetFromFlag("dbPassword")
-    ConfigKey<String> DB_PASSWORD = ConfigKeys.newStringConfigKey("db.password", "MySQL user password", "rangerpassword");
+    ConfigKey<String> DB_PASSWORD = ConfigKeys.newStringConfigKey(
+            "db.password", 
+            "MySQL user password", 
+            "rangerpassword");
 
     @SetFromFlag("rangerPassword")
-    ConfigKey<String> RANGER_PASSWORD = ConfigKeys.newStringConfigKey("ranger.password", "Ranger user password", "rangerpassword");
+    ConfigKey<String> RANGER_PASSWORD = ConfigKeys.newStringConfigKey(
+            "ranger.password", 
+            "Ranger user password", 
+            "rangerpassword");
 }

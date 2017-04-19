@@ -35,13 +35,19 @@ import com.google.common.reflect.TypeToken;
 public interface AmbariHostGroup extends DynamicCluster {
 
     @SetFromFlag("components")
-    ConfigKey<List<String>> HADOOP_COMPONENTS = ConfigKeys.newConfigKey(new TypeToken<List<String>>() {
-    }, "components", "List of components to deploy to host group");
+    @SuppressWarnings("serial")
+    ConfigKey<List<String>> HADOOP_COMPONENTS = ConfigKeys.newConfigKey(
+            new TypeToken<List<String>>() {}, 
+            "components", 
+            "List of components to deploy to host group");
 
     @SetFromFlag("siblingSpec")
+    @SuppressWarnings("serial")
     ConfigKey<EntitySpec<?>> SIBLING_SPEC = ConfigKeys.newConfigKey(
             new TypeToken<EntitySpec<?>>(){},
-            "ambari.sibling.spec", "Spec for  extra entity to be installed on each of nodes in cluster", null);
+            "ambari.sibling.spec", 
+            "Spec for  extra entity to be installed on each of nodes in cluster", 
+            null);
 
     List<String> getHostFQDNs();
 

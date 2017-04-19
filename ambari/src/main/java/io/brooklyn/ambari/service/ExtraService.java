@@ -88,20 +88,25 @@ public interface ExtraService extends BasicStartable {
     }
 
     @SetFromFlag("bindTo")
-    ConfigKey<String> BIND_TO = ConfigKeys.newStringConfigKey("bindTo", "Name of component which will be use to determine the host to install RANGER");
+    ConfigKey<String> BIND_TO = ConfigKeys.newStringConfigKey(
+            "bindTo", 
+            "Name of component which will be use to determine the host to install RANGER");
 
     @SetFromFlag("serviceName")
-    ConfigKey<String> SERVICE_NAME = ConfigKeys.newStringConfigKey("serviceName", "Name of the Hadoop service, identified by Ambari");
+    ConfigKey<String> SERVICE_NAME = ConfigKeys.newStringConfigKey(
+            "serviceName", 
+            "Name of the Hadoop service, identified by Ambari");
 
     @SetFromFlag("componentNames")
+    @SuppressWarnings("serial")
     ConfigKey<List<String>> COMPONENT_NAMES =
             ConfigKeys.newConfigKey(
                     new TypeToken<List<String>>() {},
                     "componentNames",
-                    "List of component names for this Hadoop service, identified by Ambari. " +
-                    "Items should be of form <component>|<hostGroup> or simply " +
-                    "<component>.  If hostgroup is omitted it is assumed that the " +
-                    "component should be installed on the bound hostgroup.");
+                    "List of component names for this Hadoop service, identified by Ambari. "
+                            + "Items should be of form <component>|<hostGroup> or simply "
+                            + "<component>.  If hostgroup is omitted it is assumed that the "
+                            + "component should be installed on the bound hostgroup.");
 
     /**
      * Returns the list of mapping <component-name> <--> <host-group-name> for this extra service.

@@ -32,9 +32,9 @@ public class AmbariConfigAndSensors {
     /**
      * Sets the sensor to use to configure addresses in machines' /etc/hosts file.
      */
+    @SuppressWarnings("serial")
     public static final ConfigKey<AttributeSensor<String>> ETC_HOST_ADDRESS = ConfigKeys.newConfigKey(
-            new TypeToken<AttributeSensor<String>>() {
-            },
+            new TypeToken<AttributeSensor<String>>() {},
             "entity.hostAddressSensor", "The sensor to use to obtain addresses for each machine's host file",
             Attributes.SUBNET_ADDRESS);
 }
