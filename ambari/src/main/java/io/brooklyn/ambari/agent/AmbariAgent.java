@@ -41,14 +41,17 @@ public interface AmbariAgent extends AmbariNode {
 
     @SetFromFlag("configFileUrl")
     ConfigKey<String> TEMPLATE_CONFIGURATION_URL = ConfigKeys.newConfigKey(
-            "ambari.templateConfigurationUrl", "Template file (in freemarker format) for the ambari-agent.ini file",
+            "ambari.templateConfigurationUrl", 
+            "Template file (in freemarker format) for the ambari-agent.ini file",
             JavaClassNames.resolveClasspathUrl(AmbariAgent.class, "ambari-agent.ini"));
 
     @SetFromFlag("ambariServerFQDN")
     ConfigKey<String> AMBARI_SERVER_FQDN = ConfigKeys.newStringConfigKey(
-            "ambari.server.fqdn", "Fully Qualified Domain Name of ambari server that agent should register to");
+            "ambari.server.fqdn", 
+            "Fully Qualified Domain Name of ambari server that agent should register to");
 
 
+    @SuppressWarnings("serial")
     AttributeSensor<List<String>> COMPONENTS = Sensors.newSensor(
             new TypeToken<List<String>>() {},
             "hadoop.components",

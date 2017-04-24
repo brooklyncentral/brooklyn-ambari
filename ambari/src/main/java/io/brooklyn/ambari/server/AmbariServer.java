@@ -44,12 +44,14 @@ import io.brooklyn.ambari.rest.domain.Request;
 public interface AmbariServer extends AmbariNode {
 
     // TODO this value is read-only; changing its config value is not reflected in the deployed artifacts!
-    PortAttributeSensorAndConfigKey HTTP_PORT =
-            new PortAttributeSensorAndConfigKey("ambari.server.httpPort", "HTTP Port", "8080");
+    PortAttributeSensorAndConfigKey HTTP_PORT = new PortAttributeSensorAndConfigKey(
+                    "ambari.server.httpPort", 
+                    "HTTP Port", 
+                    "8080");
 
+    @SuppressWarnings("serial")
     AttributeSensor<List<String>> REGISTERED_HOSTS = Sensors.newSensor(
-            new TypeToken<List<String>>() {
-            },
+            new TypeToken<List<String>>() {},
             "ambari.server.registeredHosts",
             "List of registered agent names");
 
@@ -57,10 +59,14 @@ public interface AmbariServer extends AmbariNode {
 
     AttributeSensor<String> CLUSTER_STATE = Sensors.newStringSensor("ambari.server.clusterState");
 
-    AttributeSensor<String> USERNAME = Sensors.newStringSensor("ambari.server.http.user", "Ambari Server's http username.");
+    AttributeSensor<String> USERNAME = Sensors.newStringSensor(
+            "ambari.server.http.user", 
+            "Ambari Server's http username.");
 
     BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey PASSWORD =
-            new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey("ambari.server.http.password", "Ambari Server's http password");
+            new BasicAttributeSensorAndConfigKey.StringAttributeSensorAndConfigKey(
+                    "ambari.server.http.password", 
+                    "Ambari Server's http password");
 
     /**
      * @throws IllegalStateException if times out.

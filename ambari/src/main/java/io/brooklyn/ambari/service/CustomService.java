@@ -33,28 +33,38 @@ import org.apache.brooklyn.util.core.flags.SetFromFlag;
 @ImplementedBy(CustomServiceImpl.class)
 public interface CustomService extends ExtraService {
     @SetFromFlag("customServiceName")
-    ConfigKey<String> CUSTOM_SERVICE_NAME = ConfigKeys.newStringConfigKey("custom.service.name", "Name of the custom service");
+    ConfigKey<String> CUSTOM_SERVICE_NAME = ConfigKeys.newStringConfigKey(
+            "custom.service.name", 
+            "Name of the custom service");
     
     @SetFromFlag("customServiceConfig")
-    ConfigKey<Map<String, Map>> CUSTOM_SERVICE_CONF = new MapConfigKey<Map>(Map.class, "custom.service.config", "Service Configuration as Map of maps");
+    ConfigKey<Map<String, Map>> CUSTOM_SERVICE_CONF = new MapConfigKey<Map>(
+            Map.class, 
+            "custom.service.config", 
+            "Service Configuration as Map of maps");
 
     @SetFromFlag("serviceConfigTemplateUrl")
     ConfigKey<String> SERVICE_CONFIG_TEMPLATE_URL = ConfigKeys.newStringConfigKey(
-            "service.config.templateUrl", "Template file (in freemarker format) for the custom service's service-config.xml file", 
+            "service.config.templateUrl", 
+            "Template file (in freemarker format) for the custom service's service-config.xml file", 
             "classpath://io/brooklyn/ambari/service/custom/configuration/service-config.xml");
 
     @SetFromFlag("serviceConfigTemplateUrl")
     ConfigKey<String> SERVICE_SCRIPT_TEMPLATE_URL = ConfigKeys.newStringConfigKey(
-            "service.script.templateUrl", "Template file (in freemarker format) for the custom service's python script file", 
+            "service.script.templateUrl", 
+            "Template file (in freemarker format) for the custom service's python script file", 
             "classpath://io/brooklyn/ambari/service/custom/package/scripts/service_client.py");
 
     @SetFromFlag("serviceConfigTemplateUrl")
     ConfigKey<String> SERVICE_METAINFO_TEMPLATE_URL = ConfigKeys.newStringConfigKey(
-            "service.metainfo.templateUrl", "Template file (in freemarker format) for the custom service's metainfo.xml file", 
+            "service.metainfo.templateUrl", 
+            "Template file (in freemarker format) for the custom service's metainfo.xml file", 
             "classpath://io/brooklyn/ambari/service/custom/metainfo.xml");
 
     @SetFromFlag("customCcomponentName")
-    ConfigKey<String> CUSTOM_COMPONENT_NAME = ConfigKeys.newStringConfigKey("custom.component.name", "Name of the componentName");
+    ConfigKey<String> CUSTOM_COMPONENT_NAME = ConfigKeys.newStringConfigKey(
+            "custom.component.name", 
+            "Name of the componentName");
 
     void customizeService();
 }
