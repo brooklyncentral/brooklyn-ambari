@@ -32,7 +32,7 @@
     <parent>
         <groupId>io.brooklyn.ambari</groupId>
         <artifactId>brooklyn-ambari-parent</artifactId>
-        <version>0.7.0-20170316.1432-v5-SNAPSHOT</version>
+        <version>0.7.0-20170316.1432-v5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
