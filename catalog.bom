@@ -3,7 +3,6 @@ brooklyn.catalog:
 
   libraries:
   - "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=io.brooklyn.ambari&a=brooklyn-ambari&v=0.8.0-SNAPSHOT&e=jar"
-
   publish:
     description: |
       Entities for running the Apache Ambari project in Apache Brooklyn.
@@ -45,9 +44,10 @@ brooklyn.catalog:
         name: "Ambari cluster"
         brooklyn.config:
           initialSize: $brooklyn:config("ambari.cluster.nodes")
+          version: 2.4.2.0
+          stackVersion: 2.5
+          securityGroup: test-ambari
           provisioning.properties:
-            securityGroupIds: 
-            - test-ambari
             minRam: 8192
             osFamily: ubuntu
             osVersionRegex: 14
