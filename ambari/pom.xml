@@ -128,7 +128,7 @@
                         <Implementation-Branch>${scmBranch}</Implementation-Branch>
                         <!-- Embed-Transitive>true</Embed-Transitive -->
                         <Embed-Dependency>*;scope=compile|runtime;groupId=!org.apache.brooklyn</Embed-Dependency>
-                        <Export-Package></Export-Package>
+                        <Export-Package>io.brooklyn.ambari.*</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
