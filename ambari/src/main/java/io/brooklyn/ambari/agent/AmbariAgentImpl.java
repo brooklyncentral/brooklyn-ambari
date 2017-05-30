@@ -74,6 +74,10 @@ public class AmbariAgentImpl extends SoftwareProcessImpl implements AmbariAgent 
         return getAttribute(COMPONENTS);
     }
 
+    public String getStackVersion() {
+        return getConfig(HADOOP_STACK_VERSION);
+    }
+
     public static EntitySpec<? extends AmbariAgent> createAgentSpec(AmbariCluster ambariCluster, ConfigBag configBag) {
         EntitySpec<? extends AmbariAgent> agentSpec = EntitySpec.create(ambariCluster.getConfig(AmbariCluster.AGENT_SPEC))
                 .configure(AMBARI_SERVER_FQDN,
