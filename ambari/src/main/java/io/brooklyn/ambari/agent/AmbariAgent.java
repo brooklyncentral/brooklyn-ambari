@@ -33,6 +33,7 @@ import org.apache.brooklyn.util.javalang.JavaClassNames;
 
 import com.google.common.reflect.TypeToken;
 
+import io.brooklyn.ambari.AmbariCluster;
 import io.brooklyn.ambari.AmbariNode;
 
 @Catalog(name="Ambari Agent", description="Ambari Agent: part of an ambari cluster that runs on each node that will form part of the Hadoop cluster")
@@ -50,6 +51,8 @@ public interface AmbariAgent extends AmbariNode {
             "ambari.server.fqdn", 
             "Fully Qualified Domain Name of ambari server that agent should register to");
 
+    @SetFromFlag("stackVersion")
+    ConfigKey<String> HADOOP_STACK_VERSION = AmbariCluster.HADOOP_STACK_VERSION;
 
     @SuppressWarnings("serial")
     AttributeSensor<List<String>> COMPONENTS = Sensors.newSensor(
