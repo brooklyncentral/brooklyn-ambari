@@ -26,9 +26,9 @@ import org.apache.brooklyn.api.effector.Effector;
 import org.apache.brooklyn.api.entity.Application;
 import org.apache.brooklyn.api.mgmt.Task;
 import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.core.entity.EntityAsserts;
 import org.apache.brooklyn.core.mgmt.internal.EffectorUtils;
 import org.apache.brooklyn.entity.group.DynamicCluster;
-import org.apache.brooklyn.test.EntityTestUtils;
 import org.apache.brooklyn.util.core.task.Tasks;
 import org.apache.brooklyn.util.guava.Maybe;
 import org.apache.brooklyn.util.time.Duration;
@@ -44,13 +44,13 @@ import io.brooklyn.ambari.server.AmbariServer;
 public class AmbariLiveTestHelper {
     protected void assertHadoopClusterEventuallyDeployed(Application app) {
         AmbariServer ambariServer = Entities.descendants(app, AmbariServer.class).iterator().next();
-        EntityTestUtils.assertAttributeEventually(
+        EntityAsserts.assertAttributeEventually(
                 ImmutableMap.of("timeout", Duration.minutes(60)),
                 ambariServer,
                 AmbariServer.CLUSTER_STATE,
                 Predicates.not(Predicates.or(Predicates.equalTo("ABORTED"), Predicates.equalTo("FAILED"), Predicates.equalTo("TIMEDOUT")))
         );
-        EntityTestUtils.assertAttributeEventually(
+        EntityAsserts.assertAttributeEventually(
                 ImmutableMap.of("timeout", Duration.minutes(60)),
                 ambariServer,
                 AmbariServer.CLUSTER_STATE,
