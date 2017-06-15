@@ -28,13 +28,13 @@ import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.mgmt.ManagementContext;
 import org.apache.brooklyn.core.entity.Attributes;
 import org.apache.brooklyn.core.entity.Entities;
+import org.apache.brooklyn.core.entity.EntityAsserts;
 import org.apache.brooklyn.core.entity.lifecycle.Lifecycle;
 import org.apache.brooklyn.core.mgmt.internal.LocalManagementContext;
 import org.apache.brooklyn.core.mgmt.rebind.RebindOptions;
 import org.apache.brooklyn.core.mgmt.rebind.RebindTestUtils;
 import org.apache.brooklyn.entity.software.base.SoftwareProcess;
 import org.apache.brooklyn.test.Asserts;
-import org.apache.brooklyn.test.EntityTestUtils;
 import org.apache.brooklyn.util.core.ResourceUtils;
 import org.apache.brooklyn.util.time.Duration;
 import org.testng.Assert;
@@ -43,8 +43,8 @@ import com.google.common.collect.ImmutableMap;
 
 public class BlueprintTestHelper {
     void assertNoFires(final Entity app) {
-        EntityTestUtils.assertAttributeEqualsEventually(app, Attributes.SERVICE_UP, Boolean.valueOf(true));
-        EntityTestUtils.assertAttributeEqualsEventually(app, Attributes.SERVICE_STATE_ACTUAL, Lifecycle.RUNNING);
+        EntityAsserts.assertAttributeEqualsEventually(app, Attributes.SERVICE_UP, Boolean.valueOf(true));
+        EntityAsserts.assertAttributeEqualsEventually(app, Attributes.SERVICE_STATE_ACTUAL, Lifecycle.RUNNING);
         Asserts.succeedsEventually(ImmutableMap.of("timeout", Duration.FIVE_MINUTES), new Runnable() {
             public void run() {
                 Iterator i$ = Entities.descendants(app).iterator();
@@ -54,8 +54,8 @@ public class BlueprintTestHelper {
                     Assert.assertNotEquals(entity.getAttribute(Attributes.SERVICE_STATE_ACTUAL), Lifecycle.ON_FIRE);
                     Assert.assertNotEquals(entity.getAttribute(Attributes.SERVICE_UP), Boolean.valueOf(false));
                     if (entity instanceof SoftwareProcess) {
-                        EntityTestUtils.assertAttributeEquals(entity, Attributes.SERVICE_STATE_ACTUAL, Lifecycle.RUNNING);
-                        EntityTestUtils.assertAttributeEquals(entity, Attributes.SERVICE_UP, Boolean.TRUE);
+                        EntityAsserts.assertAttributeEquals(entity, Attributes.SERVICE_STATE_ACTUAL, Lifecycle.RUNNING);
+                        EntityAsserts.assertAttributeEquals(entity, Attributes.SERVICE_UP, Boolean.TRUE);
                     }
                 }
 
