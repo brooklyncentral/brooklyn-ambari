@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.brooklyn.ambari</groupId>
         <artifactId>brooklyn-ambari-parent</artifactId>
-        <version>0.8.0-20170609.1528-v1</version>
+        <version>0.8.0-20170609.1528-v2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
