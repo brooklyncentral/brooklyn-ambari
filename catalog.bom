@@ -1,8 +1,8 @@
 brooklyn.catalog:
-  version: 0.8.0-SNAPSHOT
+  version: 0.8.0-20170609.1528-v1
 
   libraries:
-  - "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=io.brooklyn.ambari&a=brooklyn-ambari&v=0.8.0-SNAPSHOT&e=jar"
+  - "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=io.brooklyn.ambari&a=brooklyn-ambari&v=0.8.0-20170609.1528-v1&e=jar"
 
   publish:
     description: |
