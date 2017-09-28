@@ -124,6 +124,9 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
 
     class AmbariServerRequirementsFunction extends AbstractExtraServicesTask<AmbariServer> {
 
+        protected String errorKey = "ranger.ambari.server";
+        protected String errorDescription = "Error initialising Ranger requirements";
+
         @Override
         public Task<Integer> sshTaskApply(AmbariServer ambariServer) {
             return SshEffectorTasks
@@ -139,6 +142,9 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
 
     class AmbariAgentRequirementsFunction extends AbstractExtraServicesTask<AmbariAgent> {
 
+        protected String errorKey = "ranger.ambari.agent";
+        protected String errorDescription = "Error initialising Ranger requirements";
+
         @Override
         public Task<Integer> sshTaskApply(AmbariAgent ambariAgent) {
 
@@ -152,6 +158,10 @@ public class RangerImpl extends AbstractExtraService implements Ranger {
     }
 
     class MysqlRequirementsFunction extends AbstractExtraServicesTask<AmbariAgent> {
+
+        protected String errorKey = "ranger.mysql";
+        protected String errorDescription = "Error initialising Ranger requirements";
+
         @Override
         public Task<Integer> sshTaskApply(AmbariAgent ambariAgent) {
 

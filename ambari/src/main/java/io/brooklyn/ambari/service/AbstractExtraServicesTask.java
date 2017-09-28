@@ -31,8 +31,10 @@ import com.google.common.base.Function;
 
 public abstract class AbstractExtraServicesTask<T extends Entity> implements Function<T, Void> {
 
-    protected String errorKey = "ranger.mysql";
-    protected String errorDescription = "Error initialising Ranger requirements";
+    // TODO: At some point these should really be replaced with abstract functions, but that would need
+    // to be co-ordinated with downstream
+    protected String errorKey = "extra.service.task";
+    protected String errorDescription = "Error initialising " + this;
 
     public abstract Task<Integer> sshTaskApply(T node);
 
