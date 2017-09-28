@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import com.jayway.jsonpath.PathNotFoundException;
 import org.apache.brooklyn.api.entity.Entity;
 import org.apache.brooklyn.api.location.Location;
 import org.apache.brooklyn.api.location.MachineLocation;
@@ -174,8 +175,12 @@ public class AmbariServerImpl extends SoftwareProcessImpl implements AmbariServe
             @Nullable
             @Override
             public List<String> apply(@Nullable JsonElement jsonElement) {
-                String jsonString = jsonElement.toString();
-                return JsonPath.read(jsonString, "$.items[*].Hosts.host_name");
+                try {
+                    String jsonString = jsonElement.toString();
+                    return JsonPath.read(jsonString, "$.items[*].Hosts.host_name");
+                } catch (PathNotFoundException e) {
+                    return ImmutableList.of();
+                }
             }
         };
         return path;
