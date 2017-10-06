@@ -55,9 +55,6 @@ brooklyn.catalog:
             hdfs-site:
               dfs.webhdfs.enabled: true
               dfs.permissions.enabled: false
-            httpfs-site:
-              httpfs.proxyuser.hue: '*'
-              httpfs.proxyuser.hue.groups: '*'
           services:
           - HBASE
           - HDFS
