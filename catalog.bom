@@ -45,7 +45,7 @@ brooklyn.catalog:
         brooklyn.config:
           initialSize: $brooklyn:config("ambari.cluster.nodes")
           version: 2.6.0.0
-          stackVersion: 2.5
+          stackVersion: 2.6
           securityGroup: test-ambari
           provisioning.properties:
             minRam: 8192
@@ -61,3 +61,4 @@ brooklyn.catalog:
           - MAPREDUCE2
           - YARN
           - ZOOKEEPER
+
