@@ -44,7 +44,7 @@ brooklyn.catalog:
         name: "Ambari cluster"
         brooklyn.config:
           initialSize: $brooklyn:config("ambari.cluster.nodes")
-          version: 2.4.2.0
+          version: 2.6.0.0
           stackVersion: 2.5
           securityGroup: test-ambari
           provisioning.properties:
